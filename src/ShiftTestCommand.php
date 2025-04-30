@@ -17,9 +17,9 @@ class ShiftTestCommand extends Command
      */
     public function handle()
     {
-        $projectId = config('services.shift.project_id');
-        $token = config('services.shift.api_token');
-        $baseUrl = config('services.shift.url');
+        $projectId = config('shift.project_id');
+        $token = config('shift.api_token');
+        $baseUrl = config('shift.url');
 
         $response = Http::withToken($token)
             ->acceptJson()
