@@ -1,0 +1,25 @@
+{
+    "name": "wyxos/shift",
+    "description": "Laravel SDK to integrate and sync tasks with the SHIFT Dashboard.",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Wyxos\\Shift\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Wyxos",
+            "email": "composer@wyxos.com"
+        }
+    ],
+    "minimum-stability": "stable",
+    "require": {},
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Wyxos\\Shift\\ShiftServiceProvider"
+            ]
+        }
+    }
+}
