@@ -15,7 +15,7 @@ class InstallShiftCommand extends Command
     {
         $this->info('Starting SHIFT installation...');
 
-        $apiKey = config('services.shift.api_token');
+        $apiKey = config('shift.api_token');
 
         if (!$apiKey) {
             // Prompt for API key
@@ -27,7 +27,7 @@ class InstallShiftCommand extends Command
             ]);
         }
 
-        $projectId = config('services.shift.project_id');
+        $projectId = config('shift.project_id');
 
         if (!$projectId) {
             $projectId = $this->getProjectId();
@@ -48,9 +48,9 @@ class InstallShiftCommand extends Command
     protected function fetchProjects(string $search): array
     {
         try {
-            $token = config('services.shift.api_token');
+            $token = config('shift.api_token');
 
-            $baseUrl = config('services.shift.url');
+            $baseUrl = config('shift.url');
 
             $url = $baseUrl . '/api/projects';
 
