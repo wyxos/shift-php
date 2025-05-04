@@ -6,17 +6,19 @@ use Inertia\Inertia;
 
 Route::middleware(['web', 'auth'])->group(function () {
     Route::get('/shift', function () {
-        $token = config('shift.api_token');
-        $baseUrl = config('shift.url');
+//        $token = config('shift.api_token');
+//        $baseUrl = config('shift.url');
+//
+//        $tasks = Http::withToken($token)
+//            ->acceptJson()
+//            ->get($baseUrl . '/api/tasks', request()->query())
+//            ->json();
+//
+//        return Inertia::render('shift/Shift', [
+//            'tasks' => $tasks
+//        ]);.
 
-        $tasks = Http::withToken($token)
-            ->acceptJson()
-            ->get($baseUrl . '/api/tasks', request()->query())
-            ->json();
-
-        return Inertia::render('shift/Shift', [
-            'tasks' => $tasks
-        ]);
+        return view('shift::dashboard');
     });
 
     Route::post('/shift/tasks', function () {
