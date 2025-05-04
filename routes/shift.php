@@ -18,7 +18,7 @@ Route::middleware(['web', 'auth'])->group(function () {
 //            'tasks' => $tasks
 //        ]);.
 
-        return view('shift::dashboard');
+        return view('shift::Dashboard');
     });
 
     Route::post('/shift/tasks', function () {
