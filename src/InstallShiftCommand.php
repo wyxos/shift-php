@@ -23,7 +23,7 @@ class InstallShiftCommand extends Command
 
             // Save API key immediately
             $this->writeEnv([
-                'SHIFT_API_KEY' => $apiKey
+                'SHIFT_API_TOKEN' => $apiKey
             ]);
         }
 
