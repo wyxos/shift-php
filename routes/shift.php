@@ -13,9 +13,13 @@ Route::middleware(['web', 'auth'])->group(function () {
         $token = config('shift.api_token');
         $baseUrl = config('shift.url');
         try {
+            $url = $baseUrl . '/api/tasks/' . config('shift.project_id');
+
             $response = Http::withToken($token)
                 ->acceptJson()
-                ->get($baseUrl . '/api/tasks');
+                ->get($url, [
+                    'user_id' => auth()->id()
+                ]);
 
             if ($response->successful()) {
                 return response()->json($response->json());
@@ -42,7 +46,7 @@ Route::middleware(['web', 'auth'])->group(function () {
                 ]);
 
             if ($response->successful()) {
-                return response()->json(['message' => 'Task created successfully']);
+                return $response->json();
             }
 
             return response()->json(['error' => $response->json()['message'] ?? 'Failed to create task'], 422);
