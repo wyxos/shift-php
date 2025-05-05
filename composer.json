@@ -14,12 +14,13 @@
         }
     ],
     "minimum-stability": "stable",
-    "require": {},
+    "require": [],
     "extra": {
         "laravel": {
             "providers": [
                 "Wyxos\\Shift\\ShiftServiceProvider"
             ]
         }
-    }
+    },
+    "version": "1.0.4"
 }
