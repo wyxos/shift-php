@@ -22,7 +22,7 @@ class ShiftServiceProvider extends ServiceProvider
         $this->loadRoutesFrom(__DIR__.'/../routes/shift.php');
 
         $this->publishes([
-//            __DIR__.'/../resources/js' => resource_path('js/pages/shift'),
+            __DIR__.'/../resources' => resource_path('shift'),
             __DIR__ . '/../config/shift.php' => config_path('shift.php'),
         ], 'shift');
 
