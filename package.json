@@ -1,6 +1,6 @@
 {
   "name": "@wyxos/shift-sdk",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Laravel SDK to integrate and sync tasks with the SHIFT Dashboard.",
   "main": "release.js",
   "scripts": {
