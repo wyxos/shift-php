@@ -66,8 +66,7 @@ async function updateTask() {
 }
 
 function cancel() {
-    const taskId = route.params.id
-    router.push({ name: 'task-details', params: { id: taskId } })
+    router.push({ name: 'task-list' })
 }
 
 onMounted(fetchTask)
