@@ -1,6 +1,7 @@
 import vue from '@vitejs/plugin-vue';
 import path from 'path';
 import { defineConfig } from 'vite';
+import fs from 'fs'
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -17,6 +18,10 @@ export default defineConfig({
         strictPort: true,
         hmr: {
             host: 'shift-sdk-package.test'
+        },
+        https: {
+            key: fs.readFileSync('C:\\Users\\joeyj\\.config\\herd\\config\\valet\\Certificates\\shift-sdk-package.test.key'),
+            cert: fs.readFileSync('C:\\Users\\joeyj\\.config\\herd\\config\\valet\\Certificates\\shift-sdk-package.test.crt'),
         },
         cors: true,
         proxy: {
