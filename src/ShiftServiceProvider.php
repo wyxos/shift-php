@@ -30,6 +30,7 @@ class ShiftServiceProvider extends ServiceProvider
             $this->commands([
                 InstallShiftCommand::class,
                 ShiftTestCommand::class,
+                PublishShiftCommand::class,
             ]);
         }
     }
