@@ -18,7 +18,7 @@ class TaskController extends Controller
         $token = config('shift.api_token');
         $baseUrl = config('shift.url');
         try {
-            $url = $baseUrl . '/api/tasks/' . config('shift.project_id');
+            $url = $baseUrl . '/api/projects/' . config('shift.project_id') . '/tasks';
 
             $response = Http::withToken($token)
                 ->acceptJson()
@@ -90,6 +90,25 @@ class TaskController extends Controller
             return response()->json(['error' => $response->json()['message'] ?? 'Failed to update task'], 422);
         } catch (\Exception $e) {
             return response()->json(['error' => 'Failed to update task: ' . $e->getMessage()], 500);
+        }
+    }
+
+    public function show(int $id)
+    {
+        $token = config('shift.api_token');
+        $baseUrl = config('shift.url');
+        try {
+            $response = Http::withToken($token)
+                ->acceptJson()
+                ->get($baseUrl . '/api/tasks/' . $id);
+
+            if ($response->successful()) {
+                return response()->json($response->json());
+            }
+
+            return response()->json(['error' => $response->json()['message'] ?? 'Failed to fetch task'], 500);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Failed to fetch task: ' . $e->getMessage()], 500);
         }
     }
 }
