@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
+import axios from 'axios';
 
 interface Task {
   id: number;
@@ -16,14 +17,17 @@ const error = ref<string | null>(null);
 const fetchTasks = async () => {
   try {
     loading.value = true;
-    const response = await fetch('/shift/tasks');
+    const response = await axios.get('/shift/api/tasks', {
+      headers: {
+        'Accept': 'application/json'
+      }
+    });
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! Status: ${response.status}`);
-    }
+    // With axios, we don't need to check response.ok or parse JSON
+    // Axios automatically throws errors for non-2xx responses
+    // and automatically parses JSON responses
 
-    const data = await response.json();
-    tasks.value = data.data || [];
+    tasks.value = response.data.data || [];
   } catch (err) {
     error.value = err instanceof Error ? err.message : 'An error occurred while fetching tasks';
     console.error('Error fetching tasks:', err);

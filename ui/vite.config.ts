@@ -10,5 +10,5 @@ export default defineConfig({
         outDir: path.resolve(__dirname, '../public/shift'), // Outputs to ../public/shift
         assetsDir: 'assets', // This makes assets output to ../public/shift/assets
         emptyOutDir: true, // Cleans output directory before build
-    },
+    }
 });
