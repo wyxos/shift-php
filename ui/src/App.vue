@@ -1,89 +1,60 @@
 <script setup lang="ts">
-// No need to import components here as they are loaded via router
+import { ref, onMounted } from 'vue'
+
+type Task = {
+    id: number
+    title: string
+    status: string
+    priority: string
+}
+
+const tasks = ref<Task[]>([])
+const loading = ref(true)
+const error = ref<string|null>(null)
+
+async function fetchTasks() {
+    loading.value = true
+    error.value = null
+    try {
+        const response = await fetch('/shift/api/tasks', { credentials: 'include' })
+        if (!response.ok) throw new Error('Failed to load tasks')
+        const result = await response.json()
+        // Get the paginated "data" array
+        tasks.value = result.data
+    } catch (e: any) {
+        error.value = e.message || 'Unknown error'
+    } finally {
+        loading.value = false
+    }
+}
+
+onMounted(fetchTasks)
 </script>
 
 <template>
-  <div class="app-container">
-    <header>
-      <div class="logo-container">
-        <a href="https://vite.dev" target="_blank">
-          <img src="/vite.svg" class="logo" alt="Vite logo" />
-        </a>
-        <a href="https://vuejs.org/" target="_blank">
-          <img src="./assets/vue.svg" class="logo vue" alt="Vue logo" />
-        </a>
-      </div>
-      <nav>
-        <router-link to="/">Dashboard</router-link>
-      </nav>
-    </header>
+    <div class="max-w-xl mx-auto mt-12 p-6 bg-white rounded-2xl shadow-lg">
+        <h1 class="text-2xl font-bold mb-6">Tasks</h1>
 
-    <main>
-      <router-view />
-    </main>
-  </div>
+        <div v-if="loading" class="text-gray-500 text-center py-8">Loading...</div>
+        <div v-else-if="error" class="text-red-600 text-center py-8">{{ error }}</div>
+
+        <ul v-else class="divide-y divide-gray-100">
+            <li
+                v-for="task in tasks"
+                :key="task.id"
+                class="flex flex-col sm:flex-row sm:items-center sm:gap-6 py-3"
+            >
+                <span class="flex-1 text-lg font-medium">{{ task.title }}</span>
+                <span class="inline-block text-xs px-2 py-1 rounded-full"
+                      :class="task.status === 'pending'
+            ? 'bg-yellow-50 text-yellow-600 border border-yellow-200'
+            : task.status === 'completed'
+            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+            : 'bg-gray-100 text-gray-500 border border-gray-200'
+          "
+                >{{ task.status }}</span>
+                <span class="ml-2 text-xs uppercase text-gray-400">{{ task.priority }}</span>
+            </li>
+        </ul>
+    </div>
 </template>
-
-<style scoped>
-.app-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 20px;
-}
-
-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 30px;
-  padding-bottom: 20px;
-  border-bottom: 1px solid #eaeaea;
-}
-
-.logo-container {
-  display: flex;
-  align-items: center;
-}
-
-.logo {
-  height: 3em;
-  padding: 0.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-
-.logo.vue:hover {
-  filter: drop-shadow(0 0 2em #42b883aa);
-}
-
-nav {
-  display: flex;
-  gap: 20px;
-}
-
-nav a {
-  color: #333;
-  text-decoration: none;
-  font-weight: bold;
-  padding: 5px 10px;
-  border-radius: 4px;
-  transition: background-color 0.3s;
-}
-
-nav a:hover {
-  background-color: #f0f0f0;
-}
-
-nav a.router-link-active {
-  color: #42b883;
-  background-color: #f0f0f0;
-}
-
-main {
-  padding: 20px 0;
-}
-</style>
