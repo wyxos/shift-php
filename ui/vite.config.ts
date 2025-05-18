@@ -2,10 +2,14 @@ import vue from '@vitejs/plugin-vue';
 import path from 'path';
 import { defineConfig } from 'vite';
 import fs from 'fs'
+import tailwindcss from '@tailwindcss/vite'
 
 // https://vite.dev/config/
 export default defineConfig({
-    plugins: [vue()],
+    plugins: [
+        vue(),
+        tailwindcss()
+    ],
     base: '/shift/', // Important: ensures built asset URLs start with /shift/
     build: {
         outDir: path.resolve(__dirname, '../public/shift'), // Outputs to ../public/shift
