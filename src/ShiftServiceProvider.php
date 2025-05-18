@@ -16,13 +16,13 @@ class ShiftServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        $this->loadViewsFrom(__DIR__.'/../views/', 'shift');
+//        $this->loadViewsFrom(__DIR__.'/../views/', 'shift');
 
         // Register routes, publish files, commands
         $this->loadRoutesFrom(__DIR__.'/../routes/shift.php');
 
         $this->publishes([
-            __DIR__.'/../resources' => resource_path('shift'),
+            __DIR__.'/../public' => public_path(''),
             __DIR__ . '/../config/shift.php' => config_path('shift.php'),
         ], 'shift');
 
