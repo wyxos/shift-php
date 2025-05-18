@@ -1,120 +1,144 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
-import axios from 'axios';
+import { ref, onMounted } from 'vue'
+import axios from 'axios'
 
-interface Task {
-  id: number;
-  name: string;
-  description: string;
-  status: string;
-  // Add other properties as needed
+axios.defaults.withCredentials = true
+
+type Task = {
+    id: number
+    title: string
+    status: string
+    priority: string
 }
 
-const tasks = ref<Task[]>([]);
-const loading = ref(true);
-const error = ref<string | null>(null);
+const tasks = ref<Task[]>([])
+const loading = ref(true)
+const error = ref<string|null>(null)
+const selectedTask = ref<Task|null>(null)
+const creating = ref(false)
+const createError = ref<string|null>(null)
 
-const fetchTasks = async () => {
-  try {
-    loading.value = true;
-    const response = await axios.get('/shift/api/tasks', {
-      headers: {
-        'Accept': 'application/json'
-      }
-    });
+const newTask = ref({
+    title: '',
+    status: 'pending',
+    priority: 'medium',
+})
 
-    // With axios, we don't need to check response.ok or parse JSON
-    // Axios automatically throws errors for non-2xx responses
-    // and automatically parses JSON responses
+async function fetchTasks() {
+    loading.value = true
+    error.value = null
+    try {
+        const response = await axios.get('/shift/api/tasks')
+        tasks.value = response.data.data
+    } catch (e: any) {
+        error.value = e.response?.data?.error || e.message || 'Unknown error'
+    } finally {
+        loading.value = false
+    }
+}
 
-    tasks.value = response.data.data || [];
-  } catch (err) {
-    error.value = err instanceof Error ? err.message : 'An error occurred while fetching tasks';
-    console.error('Error fetching tasks:', err);
-  } finally {
-    loading.value = false;
-  }
-};
+async function createTask() {
+    createError.value = null
+    try {
+        await axios.post('/shift/api/tasks', newTask.value)
+        creating.value = false
+        newTask.value = { title: '', status: 'pending', priority: 'medium' }
+        await fetchTasks()
+    } catch (e: any) {
+        createError.value =
+            e.response?.data?.error ||
+            e.response?.data?.message ||
+            e.message ||
+            'Unknown error'
+    }
+}
 
-onMounted(() => {
-  fetchTasks();
-});
+onMounted(fetchTasks)
 </script>
 
 <template>
-  <div class="dashboard">
-    <h1>Tasks Dashboard</h1>
-
-    <div v-if="loading" class="loading">
-      Loading tasks...
-    </div>
-
-    <div v-else-if="error" class="error">
-      <p>{{ error }}</p>
-      <button @click="fetchTasks">Try Again</button>
-    </div>
-
-    <div v-else-if="tasks.length === 0" class="no-tasks">
-      <p>No tasks found.</p>
-    </div>
-
-    <div v-else class="tasks-container">
-      <div v-for="task in tasks" :key="task.id" class="task-card">
-        <h3>{{ task.name }}</h3>
-        <p>{{ task.description }}</p>
-        <div class="task-status">
-          Status: <span :class="task.status.toLowerCase()">{{ task.status }}</span>
+    <div class="max-w-xl mx-auto mt-12 p-6 bg-white rounded-2xl shadow-lg">
+        <div class="flex items-center justify-between mb-6">
+            <h1 class="text-2xl font-bold">Tasks</h1>
+            <button
+                @click="creating = true"
+                class="px-4 py-2 rounded text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition"
+            >
+                + Create
+            </button>
         </div>
-      </div>
+
+        <!-- Create form (modal style, but inline) -->
+        <div v-if="creating" class="mb-6 p-4 bg-gray-50 border border-gray-200 rounded-xl">
+            <div class="flex justify-between items-center mb-2">
+                <h2 class="font-bold text-lg">Create Task</h2>
+                <button @click="creating = false" class="text-gray-400 hover:text-gray-600">&times;</button>
+            </div>
+            <form @submit.prevent="createTask" class="space-y-3">
+                <div>
+                    <label class="block text-sm font-medium mb-1">Title</label>
+                    <input v-model="newTask.title" required type="text" class="w-full border rounded px-2 py-1" />
+                </div>
+                <div class="flex gap-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Status</label>
+                        <select v-model="newTask.status" class="border rounded px-2 py-1">
+                            <option value="pending">Pending</option>
+                            <option value="completed">Completed</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Priority</label>
+                        <select v-model="newTask.priority" class="border rounded px-2 py-1">
+                            <option value="low">Low</option>
+                            <option value="medium">Medium</option>
+                            <option value="high">High</option>
+                        </select>
+                    </div>
+                </div>
+                <div v-if="createError" class="text-red-600 text-sm">{{ createError }}</div>
+                <div>
+                    <button type="submit" class="mt-2 px-4 py-1 rounded bg-emerald-600 text-white font-bold hover:bg-emerald-700">Create</button>
+                </div>
+            </form>
+        </div>
+
+        <div v-if="loading" class="text-gray-500 text-center py-8">Loading...</div>
+        <div v-else-if="error" class="text-red-600 text-center py-8">{{ error }}</div>
+
+        <ul v-else class="divide-y divide-gray-100">
+            <li
+                v-for="task in tasks"
+                :key="task.id"
+                class="flex flex-col sm:flex-row sm:items-center sm:gap-4 py-3"
+            >
+                <span class="flex-1 text-lg font-medium">{{ task.title }}</span>
+                <span class="inline-block text-xs px-2 py-1 rounded-full"
+                      :class="task.status === 'pending'
+            ? 'bg-yellow-50 text-yellow-600 border border-yellow-200'
+            : task.status === 'completed'
+            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+            : 'bg-gray-100 text-gray-500 border border-gray-200'"
+                >{{ task.status }}</span>
+                <span class="ml-2 text-xs uppercase text-gray-400">{{ task.priority }}</span>
+                <button
+                    @click="selectedTask = task"
+                    class="ml-4 mt-2 sm:mt-0 px-3 py-1 rounded text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 transition"
+                >
+                    View
+                </button>
+            </li>
+        </ul>
+
+        <!-- Task details panel (from previous step) -->
+        <div v-if="selectedTask" class="mt-8 p-4 rounded-xl bg-gray-50 border border-gray-200">
+            <div class="flex justify-between items-center mb-2">
+                <h2 class="text-lg font-bold">Task Details</h2>
+                <button @click="selectedTask = null" class="text-gray-400 hover:text-gray-600">&times;</button>
+            </div>
+            <div><span class="font-semibold">Title:</span> {{ selectedTask.title }}</div>
+            <div><span class="font-semibold">Status:</span> {{ selectedTask.status }}</div>
+            <div><span class="font-semibold">Priority:</span> {{ selectedTask.priority }}</div>
+        </div>
     </div>
-  </div>
 </template>
-
-<style scoped>
-.dashboard {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 20px;
-}
-
-.loading, .error, .no-tasks {
-  text-align: center;
-  margin: 40px 0;
-}
-
-.error {
-  color: #e74c3c;
-}
-
-.tasks-container {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 20px;
-  margin-top: 20px;
-}
-
-.task-card {
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  padding: 16px;
-  background-color: #fff;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.task-status {
-  margin-top: 10px;
-  font-weight: bold;
-}
-
-.completed {
-  color: #27ae60;
-}
-
-.pending {
-  color: #f39c12;
-}
-
-.failed {
-  color: #e74c3c;
-}
-</style>
