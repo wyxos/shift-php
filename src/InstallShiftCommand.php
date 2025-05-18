@@ -43,6 +43,14 @@ class InstallShiftCommand extends Command
         if ($this->confirm('Would you like to run a test by creating a dummy task?', false)) {
             $this->call('shift:test');
         }
+
+        // publish assets
+        $this->call('vendor:publish', [
+            '--tag' => 'shift',
+            '--force' => true,
+        ]);
+
+        $this->info('Assets published successfully.');
     }
 
     protected function fetchProjects(string $search): array
