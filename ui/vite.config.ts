@@ -10,5 +10,22 @@ export default defineConfig({
         outDir: path.resolve(__dirname, '../public/shift'), // Outputs to ../public/shift
         assetsDir: 'assets', // This makes assets output to ../public/shift/assets
         emptyOutDir: true, // Cleans output directory before build
+    },
+    server: {
+        host: 'shift-sdk-package.test',
+        port: 5173,
+        strictPort: true,
+        hmr: {
+            host: 'shift-sdk-package.test'
+        },
+        cors: true,
+        proxy: {
+            // Proxy API requests to the Laravel backend
+            '/shift/api': {
+                target: 'https://shift-sdk-package.test',
+                changeOrigin: true,
+                secure: false
+            }
+        }
     }
 });
