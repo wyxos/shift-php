@@ -10,10 +10,10 @@ class ShiftController extends Controller
     /**
      * Display the shift dashboard.
      *
-     * @return \Illuminate\View\View
+     * @return string
      */
     public function index()
     {
-        return view('shift::dashboard');
+        return file_get_contents(public_path('/shift/index.html'));
     }
 }
