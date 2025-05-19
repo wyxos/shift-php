@@ -51,15 +51,30 @@ class TaskController extends Controller
         $token = config('shift.api_token');
         $baseUrl = config('shift.url');
         try {
-            $response = Http::withToken($token)
-                ->acceptJson()
-                ->post($baseUrl . '/api/tasks', [
-                    ...$request->all(),
-                    'project_id' => config('shift.project_id'),
-                    'user_id' => auth()->id(), // project user ID
+            // Check if this is an external submission (has submitter_name)
+            $isExternalSubmission = $request->has('submitter_name');
+
+            $payload = [
+                ...$request->all(),
+                'project_id' => config('shift.project_id'),
+            ];
+
+            // For authenticated users in the SDK, we want to treat them as external submitters
+            // unless they explicitly provided a submitter_name
+            if (!$isExternalSubmission && auth()->check()) {
+                // Include user info as both external submitter and regular user data
+                // This ensures the Shift app recognizes it as an external submission
+                $payload = array_merge($payload, [
+                    'submitter_name' => auth()->user()->name,
+                    'user_id' => auth()->id(),
                     'user_email' => auth()->user()->email,
                     'user_name' => auth()->user()->name,
                 ]);
+            }
+
+            $response = Http::withToken($token)
+                ->acceptJson()
+                ->post($baseUrl . '/api/tasks', $payload);
 
             if ($response->successful()) {
                 return response()->json($response->json());
