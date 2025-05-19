@@ -92,6 +92,49 @@ $response = Http::post('/shift/api/tasks', [
 $tasks = Http::get('/shift/api/tasks')->json();
 ```
 
+### Task Submissions
+
+The SDK supports task submissions from authenticated users. When a user submits a task through the SDK UI, their name, email, user ID, the source URL, and environment are automatically captured from their authenticated session and stored alongside the task in Shift.
+
+#### Using the UI
+
+When an authenticated user fills out the task creation form in the SDK UI, their information is automatically captured from their session. The SDK also automatically captures the source URL and environment.
+
+#### Programmatic Submissions
+
+You can create task submissions programmatically:
+
+```php
+use Illuminate\Support\Facades\Http;
+
+// Create a task from an authenticated user
+$response = Http::post('/shift/api/tasks', [
+    'title' => 'Task Title',
+    'description' => 'Task Description',
+    'source_url' => 'https://your-app.example.com', // Optional, defaults to current URL
+    'environment' => 'production', // Optional, defaults to 'production'
+]);
+```
+
+The SDK will automatically use the authenticated user's information (name, email, user ID) when creating the task.
+
+If you need to create a task from an external user who doesn't have a Shift account, you can still do so by including the submitter_name parameter:
+
+```php
+use Illuminate\Support\Facades\Http;
+
+// Create a task from an external submitter
+$response = Http::post('/shift/api/tasks', [
+    'title' => 'Task Title',
+    'description' => 'Task Description',
+    'submitter_name' => 'External User Name', // This indicates it's an external submission
+    'source_url' => 'https://your-app.example.com',
+    'environment' => 'production',
+]);
+```
+
+In the Shift dashboard, tasks submitted by external users will be clearly marked and will display the submitter's name, source URL, and environment.
+
 ## Testing
 
 You can test the integration by running:

@@ -18,8 +18,21 @@ const newTask = ref({
 async function createTask() {
     createError.value = null
     loading.value = true
+
     try {
-        await axios.post('/shift/api/tasks', newTask.value)
+        // Get the current URL for the source_url
+        const source_url = window.location.origin
+
+        // Get the environment from the config or default to 'production'
+        const environment = import.meta.env.VITE_APP_ENV || 'production'
+
+        // Create the task using authenticated user information
+        await axios.post('/shift/api/tasks', {
+            ...newTask.value,
+            source_url,
+            environment
+        })
+
         router.push({ name: 'task-list' })
     } catch (e: any) {
         createError.value =
