@@ -18,8 +18,12 @@ class TaskController extends Controller
         $token = config('shift.api_token');
         $baseUrl = config('shift.url');
         try {
-            $url = $baseUrl . '/api/projects/' . config('shift.project_id') . '/tasks';
+            $projectId = config('shift.project_id');
 
+            $url = $baseUrl . '/api/projects/' . $projectId . '/tasks';
+
+
+//            dd($token, $baseUrl, $projectId);
             $response = Http::withToken($token)
                 ->acceptJson()
                 ->get($url, [

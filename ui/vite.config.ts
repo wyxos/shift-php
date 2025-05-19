@@ -18,7 +18,7 @@ export default defineConfig({
     },
     server: {
         host: 'shift-sdk-package.test',
-        port: 5173,
+        port: 5174,
         strictPort: true,
         hmr: {
             host: 'shift-sdk-package.test'
