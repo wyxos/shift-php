@@ -52,8 +52,18 @@ async function updateTask() {
     editError.value = null
     loading.value = true
     try {
-        await axios.put(`/shift/api/tasks/${taskId}`, editTaskData.value)
-        router.push({ name: 'task-details', params: { id: taskId } })
+        // Get the current URL for the source_url
+        const source_url = window.location.origin
+
+        // Get the environment from the config or default to 'production'
+        const environment = import.meta.env.VITE_APP_ENV || 'production'
+
+        await axios.put(`/shift/api/tasks/${taskId}`, {
+            ...editTaskData.value,
+            source_url,
+            environment
+        })
+        router.push({ name: 'task-list' })
     } catch (e: any) {
         editError.value =
             e.response?.data?.error ||

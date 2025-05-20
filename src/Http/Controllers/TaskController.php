@@ -98,9 +98,22 @@ class TaskController extends Controller
         $token = config('shift.api_token');
         $baseUrl = config('shift.url');
         try {
+            // Prepare the payload with the request data
+            $payload = $request->all();
+
+            // Include authenticated user information if available
+            if (auth()->check()) {
+                $payload = array_merge($payload, [
+                    'user_id' => auth()->id(),
+                    'user_email' => auth()->user()->email,
+                    'user_name' => auth()->user()->name,
+                    'submitter_name' => auth()->user()->name, // Include submitter_name to maintain external submission status
+                ]);
+            }
+
             $response = Http::withToken($token)
                 ->acceptJson()
-                ->put($baseUrl . '/api/tasks/' . $id, $request->all());
+                ->put($baseUrl . '/api/tasks/' . $id, $payload);
 
             if ($response->successful()) {
                 return response()->json(['message' => 'Task updated successfully']);
@@ -117,9 +130,19 @@ class TaskController extends Controller
         $token = config('shift.api_token');
         $baseUrl = config('shift.url');
         try {
+            // Prepare query parameters
+            $params = [];
+
+            // Include authenticated user information if available
+            if (auth()->check()) {
+                $params['user_id'] = auth()->id();
+                $params['user_email'] = auth()->user()->email;
+                $params['user_name'] = auth()->user()->name;
+            }
+
             $response = Http::withToken($token)
                 ->acceptJson()
-                ->get($baseUrl . '/api/tasks/' . $id);
+                ->get($baseUrl . '/api/tasks/' . $id, $params);
 
             if ($response->successful()) {
                 return response()->json($response->json());
