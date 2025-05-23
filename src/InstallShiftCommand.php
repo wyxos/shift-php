@@ -15,15 +15,27 @@ class InstallShiftCommand extends Command
     {
         $this->info('Starting SHIFT installation...');
 
-        $projectApiToken = config('shift.project_api_token');
+        $token = config('shift.token');
 
-        if (!$projectApiToken) {
+        if (!$token) {
             // Prompt for project API token
-            $projectApiToken = $this->ask('Enter your SHIFT project API token');
+            $token = $this->ask('Enter your SHIFT API token');
 
             // Save project API token immediately
             $this->writeEnv([
-                'SHIFT_PROJECT_API_TOKEN' => $projectApiToken
+                'SHIFT_TOKEN' => $token
+            ]);
+        }
+
+        // Ask for PROJECT
+        $project = config('shift.project');
+
+        if (!$project) {
+            $project = $this->ask('Enter your SHIFT project token');
+
+            // Save project token
+            $this->writeEnv([
+                'SHIFT_PROJECT' => $project
             ]);
         }
 
