@@ -51,22 +51,13 @@ class TaskController extends Controller
         try {
             $payload = [
                 ...$request->all(),
+                'external_user' => [
+                    'name' => auth()->user()->name,
+                    'email' => auth()->user()->email,
+                    'id' => auth()->user()->id,
+                ],
+                'project' => config('shift.project'),
             ];
-
-            // For authenticated users in the SDK, we want to treat them as external submitters
-            // unless they explicitly provided a submitter_name
-            if (auth()->check()) {
-                // Include user info as both external submitter and regular user data
-                // This ensures the Shift app recognizes it as an external submission
-                $payload = array_merge($payload, [
-                    'external_user' => [
-                        'name' => auth()->user()->name,
-                        'email' => auth()->user()->email,
-                        'id' => auth()->user()->id,
-                    ],
-                    'project' => config('shift.project'),
-                ]);
-            }
 
             $response = Http::withToken($apiToken)
                 ->acceptJson()
