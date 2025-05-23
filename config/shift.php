@@ -10,8 +10,8 @@ return [
     |
     */
 
-    'api_token' => env('SHIFT_API_TOKEN'),
-    'project_api_token' => env('SHIFT_PROJECT_API_TOKEN', env('SHIFT_API_TOKEN')),
+    'token' => env('SHIFT_TOKEN'),
+    'project' => env('SHIFT_PROJECT'),
     'url' => env('SHIFT_URL', 'https://shift.wyxos.com'),
 
     /*

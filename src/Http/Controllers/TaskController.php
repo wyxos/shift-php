@@ -15,17 +15,17 @@ class TaskController extends Controller
      */
     public function index()
     {
-        $apiToken = config('shift.api_token');
+        $apiToken = config('shift.token');
         $baseUrl = config('shift.url');
         try {
             $url = $baseUrl . '/api/tasks';
 
-            $projectApiToken = config('shift.project_api_token');
+            $project = config('shift.project');
 
             $response = Http::withToken($apiToken)
                 ->acceptJson()
                 ->get($url, [
-                    'project_api_token' => $projectApiToken
+                    'project' => $project
                 ]);
 
             if ($response->successful()) {
@@ -46,7 +46,7 @@ class TaskController extends Controller
      */
     public function store(Request $request)
     {
-        $apiToken = config('shift.project_api_token');
+        $apiToken = config('shift.token');
         $baseUrl = config('shift.url');
         try {
             // Check if this is an external submission (has submitter_name)
@@ -92,7 +92,7 @@ class TaskController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $token = config('shift.project_api_token');
+        $token = config('shift.token');
         $baseUrl = config('shift.url');
         try {
             // Prepare the payload with the request data
@@ -124,7 +124,7 @@ class TaskController extends Controller
 
     public function show(int $id)
     {
-        $token = config('shift.project_api_token');
+        $token = config('shift.token');
         $baseUrl = config('shift.url');
         try {
             // Prepare query parameters
