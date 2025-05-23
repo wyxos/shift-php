@@ -11,7 +11,7 @@ return [
     */
 
     'api_token' => env('SHIFT_API_TOKEN'),
-    'project_id' => env('SHIFT_PROJECT_ID'),
+    'project_api_token' => env('SHIFT_PROJECT_API_TOKEN', env('SHIFT_API_TOKEN')),
     'url' => env('SHIFT_URL', 'https://shift.wyxos.com'),
 
     /*
@@ -28,4 +28,3 @@ return [
         'middleware' => ['web']
     ]
 ];
-

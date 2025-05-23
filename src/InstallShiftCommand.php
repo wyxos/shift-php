@@ -15,26 +15,15 @@ class InstallShiftCommand extends Command
     {
         $this->info('Starting SHIFT installation...');
 
-        $apiKey = config('shift.api_token');
+        $projectApiToken = config('shift.project_api_token');
 
-        if (!$apiKey) {
-            // Prompt for API key
-            $apiKey = $this->ask('Enter your SHIFT API key');
+        if (!$projectApiToken) {
+            // Prompt for project API token
+            $projectApiToken = $this->ask('Enter your SHIFT project API token');
 
-            // Save API key immediately
+            // Save project API token immediately
             $this->writeEnv([
-                'SHIFT_API_TOKEN' => $apiKey
-            ]);
-        }
-
-        $projectId = config('shift.project_id');
-
-        if (!$projectId) {
-            $projectId = $this->getProjectId();
-
-            // Save project ID
-            $this->writeEnv([
-                'SHIFT_PROJECT_ID' => $projectId
+                'SHIFT_PROJECT_API_TOKEN' => $projectApiToken
             ]);
         }
 
@@ -53,56 +42,7 @@ class InstallShiftCommand extends Command
         $this->info('Assets published successfully.');
     }
 
-    protected function fetchProjects(string $search): array
-    {
-        try {
-            $token = config('shift.api_token');
-
-            $baseUrl = config('shift.url');
-
-            $url = $baseUrl . '/api/projects';
-
-            $response = Http::withToken($token)
-                ->acceptJson()
-                ->get($url, [
-                    'search' => $search
-                ]);
-
-            $data = $response->json();
-
-            return $data['data'] ?? [];
-        } catch (\Exception $e) {
-            $this->error('Failed to fetch projects: ' . $e->getMessage());
-            return [];
-        }
-    }
-
-    protected function getProjectId(): string
-    {
-        // Ask for project type
-        $projectType = $this->choice(
-            'Is this a new or existing project?',
-            ['new', 'existing'],
-            'new'
-        );
-
-        // Prompt for Project name
-        if ($projectType === 'new') {
-            return $this->ask('Enter ID for your new project');
-        }
-
-        $searchTerm = $this->ask('Search for your project');
-        $projects = $this->fetchProjects($searchTerm);
-
-        if (empty($projects)) {
-            $this->error('No projects found with that name.');
-            return '';
-        }
-
-        $projectChoices = collect($projects)->pluck('name')->toArray();
-        $selectedName = $this->choice('Select your project', $projectChoices);
-        return collect($projects)->firstWhere('name', $selectedName)['id'];
-    }
+    // The fetchProjects and getProjectId methods are no longer needed since we're using project_api_token directly
 
     protected function writeEnv(array $values)
     {

@@ -17,16 +17,14 @@ class ShiftTestCommand extends Command
      */
     public function handle()
     {
-        $projectId = config('shift.project_id');
-        $token = config('shift.api_token');
+        $projectApiToken = config('shift.project_api_token');
         $baseUrl = config('shift.url');
 
-        $response = Http::withToken($token)
+        $response = Http::withToken($projectApiToken)
             ->acceptJson()
             ->post($baseUrl . '/api/tasks', [
                 'name' => 'Test Task',
-                'description' => 'This is a test task created by the installer',
-                'project_id' => $projectId
+                'description' => 'This is a test task created by the installer'
             ]);
 
         if ($response->successful()) {

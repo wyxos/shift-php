@@ -21,7 +21,7 @@ async function fetchTasks() {
     loading.value = true
     error.value = null
     try {
-        const response = await axios.get('/shift/api/tasks')
+        const response = await axios.post('/shift/api/tasks/list')
         tasks.value = response.data.data
     } catch (e: any) {
         error.value = e.response?.data?.error || e.message || 'Unknown error'

@@ -15,19 +15,17 @@ class TaskController extends Controller
      */
     public function index()
     {
-        $token = config('shift.api_token');
+        $apiToken = config('shift.api_token');
         $baseUrl = config('shift.url');
         try {
-            $projectId = config('shift.project_id');
+            $url = $baseUrl . '/api/tasks';
 
-            $url = $baseUrl . '/api/projects/' . $projectId . '/tasks';
+            $projectApiToken = config('shift.project_api_token');
 
-
-//            dd($token, $baseUrl, $projectId);
-            $response = Http::withToken($token)
+            $response = Http::withToken($apiToken)
                 ->acceptJson()
                 ->get($url, [
-                    'user_id' => auth()->id()
+                    'project_api_token' => $projectApiToken
                 ]);
 
             if ($response->successful()) {
@@ -48,7 +46,7 @@ class TaskController extends Controller
      */
     public function store(Request $request)
     {
-        $token = config('shift.api_token');
+        $apiToken = config('shift.project_api_token');
         $baseUrl = config('shift.url');
         try {
             // Check if this is an external submission (has submitter_name)
@@ -56,7 +54,6 @@ class TaskController extends Controller
 
             $payload = [
                 ...$request->all(),
-                'project_id' => config('shift.project_id'),
             ];
 
             // For authenticated users in the SDK, we want to treat them as external submitters
@@ -72,7 +69,7 @@ class TaskController extends Controller
                 ]);
             }
 
-            $response = Http::withToken($token)
+            $response = Http::withToken($apiToken)
                 ->acceptJson()
                 ->post($baseUrl . '/api/tasks', $payload);
 
@@ -95,7 +92,7 @@ class TaskController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $token = config('shift.api_token');
+        $token = config('shift.project_api_token');
         $baseUrl = config('shift.url');
         try {
             // Prepare the payload with the request data
@@ -127,7 +124,7 @@ class TaskController extends Controller
 
     public function show(int $id)
     {
-        $token = config('shift.api_token');
+        $token = config('shift.project_api_token');
         $baseUrl = config('shift.url');
         try {
             // Prepare query parameters
