@@ -59,10 +59,11 @@ class TaskController extends Controller
                 // Include user info as both external submitter and regular user data
                 // This ensures the Shift app recognizes it as an external submission
                 $payload = array_merge($payload, [
-                    'submitter_name' => auth()->user()->name,
-                    'user_id' => auth()->id(),
-                    'user_email' => auth()->user()->email,
-                    'user_name' => auth()->user()->name,
+                    'external_user' => [
+                        'name' => auth()->user()->name,
+                        'email' => auth()->user()->email,
+                        'id' => auth()->user()->id,
+                    ],
                     'project' => config('shift.project'),
                 ]);
             }
@@ -96,15 +97,14 @@ class TaskController extends Controller
             // Prepare the payload with the request data
             $payload = $request->all();
 
-            // Include authenticated user information if available
-            if (auth()->check()) {
-                $payload = array_merge($payload, [
-                    'user_id' => auth()->id(),
-                    'user_email' => auth()->user()->email,
-                    'user_name' => auth()->user()->name,
-                    'submitter_name' => auth()->user()->name, // Include submitter_name to maintain external submission status
-                ]);
-            }
+            $payload = [
+                ...$payload,
+                'external' => [
+                    'name' => auth()->user()->name,
+                    'email' => auth()->user()->email,
+                    'id' => auth()->user()->id,
+                ],
+            ];
 
             $response = Http::withToken($token)
                 ->acceptJson()
@@ -127,13 +127,6 @@ class TaskController extends Controller
         try {
             // Prepare query parameters
             $params = [];
-
-            // Include authenticated user information if available
-            if (auth()->check()) {
-                $params['user_id'] = auth()->id();
-                $params['user_email'] = auth()->user()->email;
-                $params['user_name'] = auth()->user()->name;
-            }
 
             $response = Http::withToken($token)
                 ->acceptJson()
