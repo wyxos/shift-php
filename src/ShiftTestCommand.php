@@ -24,7 +24,7 @@ class ShiftTestCommand extends Command
             ->acceptJson()
             ->post($baseUrl . '/api/tasks', [
                 'project' => config('shift.project'),
-                'name' => 'Test Task',
+                'title' => 'Test Task',
                 'description' => 'This is a test task created by the installer'
             ]);
 
