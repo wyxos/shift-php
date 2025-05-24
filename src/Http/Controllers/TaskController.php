@@ -16,7 +16,14 @@ class TaskController extends Controller
     public function index()
     {
         $apiToken = config('shift.token');
+        $project = config('shift.project');
+
+        if (empty($apiToken) || empty($project)) {
+            return response()->json(['error' => 'SHIFT configuration missing. Please install Shift package and configure SHIFT_TOKEN and SHIFT_PROJECT in .env'], 500);
+        }
+
         $baseUrl = config('shift.url');
+
         try {
             $url = $baseUrl . '/api/tasks';
 
@@ -47,6 +54,11 @@ class TaskController extends Controller
     public function store(Request $request)
     {
         $apiToken = config('shift.token');
+        $project = config('shift.project');
+
+        if (empty($apiToken) || empty($project)) {
+            return response()->json(['error' => 'SHIFT configuration missing. Please install Shift package and configure SHIFT_TOKEN and SHIFT_PROJECT in .env'], 500);
+        }
         $baseUrl = config('shift.url');
         try {
             $payload = [
@@ -82,7 +94,12 @@ class TaskController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $token = config('shift.token');
+        $apiToken = config('shift.token');
+        $project = config('shift.project');
+
+        if (empty($apiToken) || empty($project)) {
+            return response()->json(['error' => 'SHIFT configuration missing. Please install Shift package and configure SHIFT_TOKEN and SHIFT_PROJECT in .env'], 500);
+        }
         $baseUrl = config('shift.url');
         try {
             // Prepare the payload with the request data
@@ -113,7 +130,12 @@ class TaskController extends Controller
 
     public function show(int $id)
     {
-        $token = config('shift.token');
+        $apiToken = config('shift.token');
+        $project = config('shift.project');
+
+        if (empty($apiToken) || empty($project)) {
+            return response()->json(['error' => 'SHIFT configuration missing. Please install Shift package and configure SHIFT_TOKEN and SHIFT_PROJECT in .env'], 500);
+        }
         $baseUrl = config('shift.url');
         try {
             // Prepare query parameters
