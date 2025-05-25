@@ -4,11 +4,13 @@ import fs from 'fs-extra';
 import path from 'path';
 import semver from 'semver';
 import inquirer from 'inquirer';
+import simpleGit from 'simple-git';
 import { execa } from 'execa';
 
 const PACKAGE_DIR = path.resolve('.');
 const COMPOSER_PATH = path.join(PACKAGE_DIR, 'composer.json');
 const UI_PATH = path.join(PACKAGE_DIR, './ui');
+const git = simpleGit();
 
 async function getCurrentVersion() {
     const composer = await fs.readJson(COMPOSER_PATH);
@@ -23,14 +25,6 @@ async function updateVersionInComposer(version) {
     const composer = await fs.readJson(COMPOSER_PATH);
     composer.version = version;
     await fs.writeJson(COMPOSER_PATH, composer, { spaces: 2 });
-}
-
-async function runCommand(command, args = [], opts = {}) {
-    try {
-        await execa(command, args, { stdio: 'inherit', ...opts });
-    } catch (err) {
-        throw new Error(`Command failed: ${command} ${args.join(' ')}\n${err.message}`);
-    }
 }
 
 async function main() {
@@ -49,27 +43,27 @@ async function main() {
 
         console.log(`🚀 Releasing version ${version}`);
 
-        // Update version in composer.json
+        // Step 1: Update version
         await updateVersionInComposer(version);
 
-        // Build frontend assets
+        // Step 2: Build frontend assets
         console.log('📦 Installing and building frontend...');
-        await runCommand('npm install', { cwd: UI_PATH });
-        await runCommand('npm run build', { cwd: UI_PATH });
+        await execa('npm', ['install'], { cwd: UI_PATH, stdio: 'inherit' });
+        await execa('npm', ['run', 'build'], { cwd: UI_PATH, stdio: 'inherit' });
 
-        // Stage changes
+        // Step 3: Git commit, tag, push
         console.log('🔧 Staging files...');
-        await runCommand('git', ['add', PACKAGE_DIR]);
+        await git.add('.');
 
-        // Commit and tag
         console.log('✅ Committing release...');
-        await runCommand('git', ['commit', '-m', `Release v${version}`]);
-        await runCommand('git', ['tag', `v${version}`]);
+        await git.commit(`Release v${version}`);
 
-        // Push everything
-        console.log('📤 Pushing to origin...');
-        await runCommand('git', ['push', 'origin', 'HEAD']);
-        await runCommand('git', ['push', 'origin', `v${version}`]);
+        console.log('🏷️ Tagging...');
+        await git.addTag(`v${version}`);
+
+        console.log('📤 Pushing...');
+        await git.push('origin', 'HEAD');
+        await git.pushTags();
 
         console.log('🎉 Release complete!');
     } catch (err) {
