@@ -165,4 +165,44 @@ class ShiftTaskController extends Controller
             return response()->json(['error' => 'Failed to fetch task: ' . $e->getMessage()], 500);
         }
     }
+
+    /**
+     * Remove the specified task from storage.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function destroy($id)
+    {
+        $token = config('shift.token');
+        $project = config('shift.project');
+
+        if (empty($token) || empty($project)) {
+            return response()->json(['error' => 'SHIFT configuration missing. Please install Shift package and configure SHIFT_TOKEN and SHIFT_PROJECT in .env'], 500);
+        }
+        $baseUrl = config('shift.url');
+
+        try {
+            $response = Http::withToken($token)
+                ->acceptJson()
+                ->delete($baseUrl . '/api/tasks/' . $id, [
+                    'user' => [
+                        'name' => auth()->user()->name,
+                        'email' => auth()->user()->email,
+                        'id' => auth()->user()->id,
+                        'environment' => config('app.env'),
+                        'url' => config('app.url'),
+                    ],
+                    'project' => config('shift.project'),
+                ]);
+
+            if ($response->successful()) {
+                return response()->json(['message' => 'Task deleted successfully']);
+            }
+
+            return response()->json(['error' => $response->json()['message'] ?? 'Failed to delete task'], 422);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Failed to delete task: ' . $e->getMessage()], 500);
+        }
+    }
 }

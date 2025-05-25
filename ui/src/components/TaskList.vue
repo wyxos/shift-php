@@ -16,6 +16,7 @@ const router = useRouter();
 const tasks = ref<Task[]>([]);
 const loading = ref(true);
 const error = ref<string | null>(null);
+const deleteLoading = ref<number | null>(null);
 
 async function fetchTasks() {
     loading.value = true;
@@ -32,6 +33,25 @@ async function fetchTasks() {
 
 function editTask(taskId: number) {
     router.push({ name: 'edit-task', params: { id: taskId.toString() } });
+}
+
+async function deleteTask(taskId: number) {
+    if (!confirm('Are you sure you want to delete this task?')) {
+        return;
+    }
+
+    deleteLoading.value = taskId;
+    error.value = null;
+
+    try {
+        await axios.delete(`/shift/api/tasks/${taskId}`);
+        // Remove the task from the list
+        tasks.value = tasks.value.filter(task => task.id !== taskId);
+    } catch (e: any) {
+        error.value = e.response?.data?.error || e.message || 'Failed to delete task';
+    } finally {
+        deleteLoading.value = null;
+    }
 }
 
 onMounted(fetchTasks);
@@ -73,6 +93,13 @@ onMounted(fetchTasks);
                     class="mt-2 ml-2 rounded border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700 transition hover:bg-amber-100 sm:mt-0"
                 >
                     Edit
+                </button>
+                <button
+                    @click="deleteTask(task.id)"
+                    :disabled="deleteLoading === task.id"
+                    class="mt-2 ml-2 rounded border border-red-200 bg-red-50 px-3 py-1 text-xs font-semibold text-red-700 transition hover:bg-red-100 sm:mt-0"
+                >
+                    {{ deleteLoading === task.id ? 'Deleting...' : 'Delete' }}
                 </button>
             </li>
         </ul>
