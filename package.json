@@ -3,6 +3,7 @@
     "execa": "^9.5.3",
     "fs-extra": "^11.3.0",
     "inquirer": "^12.6.2",
-    "semver": "^7.7.2"
+    "semver": "^7.7.2",
+    "simple-git": "^3.27.0"
   }
 }
