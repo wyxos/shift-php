@@ -23,6 +23,10 @@ class ShiftTestCommand extends Command
         $response = Http::withToken($token)
             ->acceptJson()
             ->post($baseUrl . '/api/tasks', [
+                'metadata' => [
+                    'url' => config('app.url'),
+                    'environment' => config('app.env'),
+                ],
                 'project' => config('shift.project'),
                 'title' => 'Test Task',
                 'description' => 'This is a test task created by the installer'
