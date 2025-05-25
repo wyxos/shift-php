@@ -7,7 +7,13 @@ Laravel SDK to integrate and sync tasks with the SHIFT Dashboard.
 
 ## Overview
 
-The SHIFT SDK allows you to easily integrate your Laravel application with the SHIFT Dashboard for task management. It provides a UI and API for managing tasks, and syncs them with the SHIFT Dashboard.
+The SHIFT SDK is a Laravel package that provides a UI component for submitting tasks/issues from any Laravel application to the core SHIFT system. It allows you to easily integrate your Laravel application with the SHIFT Dashboard for task management.
+
+This package:
+- Is a Laravel package, not a full Laravel app
+- Avoids global routes, views, or assumptions about the host app
+- Sends HTTP requests to SHIFT's public API
+- Provides a Vue.js-based UI form via a Blade component
 
 ## Installation
 
@@ -24,8 +30,8 @@ php artisan install:shift
 ```
 
 This command will:
-1. Prompt you for your SHIFT API key
-2. Ask you to select or create a project
+1. Prompt you for your SHIFT API token
+2. Ask you for your SHIFT project token
 3. Save the configuration to your .env file
 4. Publish the necessary assets
 
@@ -34,8 +40,8 @@ This command will:
 The package can be configured via your `.env` file:
 
 ```
-SHIFT_API_TOKEN=your-api-token
-SHIFT_PROJECT_ID=your-project-id
+SHIFT_TOKEN=your-api-token
+SHIFT_PROJECT=your-project-token
 SHIFT_URL=https://shift.wyxos.com
 ```
 
@@ -49,8 +55,8 @@ This will create a `config/shift.php` file where you can modify the configuratio
 
 ```php
 return [
-    'api_token' => env('SHIFT_API_TOKEN'),
-    'project_id' => env('SHIFT_PROJECT_ID'),
+    'token' => env('SHIFT_TOKEN'),
+    'project' => env('SHIFT_PROJECT'),
     'url' => env('SHIFT_URL', 'https://shift.wyxos.com'),
     'routes' => [
         'prefix' => 'shift',
@@ -63,11 +69,11 @@ return [
 
 ### Dashboard
 
-Once installed, you can access the SHIFT dashboard at `/shift` in your application.
+Once installed, you can access the SHIFT dashboard at `/shift` in your application. The dashboard is protected by the 'web' and 'auth' middleware, so users must be authenticated to access it.
 
 ### API Endpoints
 
-The package provides the following API endpoints:
+The package provides the following API endpoints, all of which require authentication:
 
 - `GET /shift/api/tasks` - List tasks
 - `GET /shift/api/tasks/{id}` - Get a specific task
@@ -94,46 +100,16 @@ $tasks = Http::get('/shift/api/tasks')->json();
 
 ### Task Submissions
 
-The SDK supports task submissions from authenticated users. When a user submits a task through the SDK UI, their name, email, user ID, the source URL, and environment are automatically captured from their authenticated session and stored alongside the task in Shift.
+The SDK automatically includes the authenticated user's information (name, email, user ID) along with environment and URL information when submitting tasks to the SHIFT API.
 
-#### Using the UI
+When a user submits a task through the SDK, the following information is automatically included:
+- User's name
+- User's email
+- User's ID
+- Application environment
+- Application URL
 
-When an authenticated user fills out the task creation form in the SDK UI, their information is automatically captured from their session. The SDK also automatically captures the source URL and environment.
-
-#### Programmatic Submissions
-
-You can create task submissions programmatically:
-
-```php
-use Illuminate\Support\Facades\Http;
-
-// Create a task from an authenticated user
-$response = Http::post('/shift/api/tasks', [
-    'title' => 'Task Title',
-    'description' => 'Task Description',
-    'source_url' => 'https://your-app.example.com', // Optional, defaults to current URL
-    'environment' => 'production', // Optional, defaults to 'production'
-]);
-```
-
-The SDK will automatically use the authenticated user's information (name, email, user ID) when creating the task.
-
-If you need to create a task from an external user who doesn't have a Shift account, you can still do so by including the submitter_name parameter:
-
-```php
-use Illuminate\Support\Facades\Http;
-
-// Create a task from an external submitter
-$response = Http::post('/shift/api/tasks', [
-    'title' => 'Task Title',
-    'description' => 'Task Description',
-    'submitter_name' => 'External User Name', // This indicates it's an external submission
-    'source_url' => 'https://your-app.example.com',
-    'environment' => 'production',
-]);
-```
-
-In the Shift dashboard, tasks submitted by external users will be clearly marked and will display the submitter's name, source URL, and environment.
+This information helps track who submitted the task and from where.
 
 ## Testing
 
@@ -152,6 +128,14 @@ The package provides the following commands:
 - `install:shift` - Install and configure the SHIFT SDK
 - `shift:test` - Test the integration by creating a dummy task
 - `shift:publish` - Publish the SHIFT SDK assets
+
+## Directory Structure
+
+- `src/` – Main package code
+  - `src/Http/Controllers` – Controllers for SDK routes
+- `routes/` – Contains package-specific routes (prefixed)
+- `config/shift.php` – Package config
+- `ui/` – Vue components (compiled via host app)
 
 ## License
 
