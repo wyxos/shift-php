@@ -1,35 +1,3 @@
-### 🧠 Critique – What's Good:
-
-* ✅ Clear intro and purpose
-* ✅ Good installation and config instructions
-* ✅ Useful command references
-* ✅ Highlights both UI and programmatic usage
-
----
-
-### ⚠️ What Could Be Improved:
-
-1. **Redundant or irrelevant lines:**
-
-    * "This package: Is a Laravel package..." — obvious from context.
-    * "Avoids global routes/views..." — devs care more about what routes exist, not what doesn't.
-    * "Automatically includes user info..." — should be briefly mentioned, not over-explained.
-
-2. **Too much focus on internals:**
-
-    * Directory structure is unnecessary for most users unless they're contributors.
-    * Implementation details about middleware and route prefixes should be part of config docs, not the main README.
-
-3. **API usage with `Http::post('/shift/api/tasks')`** is misleading:
-
-    * That’s calling your **own app**, not the remote SHIFT API.
-    * It could confuse devs into thinking they're hitting the real SHIFT dashboard.
-
----
-
-### ✅ Suggested Cleaned-Up README
-
-````markdown
 # SHIFT SDK for Laravel
 
 [![Latest Version on Packagist](https://img.shields.io/packagist/v/wyxos/shift-sdk.svg?style=flat-square)](https://packagist.org/packages/wyxos/shift-sdk)
