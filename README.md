@@ -1,16 +1,16 @@
-# SHIFT SDK for Laravel
+# SHIFT php for Laravel
 
-[![Latest Version on Packagist](https://img.shields.io/packagist/v/wyxos/shift-sdk.svg?style=flat-square)](https://packagist.org/packages/wyxos/shift-sdk)
+[![Latest Version on Packagist](https://img.shields.io/packagist/v/wyxos/shift-php.svg?style=flat-square)](https://packagist.org/packages/wyxos/shift-php)
 [![MIT Licensed](https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-square)](LICENSE.md)
 
-A Laravel SDK for submitting tasks to the SHIFT Dashboard from within your application. Provides a clean Vue-based UI component and simple API endpoints to send issue reports or feature requests directly to your SHIFT project.
+A Laravel package for submitting tasks to the SHIFT Dashboard from within your application. Provides a clean Vue-based UI component and simple API endpoints to send issue reports or feature requests directly to your SHIFT project.
 
 ---
 
 ## 🚀 Installation
 
 ```bash
-composer require wyxos/shift-sdk
+composer require wyxos/shift-php
 php artisan install:shift
 ````
 
@@ -84,7 +84,7 @@ $response = Http::post('/shift/api/tasks', [
 ]);
 ```
 
-When tasks are submitted, the SDK automatically includes:
+When tasks are submitted, the package automatically includes:
 
 * Authenticated user's name, email, and ID
 * Current environment and application URL
@@ -107,7 +107,7 @@ This creates a dummy task to verify setup.
 
 * `install:shift` – Interactive installation
 * `shift:test` – Submit a test task
-* `shift:publish` – Manually publish SDK assets
+* `shift:publish` – Manually publish package assets
 
 ---
 

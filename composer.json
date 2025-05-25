@@ -1,5 +1,5 @@
 {
-  "name": "wyxos/shift-sdk",
+  "name": "wyxos/shift-php",
   "description": "Laravel SDK to integrate and sync tasks with the SHIFT Dashboard.",
   "license": "MIT",
   "autoload": {
@@ -22,5 +22,5 @@
       ]
     }
   },
-  "version": "1.0.26"
+  "version": "1.0.29"
 }

@@ -1,4 +1,7 @@
 {
+    "scripts": {
+        "release": "node release.mjs"
+    },
   "dependencies": {
     "execa": "^9.5.3",
     "fs-extra": "^11.3.0",
