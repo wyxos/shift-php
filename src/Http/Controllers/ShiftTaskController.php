@@ -110,12 +110,11 @@ class ShiftTaskController extends Controller
             return response()->json(['error' => 'SHIFT configuration missing. Please install Shift package and configure SHIFT_TOKEN and SHIFT_PROJECT in .env'], 500);
         }
         $baseUrl = config('shift.url');
+
         try {
             // Prepare the payload with the request data
-            $payload = $request->all();
-
             $payload = [
-                ...$payload,
+                ...$request->all(),
                 'user' => [
                     'name' => auth()->user()->name,
                     'email' => auth()->user()->email,
