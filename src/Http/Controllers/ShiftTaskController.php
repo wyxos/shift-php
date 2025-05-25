@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Http;
 
-class TaskController extends Controller
+class ShiftTaskController extends Controller
 {
     /**
      * Display a listing of the tasks.
@@ -32,7 +32,14 @@ class TaskController extends Controller
             $response = Http::withToken($apiToken)
                 ->acceptJson()
                 ->get($url, [
-                    'project' => $project
+                    'project' => $project,
+                    'user' => [
+                        'name' => auth()->user()->name,
+                        'email' => auth()->user()->email,
+                        'id' => auth()->user()->id,
+                        'environment' => config('app.env'),
+                        'url' => config('app.url'),
+                    ],
                 ]);
 
             if ($response->successful()) {
@@ -63,10 +70,12 @@ class TaskController extends Controller
         try {
             $payload = [
                 ...$request->all(),
-                'external_user' => [
+                'user' => [
                     'name' => auth()->user()->name,
                     'email' => auth()->user()->email,
                     'id' => auth()->user()->id,
+                    'environment' => config('app.env'),
+                    'url' => config('app.url'),
                 ],
                 'project' => config('shift.project'),
             ];
@@ -94,10 +103,10 @@ class TaskController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $apiToken = config('shift.token');
+        $token = config('shift.token');
         $project = config('shift.project');
 
-        if (empty($apiToken) || empty($project)) {
+        if (empty($token) || empty($project)) {
             return response()->json(['error' => 'SHIFT configuration missing. Please install Shift package and configure SHIFT_TOKEN and SHIFT_PROJECT in .env'], 500);
         }
         $baseUrl = config('shift.url');
@@ -107,11 +116,14 @@ class TaskController extends Controller
 
             $payload = [
                 ...$payload,
-                'external' => [
+                'user' => [
                     'name' => auth()->user()->name,
                     'email' => auth()->user()->email,
                     'id' => auth()->user()->id,
+                    'environment' => config('app.env'),
+                    'url' => config('app.url'),
                 ],
+                'project' => config('shift.project'),
             ];
 
             $response = Http::withToken($token)
@@ -130,10 +142,10 @@ class TaskController extends Controller
 
     public function show(int $id)
     {
-        $apiToken = config('shift.token');
+        $token = config('shift.token');
         $project = config('shift.project');
 
-        if (empty($apiToken) || empty($project)) {
+        if (empty($token) || empty($project)) {
             return response()->json(['error' => 'SHIFT configuration missing. Please install Shift package and configure SHIFT_TOKEN and SHIFT_PROJECT in .env'], 500);
         }
         $baseUrl = config('shift.url');
