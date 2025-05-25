@@ -30,10 +30,6 @@ async function fetchTasks() {
     }
 }
 
-function viewTask(taskId: number) {
-    router.push({ name: 'task-details', params: { id: taskId.toString() } });
-}
-
 function editTask(taskId: number) {
     router.push({ name: 'edit-task', params: { id: taskId.toString() } });
 }
