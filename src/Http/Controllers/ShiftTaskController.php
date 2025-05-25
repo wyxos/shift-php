@@ -40,6 +40,10 @@ class ShiftTaskController extends Controller
                         'environment' => config('app.env'),
                         'url' => config('app.url'),
                     ],
+                    'metadata' => [
+                        'url' => config('app.url'),
+                        'environment' => config('app.env'),
+                    ],
                 ]);
 
             if ($response->successful()) {
@@ -70,6 +74,7 @@ class ShiftTaskController extends Controller
         try {
             $payload = [
                 ...$request->all(),
+                'project' => $project,
                 'user' => [
                     'name' => auth()->user()->name,
                     'email' => auth()->user()->email,
@@ -77,7 +82,10 @@ class ShiftTaskController extends Controller
                     'environment' => config('app.env'),
                     'url' => config('app.url'),
                 ],
-                'project' => config('shift.project'),
+                'metadata' => [
+                    'url' => config('app.url'),
+                    'environment' => config('app.env'),
+                ],
             ];
 
             $response = Http::withToken($apiToken)
@@ -115,6 +123,7 @@ class ShiftTaskController extends Controller
             // Prepare the payload with the request data
             $payload = [
                 ...$request->all(),
+                'project' => $project,
                 'user' => [
                     'name' => auth()->user()->name,
                     'email' => auth()->user()->email,
@@ -122,7 +131,10 @@ class ShiftTaskController extends Controller
                     'environment' => config('app.env'),
                     'url' => config('app.url'),
                 ],
-                'project' => config('shift.project'),
+                'metadata' => [
+                    'url' => config('app.url'),
+                    'environment' => config('app.env'),
+                ],
             ];
 
             $response = Http::withToken($token)
@@ -150,7 +162,20 @@ class ShiftTaskController extends Controller
         $baseUrl = config('shift.url');
         try {
             // Prepare query parameters
-            $params = [];
+            $params = [
+                'project' => $project,
+                'user' => [
+                    'name' => auth()->user()->name,
+                    'email' => auth()->user()->email,
+                    'id' => auth()->user()->id,
+                    'environment' => config('app.env'),
+                    'url' => config('app.url'),
+                ],
+                'metadata' => [
+                    'url' => config('app.url'),
+                    'environment' => config('app.env'),
+                ],
+            ];
 
             $response = Http::withToken($token)
                 ->acceptJson()
@@ -186,6 +211,7 @@ class ShiftTaskController extends Controller
             $response = Http::withToken($token)
                 ->acceptJson()
                 ->delete($baseUrl . '/api/tasks/' . $id, [
+                    'project' => $project,
                     'user' => [
                         'name' => auth()->user()->name,
                         'email' => auth()->user()->email,
@@ -193,7 +219,10 @@ class ShiftTaskController extends Controller
                         'environment' => config('app.env'),
                         'url' => config('app.url'),
                     ],
-                    'project' => config('shift.project'),
+                    'metadata' => [
+                        'url' => config('app.url'),
+                        'environment' => config('app.env'),
+                    ],
                 ]);
 
             if ($response->successful()) {

@@ -14,6 +14,7 @@ const fetchError = ref<string|null>(null)
 
 const editTaskData = ref({
     title: '',
+    description: '',
     status: 'pending',
     priority: 'medium',
 })
@@ -32,6 +33,7 @@ async function fetchTask() {
         const task = response.data
         editTaskData.value = {
             title: task.title,
+            description: task.description || '',
             status: task.status,
             priority: task.priority,
         }
@@ -100,6 +102,14 @@ onMounted(fetchTask)
             <div>
                 <label class="block text-sm font-medium mb-1">Title</label>
                 <input v-model="editTaskData.title" required type="text" class="w-full border rounded px-2 py-1" />
+            </div>
+            <div>
+                <label class="block text-sm font-medium mb-1">Description</label>
+                <textarea
+                    v-model="editTaskData.description"
+                    rows="4"
+                    class="w-full border rounded px-2 py-1"
+                ></textarea>
             </div>
             <div class="flex gap-4">
                 <div>
