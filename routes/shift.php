@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Route;
 use Wyxos\Shift\Http\Controllers\ShiftController;
 use Wyxos\Shift\Http\Controllers\ShiftTaskController;
 
-Route::middleware(['web', 'auth'])->group(function () {
+Route::middleware(config('shift.routes.middleware'))->group(function () {
 
     Route::get('/shift/api/tasks', [ShiftTaskController::class, 'index'])->name('tasks.index');
     Route::get('/shift/api/tasks/{id}', [ShiftTaskController::class, 'show'])->name('tasks.show');
