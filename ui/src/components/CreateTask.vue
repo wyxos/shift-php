@@ -13,7 +13,6 @@ const attachments = ref<File[]>([]);
 const newTask = ref({
     title: '',
     description: '',
-    status: 'pending',
     priority: 'medium',
 });
 
@@ -41,7 +40,6 @@ async function createTask() {
         // Add task data
         formData.append('title', newTask.value.title);
         formData.append('description', newTask.value.description);
-        formData.append('status', newTask.value.status);
         formData.append('priority', newTask.value.priority);
         formData.append('source_url', source_url);
         formData.append('environment', environment);
@@ -92,22 +90,13 @@ function cancel() {
                 <label class="mb-1 block text-sm font-medium">Description</label>
                 <textarea v-model="newTask.description" type="text" class="w-full rounded border px-2 py-1" rows="3"></textarea>
             </div>
-            <div class="flex gap-4">
-                <div>
-                    <label class="mb-1 block text-sm font-medium">Status</label>
-                    <select v-model="newTask.status" class="rounded border px-2 py-1">
-                        <option value="pending">Pending</option>
-                        <option value="completed">Completed</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="mb-1 block text-sm font-medium">Priority</label>
-                    <select v-model="newTask.priority" class="rounded border px-2 py-1">
-                        <option value="low">Low</option>
-                        <option value="medium">Medium</option>
-                        <option value="high">High</option>
-                    </select>
-                </div>
+            <div>
+                <label class="mb-1 block text-sm font-medium">Priority</label>
+                <select v-model="newTask.priority" class="rounded border px-2 py-1">
+                    <option value="low">Low</option>
+                    <option value="medium">Medium</option>
+                    <option value="high">High</option>
+                </select>
             </div>
             <div>
                 <label class="mb-1 block text-sm font-medium">Attachments</label>

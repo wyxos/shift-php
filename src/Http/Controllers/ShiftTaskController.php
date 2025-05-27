@@ -88,7 +88,7 @@ class ShiftTaskController extends Controller
                     ],
                     [
                         'name' => 'status',
-                        'contents' => $request->input('status') ?? 'pending'
+                        'contents' => 'pending'
                     ],
                     [
                         'name' => 'priority',
@@ -147,7 +147,8 @@ class ShiftTaskController extends Controller
             } else {
                 // Regular JSON request without files
                 $payload = [
-                    ...$request->all(),
+                    ...$request->except('status'),
+                    'status' => 'pending',
                     'project' => $project,
                     'user' => [
                         'name' => auth()->user()->name,
