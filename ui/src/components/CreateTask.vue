@@ -8,6 +8,7 @@ axios.defaults.withCredentials = true;
 const router = useRouter();
 const createError = ref<string | null>(null);
 const loading = ref(false);
+const attachments = ref<File[]>([]);
 
 const newTask = ref({
     title: '',
@@ -15,6 +16,13 @@ const newTask = ref({
     status: 'pending',
     priority: 'medium',
 });
+
+function handleFileChange(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (input.files) {
+        attachments.value = Array.from(input.files);
+    }
+}
 
 async function createTask() {
     createError.value = null;
@@ -27,11 +35,27 @@ async function createTask() {
         // Get the environment from the config or default to 'production'
         const environment = import.meta.env.VITE_APP_ENV || 'production';
 
+        // Create FormData to handle file uploads
+        const formData = new FormData();
+
+        // Add task data
+        formData.append('title', newTask.value.title);
+        formData.append('description', newTask.value.description);
+        formData.append('status', newTask.value.status);
+        formData.append('priority', newTask.value.priority);
+        formData.append('source_url', source_url);
+        formData.append('environment', environment);
+
+        // Add attachments
+        attachments.value.forEach((file, index) => {
+            formData.append(`attachments[${index}]`, file);
+        });
+
         // Create the task using authenticated user information
-        await axios.post('/shift/api/tasks', {
-            ...newTask.value,
-            source_url,
-            environment,
+        await axios.post('/shift/api/tasks', formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data'
+            }
         });
 
         router.push({ name: 'task-list' });
@@ -83,6 +107,23 @@ function cancel() {
                         <option value="medium">Medium</option>
                         <option value="high">High</option>
                     </select>
+                </div>
+            </div>
+            <div>
+                <label class="mb-1 block text-sm font-medium">Attachments</label>
+                <input
+                    type="file"
+                    @change="handleFileChange"
+                    multiple
+                    class="w-full rounded border px-2 py-1"
+                />
+                <div v-if="attachments.length > 0" class="mt-2">
+                    <p class="text-sm text-gray-600">Selected files:</p>
+                    <ul class="text-sm text-gray-600 list-disc list-inside">
+                        <li v-for="(file, index) in attachments" :key="index">
+                            {{ file.name }} ({{ (file.size / 1024).toFixed(2) }} KB)
+                        </li>
+                    </ul>
                 </div>
             </div>
             <div v-if="createError" class="text-sm text-red-600">{{ createError }}</div>
