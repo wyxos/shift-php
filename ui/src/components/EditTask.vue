@@ -160,6 +160,7 @@ onMounted(fetchTask)
                     <select v-model="editTaskData.status" class="border rounded px-2 py-1">
                         <option value="pending">Pending</option>
                         <option value="completed">Completed</option>
+                        <option value="closed">Closed</option>
                     </select>
                 </div>
                 <div>
