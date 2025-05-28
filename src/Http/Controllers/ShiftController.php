@@ -22,7 +22,25 @@ class ShiftController extends Controller
                 $response = Http::get($this->getViteDevServerUrl());
 
                 if ($response->successful()) {
-                    return response($response->body(), 200)
+                    $html = $response->body();
+
+
+                    $viteUrl = rtrim($this->getViteDevServerUrl(), '/');
+
+                    $replacements = [
+                        '"/@vite/client"' => "\"{$viteUrl}/@vite/client\"",
+                        '"/src/'           => "\"{$viteUrl}/src/",
+                        "'/src/"           => "'{$viteUrl}/src/",
+                        "'/@vite/client'"  => "'{$viteUrl}/@vite/client'",
+                    ];
+
+                    foreach ($replacements as $search => $replace) {
+                        $html = str_replace($search, $replace, $html);
+                    }
+
+                    $html = $this->injectLoginRoute($html);
+
+                    return response($html, 200)
                         ->header('Content-Type', 'text/html');
                 }
             } catch (\Exception $e) {
@@ -31,7 +49,10 @@ class ShiftController extends Controller
         }
 
         // In production or if Vite dev server is not running, serve the built files
-        return file_get_contents(public_path('/shift/index.html'));
+        $html = file_get_contents(public_path('/shift/index.html'));
+        $html = $this->injectLoginRoute($html);
+
+        return $html;
     }
 
     /**
@@ -57,8 +78,28 @@ class ShiftController extends Controller
     private function getViteDevServerUrl()
     {
         $host = config('app.domain', 'shift-sdk-package.test');
-        $port = 5173; // Default Vite dev server port
+        $port = 5174; // Default Vite dev server port
 
-        return "https://{$host}:{$port}/shift/";
+        return "https://{$host}:{$port}/";
+    }
+
+    /**
+     * Inject the login route URL into the HTML.
+     *
+     * @param string $html
+     * @return string
+     */
+    private function injectLoginRoute(string $html): string
+    {
+        $loginRoute = route('login');
+
+        $script = <<<SCRIPT
+<script>
+    window.shiftConfig = window.shiftConfig || {};
+    window.shiftConfig.loginRoute = '{$loginRoute}';
+</script>
+SCRIPT;
+
+        return str_replace('</head>', $script . '</head>', $html);
     }
 }
