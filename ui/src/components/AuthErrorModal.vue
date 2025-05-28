@@ -24,8 +24,10 @@ function closeModal() {
 
 // Function to redirect to the host app
 function redirectToHostApp() {
-  // Use the provided redirectUrl or default to the current origin
-  const url = props.redirectUrl || window.location.origin;
+  // Use the provided redirectUrl, or the configured login route, or default to the current origin
+  const url = props.redirectUrl ||
+    (window.shiftConfig && window.shiftConfig.loginRoute) ||
+    window.location.origin;
   window.location.href = url;
 }
 
