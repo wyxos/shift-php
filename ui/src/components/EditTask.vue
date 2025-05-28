@@ -1,9 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import axios from 'axios'
-
-axios.defaults.withCredentials = true
+import axios from '../axios-config'
 
 const router = useRouter()
 const route = useRoute()
