@@ -5,12 +5,12 @@ import fs from 'fs'
 import tailwindcss from '@tailwindcss/vite'
 
 // https://vite.dev/config/
-export default defineConfig({
+export default defineConfig(({command}) => ({
     plugins: [
         vue(),
         tailwindcss()
     ],
-    base: '/shift/', // Important: ensures built asset URLs start with /shift/
+    base: command === 'serve' ? '/' : '/shift/',
     build: {
         outDir: path.resolve(__dirname, '../public/shift'), // Outputs to ../public/shift
         assetsDir: 'assets', // This makes assets output to ../public/shift/assets
@@ -37,4 +37,4 @@ export default defineConfig({
             }
         }
     }
-});
+}));
