@@ -18,8 +18,7 @@ function closeModal() {
 
 // Function to redirect to the host app
 function redirectToHostApp() {
-    // Use the provided redirectUrl, or the configured login route, or default to the current origin
-    window.location.href = window.shiftConfig.loginRoute;
+    window.location.href = window.shiftConfig?.loginRoute ?? '/login';
 }
 
 // Add event listener when component is mounted
