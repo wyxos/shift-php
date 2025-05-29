@@ -92,11 +92,17 @@ class ShiftController extends Controller
     private function injectLoginRoute(string $html): string
     {
         $loginRoute = route('login');
+        $logoutRoute = route('logout');
+        $baseUrl = config('app.url');
+        $appName = config('app.name');
 
         $script = <<<SCRIPT
 <script>
     window.shiftConfig = window.shiftConfig || {};
     window.shiftConfig.loginRoute = '{$loginRoute}';
+    window.shiftConfig.logoutRoute = '{$logoutRoute}';
+    window.shiftConfig.baseUrl = '{$baseUrl}';
+    window.shiftConfig.appName = '{$appName}';
 </script>
 SCRIPT;
 
