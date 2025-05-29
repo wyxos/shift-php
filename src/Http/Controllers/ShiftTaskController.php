@@ -72,101 +72,27 @@ class ShiftTaskController extends Controller
         }
         $baseUrl = config('shift.url');
         try {
-            // Check if we have file uploads
-            $hasAttachments = $request->hasFile('attachments');
+            // Regular JSON request with temp_identifier for attachments
+            $payload = [
+                ...$request->except('status'),
+                'status' => 'pending',
+                'project' => $project,
+                'user' => [
+                    'name' => auth()->user()->name,
+                    'email' => auth()->user()->email,
+                    'id' => auth()->user()->id,
+                    'environment' => config('app.env'),
+                    'url' => config('app.url'),
+                ],
+                'metadata' => [
+                    'url' => config('app.url'),
+                    'environment' => config('app.env'),
+                ],
+            ];
 
-            if ($hasAttachments) {
-                // Create a multipart request with files
-                $multipartData = [
-                    [
-                        'name' => 'title',
-                        'contents' => $request->input('title')
-                    ],
-                    [
-                        'name' => 'description',
-                        'contents' => $request->input('description') ?? ''
-                    ],
-                    [
-                        'name' => 'status',
-                        'contents' => 'pending'
-                    ],
-                    [
-                        'name' => 'priority',
-                        'contents' => $request->input('priority') ?? 'medium'
-                    ],
-                    [
-                        'name' => 'project',
-                        'contents' => $project
-                    ],
-                    [
-                        'name' => 'user[name]',
-                        'contents' => auth()->user()->name
-                    ],
-                    [
-                        'name' => 'user[email]',
-                        'contents' => auth()->user()->email
-                    ],
-                    [
-                        'name' => 'user[id]',
-                        'contents' => auth()->user()->id
-                    ],
-                    [
-                        'name' => 'user[environment]',
-                        'contents' => config('app.env')
-                    ],
-                    [
-                        'name' => 'user[url]',
-                        'contents' => config('app.url')
-                    ],
-                    [
-                        'name' => 'metadata[url]',
-                        'contents' => config('app.url')
-                    ],
-                    [
-                        'name' => 'metadata[environment]',
-                        'contents' => config('app.env')
-                    ],
-                ];
-
-                // Add attachments to multipart data
-                if ($request->hasFile('attachments')) {
-                    $files = $request->file('attachments');
-                    foreach ($files as $index => $file) {
-                        $multipartData[] = [
-                            'name' => "attachments[$index]",
-                            'contents' => fopen($file->getPathname(), 'r'),
-                            'filename' => $file->getClientOriginalName()
-                        ];
-                    }
-                }
-
-                $response = Http::withToken($apiToken)
-                    ->acceptJson()
-                    ->asMultipart()
-                    ->post($baseUrl . '/api/tasks', $multipartData);
-            } else {
-                // Regular JSON request without files
-                $payload = [
-                    ...$request->except('status'),
-                    'status' => 'pending',
-                    'project' => $project,
-                    'user' => [
-                        'name' => auth()->user()->name,
-                        'email' => auth()->user()->email,
-                        'id' => auth()->user()->id,
-                        'environment' => config('app.env'),
-                        'url' => config('app.url'),
-                    ],
-                    'metadata' => [
-                        'url' => config('app.url'),
-                        'environment' => config('app.env'),
-                    ],
-                ];
-
-                $response = Http::withToken($apiToken)
-                    ->acceptJson()
-                    ->post($baseUrl . '/api/tasks', $payload);
-            }
+            $response = Http::withToken($apiToken)
+                ->acceptJson()
+                ->post($baseUrl . '/api/tasks', $payload);
 
             if ($response->successful()) {
                 return response()->json($response->json());
@@ -196,112 +122,26 @@ class ShiftTaskController extends Controller
         $baseUrl = config('shift.url');
 
         try {
-            // Check if we have file uploads or deleted attachments
-            $hasAttachments = $request->hasFile('attachments');
-            $hasDeletedAttachments = $request->has('deleted_attachment_ids') && is_array($request->input('deleted_attachment_ids'));
+            // Regular JSON request with temp_identifier for attachments
+            $payload = [
+                ...$request->all(),
+                'project' => $project,
+                'user' => [
+                    'name' => auth()->user()->name,
+                    'email' => auth()->user()->email,
+                    'id' => auth()->user()->id,
+                    'environment' => config('app.env'),
+                    'url' => config('app.url'),
+                ],
+                'metadata' => [
+                    'url' => config('app.url'),
+                    'environment' => config('app.env'),
+                ],
+            ];
 
-            if ($hasAttachments || $hasDeletedAttachments) {
-                // Create a multipart request with files
-                $multipartData = [
-                    [
-                        'name' => 'title',
-                        'contents' => $request->input('title')
-                    ],
-                    [
-                        'name' => 'description',
-                        'contents' => $request->input('description') ?? ''
-                    ],
-                    [
-                        'name' => 'status',
-                        'contents' => $request->input('status') ?? 'pending'
-                    ],
-                    [
-                        'name' => 'priority',
-                        'contents' => $request->input('priority') ?? 'medium'
-                    ],
-                    [
-                        'name' => 'project',
-                        'contents' => $project
-                    ],
-                    [
-                        'name' => 'user[name]',
-                        'contents' => auth()->user()->name
-                    ],
-                    [
-                        'name' => 'user[email]',
-                        'contents' => auth()->user()->email
-                    ],
-                    [
-                        'name' => 'user[id]',
-                        'contents' => auth()->user()->id
-                    ],
-                    [
-                        'name' => 'user[environment]',
-                        'contents' => config('app.env')
-                    ],
-                    [
-                        'name' => 'user[url]',
-                        'contents' => config('app.url')
-                    ],
-                    [
-                        'name' => 'metadata[url]',
-                        'contents' => config('app.url')
-                    ],
-                    [
-                        'name' => 'metadata[environment]',
-                        'contents' => config('app.env')
-                    ],
-                ];
-
-                // Add deleted attachment IDs to multipart data
-                if ($hasDeletedAttachments) {
-                    $deletedIds = $request->input('deleted_attachment_ids');
-                    foreach ($deletedIds as $index => $id) {
-                        $multipartData[] = [
-                            'name' => "deleted_attachment_ids[$index]",
-                            'contents' => $id
-                        ];
-                    }
-                }
-
-                // Add attachments to multipart data
-                if ($hasAttachments) {
-                    $files = $request->file('attachments');
-                    foreach ($files as $index => $file) {
-                        $multipartData[] = [
-                            'name' => "attachments[$index]",
-                            'contents' => fopen($file->getPathname(), 'r'),
-                            'filename' => $file->getClientOriginalName()
-                        ];
-                    }
-                }
-
-                $response = Http::withToken($token)
-                    ->acceptJson()
-                    ->asMultipart()
-                    ->put($baseUrl . '/api/tasks/' . $id, $multipartData);
-            } else {
-                // Regular JSON request without files
-                $payload = [
-                    ...$request->all(),
-                    'project' => $project,
-                    'user' => [
-                        'name' => auth()->user()->name,
-                        'email' => auth()->user()->email,
-                        'id' => auth()->user()->id,
-                        'environment' => config('app.env'),
-                        'url' => config('app.url'),
-                    ],
-                    'metadata' => [
-                        'url' => config('app.url'),
-                        'environment' => config('app.env'),
-                    ],
-                ];
-
-                $response = Http::withToken($token)
-                    ->acceptJson()
-                    ->put($baseUrl . '/api/tasks/' . $id, $payload);
-            }
+            $response = Http::withToken($token)
+                ->acceptJson()
+                ->put($baseUrl . '/api/tasks/' . $id, $payload);
 
             if ($response->successful()) {
                 return response()->json(['message' => 'Task updated successfully']);

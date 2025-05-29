@@ -93,6 +93,95 @@ class ShiftAttachmentController extends Controller
     }
 
     /**
+     * Upload multiple attachments at once.
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function uploadMultiple(Request $request)
+    {
+        $apiToken = config('shift.token');
+        $project = config('shift.project');
+
+        if (empty($apiToken) || empty($project)) {
+            return response()->json(['error' => 'SHIFT configuration missing. Please install Shift package and configure SHIFT_TOKEN and SHIFT_PROJECT in .env'], 500);
+        }
+
+        $baseUrl = config('shift.url');
+
+        try {
+            // Validate the request
+            $request->validate([
+                'attachments' => 'required|array',
+                'attachments.*' => 'file',
+                'temp_identifier' => 'required|string',
+            ]);
+
+            // Create a multipart request with all files
+            $multipartData = [
+                [
+                    'name' => 'temp_identifier',
+                    'contents' => $request->input('temp_identifier')
+                ],
+                [
+                    'name' => 'project',
+                    'contents' => $project
+                ],
+                [
+                    'name' => 'user[name]',
+                    'contents' => auth()->user()->name
+                ],
+                [
+                    'name' => 'user[email]',
+                    'contents' => auth()->user()->email
+                ],
+                [
+                    'name' => 'user[id]',
+                    'contents' => auth()->user()->id
+                ],
+                [
+                    'name' => 'user[environment]',
+                    'contents' => config('app.env')
+                ],
+                [
+                    'name' => 'user[url]',
+                    'contents' => config('app.url')
+                ],
+                [
+                    'name' => 'metadata[url]',
+                    'contents' => config('app.url')
+                ],
+                [
+                    'name' => 'metadata[environment]',
+                    'contents' => config('app.env')
+                ],
+            ];
+
+            // Add all files to the multipart data
+            foreach ($request->file('attachments') as $index => $file) {
+                $multipartData[] = [
+                    'name' => "attachments[$index]",
+                    'contents' => fopen($file->getPathname(), 'r'),
+                    'filename' => $file->getClientOriginalName()
+                ];
+            }
+
+            $response = Http::withToken($apiToken)
+                ->acceptJson()
+                ->asMultipart()
+                ->post($baseUrl . '/api/attachments/upload-multiple', $multipartData);
+
+            if ($response->successful()) {
+                return response()->json($response->json());
+            }
+
+            return response()->json(['error' => $response->json()['message'] ?? 'Failed to upload attachments'], 422);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Failed to upload attachments: ' . $e->getMessage()], 500);
+        }
+    }
+
+    /**
      * Remove a temporary attachment.
      *
      * @param Request $request
