@@ -75,7 +75,7 @@ class ShiftTaskThreadController extends Controller
             // Create the payload
             $payload = [
                 'content' => $request->input('content'),
-                'type' => $request->input('type', 'external'), // Default to external for SDK
+                'type' => 'external', // Always use external for SDK
                 'project' => $project,
                 'user' => [
                     'name' => auth()->user()->name,
