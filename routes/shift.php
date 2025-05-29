@@ -5,6 +5,9 @@ use Wyxos\Shift\Http\Controllers\ShiftController;
 use Wyxos\Shift\Http\Controllers\ShiftTaskController;
 use Wyxos\Shift\Http\Controllers\ShiftTaskThreadController;
 use Wyxos\Shift\Http\Controllers\ShiftAttachmentController;
+use Wyxos\Shift\Http\Controllers\ShiftNotificationController;
+
+Route::post('/shift/api/notifications', [ShiftNotificationController::class, 'store']);
 
 Route::middleware(config('shift.routes.middleware'))->group(function () {
     // Task routes
