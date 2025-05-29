@@ -1,9 +1,10 @@
 /// <reference types="vite/client" />
 
-interface ShiftConfig {
-  loginRoute?: string;
-}
-
 interface Window {
-  shiftConfig?: ShiftConfig;
+    shiftConfig: {
+        loginRoute: string;
+        logoutRoute: string;
+        baseUrl: string;
+        appName: string;
+    };
 }
