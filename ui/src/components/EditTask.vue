@@ -60,7 +60,7 @@ async function fetchTask() {
         }
 
         // Load task threads
-        await loadTaskThreads(taskId)
+        await loadTaskThreads(Array.isArray(taskId) ? taskId[0] : taskId)
     } catch (e: any) {
         fetchError.value = e.response?.data?.error || e.message || 'Unknown error'
     } finally {
