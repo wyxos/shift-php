@@ -11,6 +11,14 @@ class ShiftNotificationController extends Controller
 {
     public function store()
     {
+        if(!app()->isProduction()){
+            // return response to inform that notification should be managed by main SHIFT app.
+            return response()->json([
+                'handled_by' => 'main_app',
+                'message' => 'Notification skipped in SDK, main SHIFT app should handle this.',
+            ], 200);
+        }
+
         $request = request();
 
         $user = User::find($request->input('payload.user_id'));
@@ -18,7 +26,7 @@ class ShiftNotificationController extends Controller
         $user->notify(new TaskThreadUpdated($request->input('payload')));
 
         return response()->json([
-            'message' => $user,
+            'message' => 'Notification processed successfully',
         ]);
 
         $request->validate([
