@@ -38,6 +38,13 @@ class ShiftTaskThreadController extends Controller
                     'X-App-Url' => config('app.url'),
                 ])
                 ->get($url, [
+                    'user' => [
+                        'name' => auth()->user()->name,
+                        'email' => auth()->user()->email,
+                        'id' => auth()->user()->id,
+                        'environment' => config('app.env'),
+                        'url' => config('app.url'),
+                    ],
                     'project' => $project
                 ]);
 
