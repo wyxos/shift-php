@@ -10,9 +10,9 @@ export default defineConfig(({command}) => ({
         vue(),
         tailwindcss()
     ],
-    base: command === 'serve' ? '/' : '/shift/',
+    base: command === 'serve' ? '/' : '/shift-assets/',
     build: {
-        outDir: path.resolve(__dirname, '../public/shift'), // Outputs to ../public/shift
+        outDir: path.resolve(__dirname, '../public/shift-assets'), // Outputs to ../public/shift
         assetsDir: 'assets', // This makes assets output to ../public/shift/assets
         emptyOutDir: true, // Cleans output directory before build
     },
