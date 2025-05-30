@@ -8,7 +8,6 @@ class ShiftServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        // Register package services here (config, bindings, etc.)
         $this->mergeConfigFrom(
             __DIR__ . '/../config/shift.php', 'shift'
         );
@@ -16,13 +15,21 @@ class ShiftServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-//        $this->loadViewsFrom(__DIR__.'/../views/', 'shift');
-
-        // Register routes, publish files, commands
         $this->loadRoutesFrom(__DIR__.'/../routes/shift.php');
 
+        // Publish public assets separately
         $this->publishes([
-            __DIR__.'/../public' => public_path(''),
+            __DIR__.'/../public' => public_path('vendor/shift'),
+        ], 'shift-assets');
+
+        // Publish config separately
+        $this->publishes([
+            __DIR__ . '/../config/shift.php' => config_path('shift.php'),
+        ], 'shift-config');
+
+        // Combined group for convenience
+        $this->publishes([
+            __DIR__.'/../public' => public_path('vendor/shift'),
             __DIR__ . '/../config/shift.php' => config_path('shift.php'),
         ], 'shift');
 
