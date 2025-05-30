@@ -99,18 +99,16 @@ class ShiftController extends Controller
 
         $script = <<<SCRIPT
 <script>
-    window.shiftConfig = window.shiftConfig || {};
-    window.shiftConfig.loginRoute = '{$loginRoute}';
-    window.shiftConfig.logoutRoute = '{$logoutRoute}';
-    window.shiftConfig.baseUrl = '{$baseUrl}';
-    window.shiftConfig.appName = '{$appName}';
+    window.shiftConfig = {
+        loginRoute: '{$loginRoute}',
+        logoutRoute: '{$logoutRoute}',
+        baseUrl: '{$baseUrl}',
+        appName: '{$appName}'
+    };
 </script>
 SCRIPT;
 
-        return Str::replace(
-            '<script type="module"',
-            $script . "\n<script type=\"module\"",
-            $html
-        );
+        // Inject just before the first <script type="module">
+        return preg_replace('/(<script\s+type="module")/i', $script . "\n$1", $html, 1);
     }
 }
