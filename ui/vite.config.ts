@@ -1,15 +1,31 @@
+import tailwindcss from '@tailwindcss/vite';
 import vue from '@vitejs/plugin-vue';
+import fs from 'fs';
+import os from 'os';
 import path from 'path';
 import { defineConfig } from 'vite';
-import fs from 'fs'
-import tailwindcss from '@tailwindcss/vite'
 
-// https://vite.dev/config/
-export default defineConfig(({command}) => ({
-    plugins: [
-        vue(),
-        tailwindcss()
-    ],
+let https = {};
+
+let certBasePath = '';
+
+if (process.platform === 'win32') {
+    certBasePath = path.join(os.homedir(), '.config', 'herd', 'config', 'valet', 'Certificates');
+}
+
+if (process.platform === 'darwin') {
+    certBasePath = path.join(os.homedir(), 'Library', 'Application Support', 'Herd', 'config', 'valet', 'Certificates');
+}
+
+const certName = 'shift-sdk-package.test';
+
+https = {
+    key: fs.readFileSync(path.join(certBasePath, `${certName}.key`), 'utf8'),
+    cert: fs.readFileSync(path.join(certBasePath, `${certName}.crt`), 'utf8'),
+};
+
+export default defineConfig(({ command }) => ({
+    plugins: [vue(), tailwindcss()],
     base: command === 'serve' ? '/' : '/shift-assets/',
     build: {
         outDir: path.resolve(__dirname, '../public/shift-assets'), // Outputs to ../public/shift
@@ -21,20 +37,17 @@ export default defineConfig(({command}) => ({
         port: 5174,
         strictPort: true,
         hmr: {
-            host: 'shift-sdk-package.test'
+            host: 'shift-sdk-package.test',
         },
-        https: {
-            key: fs.readFileSync('C:\\Users\\joeyj\\.config\\herd\\config\\valet\\Certificates\\shift-sdk-package.test.key'),
-            cert: fs.readFileSync('C:\\Users\\joeyj\\.config\\herd\\config\\valet\\Certificates\\shift-sdk-package.test.crt'),
-        },
+        https: https,
         cors: true,
         proxy: {
             // Proxy API requests to the Laravel backend
             '/shift/api': {
                 target: 'https://shift-sdk-package.test',
                 changeOrigin: true,
-                secure: false
-            }
-        }
-    }
+                secure: false,
+            },
+        },
+    },
 }));
