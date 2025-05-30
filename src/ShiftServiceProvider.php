@@ -19,7 +19,7 @@ class ShiftServiceProvider extends ServiceProvider
 
         // Publish public assets separately
         $this->publishes([
-            __DIR__.'/../public' => public_path('vendor/shift'),
+            __DIR__.'/../public' => public_path(''),
         ], 'shift-assets');
 
         // Publish config separately
@@ -29,7 +29,7 @@ class ShiftServiceProvider extends ServiceProvider
 
         // Combined group for convenience
         $this->publishes([
-            __DIR__.'/../public' => public_path('vendor/shift'),
+            __DIR__.'/../public' => public_path(''),
             __DIR__ . '/../config/shift.php' => config_path('shift.php'),
         ], 'shift');
 
