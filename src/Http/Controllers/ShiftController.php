@@ -107,6 +107,10 @@ class ShiftController extends Controller
 </script>
 SCRIPT;
 
-        return Str::replace('</head>', $script . '</head>', $html);
+        return Str::replace(
+            '<script type="module"',
+            $script . "\n<script type=\"module\"",
+            $html
+        );
     }
 }
