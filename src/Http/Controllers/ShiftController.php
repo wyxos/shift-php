@@ -50,7 +50,7 @@ class ShiftController extends Controller
         }
 
         // In production or if Vite dev server is not running, serve the built files
-        $html = file_get_contents(public_path('/shift/index.html'));
+        $html = file_get_contents(public_path('/shift-assets/index.html'));
         $html = $this->injectLoginRoute($html);
 
         return $html;
