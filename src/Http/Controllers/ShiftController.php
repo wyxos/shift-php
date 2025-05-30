@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\App;
+use Illuminate\Support\Str;
 
 class ShiftController extends Controller
 {
@@ -106,6 +107,6 @@ class ShiftController extends Controller
 </script>
 SCRIPT;
 
-        return str_replace('</head>', $script . '</head>', $html);
+        return Str::replace('</head>', $script . '</head>', $html);
     }
 }
