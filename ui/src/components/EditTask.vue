@@ -291,8 +291,8 @@ onMounted(fetchTask);
 </script>
 
 <template>
-    <div class="mx-auto mt-12 rounded-2xl px-10">
-        <div class="mb-6 flex items-center justify-between">
+    <div class="flex flex-1 flex-col overflow-hidden rounded-2xl">
+        <div class="mb-4 flex items-center justify-between">
             <h1 class="text-2xl font-bold">Edit Task</h1>
             <button
                 class="rounded border border-gray-200 bg-gray-50 px-4 py-2 text-xs font-semibold text-gray-700 transition hover:bg-gray-100"
@@ -302,7 +302,7 @@ onMounted(fetchTask);
             </button>
         </div>
 
-        <div class="flex justify-center gap-4 bg-white p-6 shadow-lg">
+        <div class="flex flex-1 justify-center gap-6 overflow-hidden bg-white p-6 shadow-lg">
             <div>
                 <div v-if="fetchLoading" class="py-8 text-center text-gray-500">Loading task data...</div>
                 <div v-else-if="fetchError" class="py-8 text-center text-red-600">{{ fetchError }}</div>
@@ -411,16 +411,16 @@ onMounted(fetchTask);
             </div>
 
             <!-- Thread Section (outside the form) -->
-            <div class="flex w-[600px] flex-col rounded-2xl bg-white">
+            <div class="flex h-full w-[600px] flex-col overflow-hidden rounded-2xl bg-white">
                 <!-- External Thread Section -->
-                <h3 class="mb-4 text-sm font-medium">Comments</h3>
+                <h3 class="mb-2 text-sm font-medium">Comments</h3>
                 <!-- Thread loading indicator -->
                 <div v-if="threadLoading" class="py-4 text-center text-gray-500">Loading thread messages...</div>
                 <div v-else-if="threadError" class="py-4 text-center text-red-600">{{ threadError }}</div>
 
-                <div v-else class="flex flex-1 flex-col">
+                <div v-else class="flex flex-1 flex-col overflow-hidden">
                     <!-- Messages container with fixed height and scrolling -->
-                    <div class="mb-4 flex-1 overflow-y-auto rounded bg-gray-50 p-2">
+                    <div class="mb-4 flex-1 overflow-auto rounded bg-gray-50 px-2">
                         <div v-if="externalMessages.length === 0" class="py-4 text-center text-gray-500">
                             No messages yet. Start the conversation!
                         </div>
@@ -489,38 +489,38 @@ onMounted(fetchTask);
 
                     <!-- Thread loading indicator -->
                     <div v-if="isThreadUploading" class="mb-2 text-sm text-blue-500">Uploading attachment...</div>
+                </div>
 
-                    <!-- Message input with attachment button -->
-                    <div class="flex flex-col">
-                        <div class="mb-2 flex">
-                            <input
-                                v-model="newMessage"
-                                class="flex-grow rounded-l-md border p-2 focus:ring-2 focus:ring-amber-500 focus:outline-none"
-                                placeholder="Type your message..."
-                                type="text"
-                                @keyup.enter.prevent="sendMessage($event)"
-                            />
-                            <label
-                                class="flex cursor-pointer items-center bg-gray-200 px-3 py-2 text-gray-700 hover:bg-gray-300 focus:ring-2 focus:ring-amber-500 focus:outline-none"
-                            >
-                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                    <path
-                                        d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="2"
-                                    />
-                                </svg>
-                                <input class="hidden" multiple type="file" @change="handleThreadFileUpload" />
-                            </label>
-                            <button
-                                class="rounded-r-md bg-amber-600 px-4 py-2 text-white hover:bg-amber-700 focus:ring-2 focus:ring-amber-500 focus:outline-none"
-                                type="button"
-                                @click.prevent="sendMessage($event)"
-                            >
-                                Send
-                            </button>
-                        </div>
+                <!-- Message input with attachment button -->
+                <div class="flex flex-col">
+                    <div class="mb-2 flex">
+                        <input
+                            v-model="newMessage"
+                            class="flex-grow rounded-l-md border p-2 focus:ring-2 focus:ring-amber-500 focus:outline-none"
+                            placeholder="Type your message..."
+                            type="text"
+                            @keyup.enter.prevent="sendMessage($event)"
+                        />
+                        <label
+                            class="flex cursor-pointer items-center bg-gray-200 px-3 py-2 text-gray-700 hover:bg-gray-300 focus:ring-2 focus:ring-amber-500 focus:outline-none"
+                        >
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path
+                                    d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                />
+                            </svg>
+                            <input class="hidden" multiple type="file" @change="handleThreadFileUpload" />
+                        </label>
+                        <button
+                            class="rounded-r-md bg-amber-600 px-4 py-2 text-white hover:bg-amber-700 focus:ring-2 focus:ring-amber-500 focus:outline-none"
+                            type="button"
+                            @click.prevent="sendMessage($event)"
+                        >
+                            Send
+                        </button>
                     </div>
                 </div>
             </div>
