@@ -1,10 +1,10 @@
 <script lang="ts" setup>
-import { onMounted, ref, shallowRef, onBeforeUnmount, watch } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
-import axios from '../axios-config';
 import Editor from '@toast-ui/editor';
 import '@toast-ui/editor/dist/toastui-editor.css';
 import { marked } from 'marked';
+import { onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import axios from '../axios-config';
 
 const router = useRouter();
 const route = useRoute();
@@ -329,9 +329,9 @@ onMounted(() => {
                     ['hr', 'quote'],
                     ['ul', 'ol', 'task', 'indent', 'outdent'],
                     ['table', 'link'],
-                    ['code', 'codeblock']
+                    ['code', 'codeblock'],
                 ],
-                hideModeSwitch: true // Only allow markdown mode
+                hideModeSwitch: true, // Only allow markdown mode
             });
         }
     }, 0);
@@ -363,9 +363,9 @@ onMounted(() => {
                         ['hr', 'quote'],
                         ['ul', 'ol', 'task', 'indent', 'outdent'],
                         ['table', 'link'],
-                        ['code', 'codeblock']
+                        ['code', 'codeblock'],
                     ],
-                    hideModeSwitch: true // Only allow markdown mode
+                    hideModeSwitch: true, // Only allow markdown mode
                 });
 
                 // Set initial content if available
@@ -378,9 +378,7 @@ onMounted(() => {
                 console.error('Error initializing description editor:', error);
             }
         } else {
-            const reason = fetchLoading.value ? 'form is still loading' :
-                          fetchError.value ? 'fetch error occurred' :
-                          'container not found';
+            const reason = fetchLoading.value ? 'form is still loading' : fetchError.value ? 'fetch error occurred' : 'container not found';
 
             console.error(`Description editor initialization skipped: ${reason} (attempt ${retryCount + 1}/${maxRetries})`);
 
@@ -424,7 +422,7 @@ onBeforeUnmount(() => {
 <style>
 /* Basic styling for markdown content */
 .markdown-content {
-  line-height: 1.5;
+    line-height: 1.5;
 }
 
 .markdown-content h1,
@@ -433,71 +431,79 @@ onBeforeUnmount(() => {
 .markdown-content h4,
 .markdown-content h5,
 .markdown-content h6 {
-  margin-top: 1em;
-  margin-bottom: 0.5em;
-  font-weight: bold;
+    margin-top: 1em;
+    margin-bottom: 0.5em;
+    font-weight: bold;
 }
 
-.markdown-content h1 { font-size: 1.5em; }
-.markdown-content h2 { font-size: 1.3em; }
-.markdown-content h3 { font-size: 1.2em; }
+.markdown-content h1 {
+    font-size: 1.5em;
+}
+
+.markdown-content h2 {
+    font-size: 1.3em;
+}
+
+.markdown-content h3 {
+    font-size: 1.2em;
+}
 
 .markdown-content p {
-  margin-bottom: 1em;
+    margin-bottom: 1em;
 }
 
 .markdown-content ul,
 .markdown-content ol {
-  margin-left: 1.5em;
-  margin-bottom: 1em;
+    margin-left: 1.5em;
+    margin-bottom: 1em;
 }
 
 .markdown-content code {
-  background-color: rgba(0, 0, 0, 0.05);
-  padding: 0.2em 0.4em;
-  border-radius: 3px;
-  font-family: monospace;
+    background-color: rgba(0, 0, 0, 0.05);
+    padding: 0.2em 0.4em;
+    border-radius: 3px;
+    font-family: monospace;
 }
 
 .markdown-content pre {
-  background-color: rgba(0, 0, 0, 0.05);
-  padding: 1em;
-  border-radius: 3px;
-  overflow-x: auto;
-  margin-bottom: 1em;
+    background-color: rgba(0, 0, 0, 0.05);
+    padding: 1em;
+    border-radius: 3px;
+    overflow-x: auto;
+    margin-bottom: 1em;
 }
 
 .markdown-content blockquote {
-  border-left: 4px solid #ddd;
-  padding-left: 1em;
-  color: #666;
-  margin-bottom: 1em;
+    border-left: 4px solid #ddd;
+    padding-left: 1em;
+    color: #666;
+    margin-bottom: 1em;
 }
 
 .markdown-content a {
-  color: #0366d6;
-  text-decoration: underline;
+    color: #0366d6;
+    text-decoration: underline;
 }
 
 .markdown-content table {
-  border-collapse: collapse;
-  margin-bottom: 1em;
-  width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 1em;
+    width: 100%;
 }
 
 .markdown-content table th,
 .markdown-content table td {
-  border: 1px solid #ddd;
-  padding: 0.5em;
+    border: 1px solid #ddd;
+    padding: 0.5em;
 }
 
 .markdown-content table th {
-  background-color: rgba(0, 0, 0, 0.05);
+    background-color: rgba(0, 0, 0, 0.05);
 }
 </style>
 
 <template>
-    <div class="flex flex-1 flex-col overflow-hidden rounded-2xl">
+    <div class="flex w-full flex-1 flex-col overflow-hidden rounded bg-white p-4">
         <div class="mb-4 flex items-center justify-between">
             <h1 class="text-2xl font-bold">Edit Task</h1>
             <button
@@ -508,98 +514,100 @@ onBeforeUnmount(() => {
             </button>
         </div>
 
-        <div class="flex flex-1 justify-center gap-6 overflow-hidden bg-white p-6 shadow-lg">
-            <div>
+        <div class="flex flex-1 justify-center gap-6 overflow-hidden">
+            <div class="flex flex-col">
                 <div v-if="fetchLoading" class="py-8 text-center text-gray-500">Loading task data...</div>
                 <div v-else-if="fetchError" class="py-8 text-center text-red-600">{{ fetchError }}</div>
-                <form v-else class="space-y-3" @submit.prevent="updateTask">
-                    <div>
-                        <label class="mb-1 block text-sm font-medium">Title</label>
-                        <input v-model="editTaskData.title" class="w-full rounded border px-2 py-1" required type="text" />
-                    </div>
-                    <div>
-                        <label class="mb-1 block text-sm font-medium">Description</label>
-                        <div ref="descriptionEditorContainerRef" class="w-full rounded border" style="min-height: 250px;"></div>
-                    </div>
-                    <div class="flex gap-4">
+                <form v-else class="flex flex-1 flex-col gap-3 overflow-hidden" @submit.prevent="updateTask">
+                    <div class="flex-1 space-y-3 overflow-auto">
                         <div>
-                            <label class="mb-1 block text-sm font-medium">Status</label>
-                            <select v-model="editTaskData.status" class="rounded border px-2 py-1">
-                                <option value="pending">Pending</option>
-                                <option disabled value="in-progress">In progress</option>
-                                <option value="awaiting-feedback">Awaiting feedback</option>
-                                <option value="completed">Completed</option>
-                                <option value="closed">Closed</option>
-                            </select>
+                            <label class="mb-1 block text-sm font-medium">Title</label>
+                            <input v-model="editTaskData.title" class="w-full rounded border px-2 py-1" required type="text" />
                         </div>
                         <div>
-                            <label class="mb-1 block text-sm font-medium">Priority</label>
-                            <select v-model="editTaskData.priority" class="rounded border px-2 py-1">
-                                <option value="low">Low</option>
-                                <option value="medium">Medium</option>
-                                <option value="high">High</option>
-                            </select>
+                            <label class="mb-1 block text-sm font-medium">Description</label>
+                            <div ref="descriptionEditorContainerRef" class="w-full rounded border" style="min-height: 250px"></div>
                         </div>
-                    </div>
-
-                    <!-- Existing Attachments -->
-                    <div v-if="existingAttachments.length > 0" class="mt-4">
-                        <label class="mb-1 block text-sm font-medium">Existing Attachments</label>
-                        <div class="rounded border bg-gray-50 p-2">
-                            <div v-for="attachment in existingAttachments" :key="attachment.id" class="flex items-center justify-between py-1">
-                                <div class="flex items-center">
-                                    <svg class="mr-2 h-4 w-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                                        <path
-                                            clip-rule="evenodd"
-                                            d="M8 4a3 3 0 00-3 3v4a5 5 0 0010 0V7a1 1 0 112 0v4a7 7 0 11-14 0V7a5 5 0 0110 0v4a3 3 0 11-6 0V7a1 1 0 012 0v4a1 1 0 102 0V7a3 3 0 00-3-3z"
-                                            fill-rule="evenodd"
-                                        />
-                                    </svg>
-                                    <a :href="attachment.url" class="text-sm text-blue-600 hover:underline" target="_blank">
-                                        {{ attachment.original_filename }}
-                                    </a>
-                                </div>
-                                <button class="text-xs text-red-600 hover:text-red-800" type="button" @click="deleteAttachment(attachment.id)">
-                                    Remove
-                                </button>
+                        <div class="flex gap-4">
+                            <div>
+                                <label class="mb-1 block text-sm font-medium">Status</label>
+                                <select v-model="editTaskData.status" class="rounded border px-2 py-1">
+                                    <option value="pending">Pending</option>
+                                    <option disabled value="in-progress">In progress</option>
+                                    <option value="awaiting-feedback">Awaiting feedback</option>
+                                    <option value="completed">Completed</option>
+                                    <option value="closed">Closed</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="mb-1 block text-sm font-medium">Priority</label>
+                                <select v-model="editTaskData.priority" class="rounded border px-2 py-1">
+                                    <option value="low">Low</option>
+                                    <option value="medium">Medium</option>
+                                    <option value="high">High</option>
+                                </select>
                             </div>
                         </div>
-                    </div>
 
-                    <!-- New Attachments -->
-                    <div class="mt-4">
-                        <label class="mb-1 block text-sm font-medium">Add New Attachments</label>
-                        <input :disabled="isUploading" class="w-full rounded border px-2 py-1" multiple type="file" @change="handleFileChange" />
-
-                        <!-- Upload error message -->
-                        <div v-if="uploadError" class="mt-1 text-sm text-red-500">{{ uploadError }}</div>
-
-                        <!-- Loading indicator -->
-                        <div v-if="isUploading" class="mt-1 text-sm text-blue-500">Uploading files...</div>
-
-                        <!-- List of uploaded files -->
-                        <div v-if="uploadedFiles.length > 0" class="mt-3">
-                            <p class="text-sm text-gray-600">Uploaded files:</p>
-                            <ul class="mt-2 divide-y divide-gray-200 rounded-md border border-gray-200">
-                                <li v-for="file in uploadedFiles" :key="file.path" class="flex items-center justify-between px-3 py-2 text-sm">
+                        <!-- Existing Attachments -->
+                        <div v-if="existingAttachments.length > 0" class="mt-4">
+                            <label class="mb-1 block text-sm font-medium">Existing Attachments</label>
+                            <div class="rounded border bg-gray-50 p-2">
+                                <div v-for="attachment in existingAttachments" :key="attachment.id" class="flex items-center justify-between py-1">
                                     <div class="flex items-center">
-                                        <svg class="mr-2 h-5 w-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                                        <svg class="mr-2 h-4 w-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
                                             <path
                                                 clip-rule="evenodd"
                                                 d="M8 4a3 3 0 00-3 3v4a5 5 0 0010 0V7a1 1 0 112 0v4a7 7 0 11-14 0V7a5 5 0 0110 0v4a3 3 0 11-6 0V7a1 1 0 012 0v4a1 1 0 102 0V7a3 3 0 00-3-3z"
                                                 fill-rule="evenodd"
                                             />
                                         </svg>
-                                        <span class="truncate">{{ file.original_filename }}</span>
+                                        <a :href="attachment.url" class="text-sm text-blue-600 hover:underline" target="_blank">
+                                            {{ attachment.original_filename }}
+                                        </a>
                                     </div>
-                                    <button :disabled="loading" class="text-red-600 hover:text-red-900" type="button" @click="removeFile(file)">
+                                    <button class="text-xs text-red-600 hover:text-red-800" type="button" @click="deleteAttachment(attachment.id)">
                                         Remove
                                     </button>
-                                </li>
-                            </ul>
+                                </div>
+                            </div>
                         </div>
+
+                        <!-- New Attachments -->
+                        <div class="mt-4">
+                            <label class="mb-1 block text-sm font-medium">Add New Attachments</label>
+                            <input :disabled="isUploading" class="w-full rounded border px-2 py-1" multiple type="file" @change="handleFileChange" />
+
+                            <!-- Upload error message -->
+                            <div v-if="uploadError" class="mt-1 text-sm text-red-500">{{ uploadError }}</div>
+
+                            <!-- Loading indicator -->
+                            <div v-if="isUploading" class="mt-1 text-sm text-blue-500">Uploading files...</div>
+
+                            <!-- List of uploaded files -->
+                            <div v-if="uploadedFiles.length > 0" class="mt-3">
+                                <p class="text-sm text-gray-600">Uploaded files:</p>
+                                <ul class="mt-2 divide-y divide-gray-200 rounded-md border border-gray-200">
+                                    <li v-for="file in uploadedFiles" :key="file.path" class="flex items-center justify-between px-3 py-2 text-sm">
+                                        <div class="flex items-center">
+                                            <svg class="mr-2 h-5 w-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                                                <path
+                                                    clip-rule="evenodd"
+                                                    d="M8 4a3 3 0 00-3 3v4a5 5 0 0010 0V7a1 1 0 112 0v4a7 7 0 11-14 0V7a5 5 0 0110 0v4a3 3 0 11-6 0V7a1 1 0 012 0v4a1 1 0 102 0V7a3 3 0 00-3-3z"
+                                                    fill-rule="evenodd"
+                                                />
+                                            </svg>
+                                            <span class="truncate">{{ file.original_filename }}</span>
+                                        </div>
+                                        <button :disabled="loading" class="text-red-600 hover:text-red-900" type="button" @click="removeFile(file)">
+                                            Remove
+                                        </button>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div v-if="editError" class="text-sm text-red-600">{{ editError }}</div>
                     </div>
-                    <div v-if="editError" class="text-sm text-red-600">{{ editError }}</div>
                     <div>
                         <button :disabled="loading" class="mt-2 rounded bg-amber-600 px-4 py-1 font-bold text-white hover:bg-amber-700" type="submit">
                             {{ loading ? 'Saving...' : 'Save' }}
@@ -617,7 +625,7 @@ onBeforeUnmount(() => {
             </div>
 
             <!-- Thread Section (outside the form) -->
-            <div class="flex h-full w-[600px] flex-col overflow-hidden rounded-2xl bg-white">
+            <div class="flex h-full w-[600px] flex-col overflow-hidden">
                 <!-- External Thread Section -->
                 <h3 class="mb-2 text-sm font-medium">Comments</h3>
                 <!-- Thread loading indicator -->
@@ -646,7 +654,7 @@ onBeforeUnmount(() => {
                                 class="inline-block max-w-3/4 rounded-lg p-3"
                             >
                                 <p v-if="!message.isCurrentUser" class="text-sm font-semibold">{{ message.sender }}</p>
-                                <div v-html="renderMarkdown(message.content)" class="markdown-content"></div>
+                                <div class="markdown-content" v-html="renderMarkdown(message.content)"></div>
 
                                 <!-- Display message attachments if any -->
                                 <div v-if="message.attachments && message.attachments.length > 0" class="mt-2">
