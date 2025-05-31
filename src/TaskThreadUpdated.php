@@ -46,7 +46,7 @@ class TaskThreadUpdated extends Notification
 
         return (new MailMessage)
             ->subject("New reply in {$threadType} for {$taskTitle}")
-            ->line("A new message was posted in the {$threadType}.")
+            ->line("A new message was posted.")
             ->line("Preview: \"{$snippet}\"")
             ->action('View Thread', $url)
             ->line('Please do not reply to this email directly.');
