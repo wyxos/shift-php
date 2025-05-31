@@ -1,7 +1,9 @@
 <script lang="ts" setup>
-import { onMounted, ref } from 'vue';
+import { onMounted, ref, shallowRef, onBeforeUnmount } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import axios from '../axios-config';
+import Editor from '@toast-ui/editor';
+import '@toast-ui/editor/dist/toastui-editor.css';
 
 const router = useRouter();
 const route = useRoute();
@@ -18,9 +20,12 @@ const deletedAttachmentIds = ref<number[]>([]);
 
 // Thread state
 const externalMessages = ref<any[]>([]);
-const newMessage = ref('');
 const threadLoading = ref(false);
 const threadError = ref<string | null>(null);
+
+// Toast Editor reference
+const editorRef = shallowRef<Editor | null>(null);
+const editorContainerRef = ref<HTMLElement | null>(null);
 
 // Thread attachment state
 const threadTempIdentifier = ref(Date.now().toString() + '_thread');
@@ -210,14 +215,17 @@ async function sendMessage(event?: Event) {
         event.stopPropagation();
     }
 
-    if (!newMessage.value.trim() && threadAttachments.value.length === 0) return;
+    // Get content from the editor
+    const editorContent = editorRef.value?.getMarkdown() || '';
+
+    if (!editorContent.trim() && threadAttachments.value.length === 0) return;
 
     const taskId = route.params.id;
     if (!taskId) return;
 
     try {
         const response = await axios.post(`/shift/api/tasks/${taskId}/threads`, {
-            content: newMessage.value,
+            content: editorContent,
             type: 'external', // Always external for SDK
             temp_identifier: threadAttachments.value.length > 0 ? threadTempIdentifier.value : null,
         });
@@ -236,8 +244,11 @@ async function sendMessage(event?: Event) {
 
         externalMessages.value.push(message);
 
-        // Clear form
-        newMessage.value = '';
+        // Clear editor
+        if (editorRef.value) {
+            editorRef.value.setMarkdown('');
+        }
+
         threadAttachments.value = [];
         threadTempIdentifier.value = Date.now().toString() + '_thread';
     } catch (e: any) {
@@ -287,7 +298,38 @@ function cancel() {
     router.push({ name: 'task-list' });
 }
 
-onMounted(fetchTask);
+// Initialize the editor when component is mounted
+onMounted(() => {
+    fetchTask();
+
+    // Initialize Toast Editor after DOM is ready
+    setTimeout(() => {
+        if (editorContainerRef.value) {
+            editorRef.value = new Editor({
+                el: editorContainerRef.value,
+                height: '200px',
+                initialEditType: 'markdown',
+                previewStyle: 'tab',
+                toolbarItems: [
+                    ['heading', 'bold', 'italic', 'strike'],
+                    ['hr', 'quote'],
+                    ['ul', 'ol', 'task', 'indent', 'outdent'],
+                    ['table', 'link'],
+                    ['code', 'codeblock']
+                ],
+                hideModeSwitch: true // Only allow markdown mode
+            });
+        }
+    }, 0);
+});
+
+// Clean up the editor when component is unmounted
+onBeforeUnmount(() => {
+    if (editorRef.value) {
+        editorRef.value.destroy();
+        editorRef.value = null;
+    }
+});
 </script>
 
 <template>
@@ -491,36 +533,34 @@ onMounted(fetchTask);
                     <div v-if="isThreadUploading" class="mb-2 text-sm text-blue-500">Uploading attachment...</div>
                 </div>
 
-                <!-- Message input with attachment button -->
+                <!-- Message input with Toast Editor and attachment button -->
                 <div class="flex flex-col">
-                    <div class="mb-2 flex">
-                        <input
-                            v-model="newMessage"
-                            class="flex-grow rounded-l-md border p-2 focus:ring-2 focus:ring-amber-500 focus:outline-none"
-                            placeholder="Type your message..."
-                            type="text"
-                            @keyup.enter.prevent="sendMessage($event)"
-                        />
-                        <label
-                            class="flex cursor-pointer items-center bg-gray-200 px-3 py-2 text-gray-700 hover:bg-gray-300 focus:ring-2 focus:ring-amber-500 focus:outline-none"
-                        >
-                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                <path
-                                    d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    stroke-width="2"
-                                />
-                            </svg>
-                            <input class="hidden" multiple type="file" @change="handleThreadFileUpload" />
-                        </label>
-                        <button
-                            class="rounded-r-md bg-amber-600 px-4 py-2 text-white hover:bg-amber-700 focus:ring-2 focus:ring-amber-500 focus:outline-none"
-                            type="button"
-                            @click.prevent="sendMessage($event)"
-                        >
-                            Send
-                        </button>
+                    <div class="mb-2 flex flex-col">
+                        <!-- Toast Editor Container -->
+                        <div ref="editorContainerRef" class="mb-2 rounded-md border"></div>
+
+                        <div class="flex">
+                            <label
+                                class="flex cursor-pointer items-center rounded-l-md bg-gray-200 px-3 py-2 text-gray-700 hover:bg-gray-300 focus:ring-2 focus:ring-amber-500 focus:outline-none"
+                            >
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path
+                                        d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        stroke-width="2"
+                                    />
+                                </svg>
+                                <input class="hidden" multiple type="file" @change="handleThreadFileUpload" />
+                            </label>
+                            <button
+                                class="flex-grow rounded-r-md bg-amber-600 px-4 py-2 text-white hover:bg-amber-700 focus:ring-2 focus:ring-amber-500 focus:outline-none"
+                                type="button"
+                                @click.prevent="sendMessage($event)"
+                            >
+                                Send
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
