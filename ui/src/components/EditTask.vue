@@ -651,9 +651,13 @@ onBeforeUnmount(() => {
                                         ? 'rounded-br-none bg-blue-600 font-bold text-white'
                                         : 'rounded-bl-none bg-gray-200 text-gray-800'
                                 "
-                                class="inline-block max-w-3/4 rounded-lg p-3"
+                                class="inline-block max-w-3/4 min-w-1/3 rounded-lg p-3"
                             >
-                                <p v-if="!message.isCurrentUser" class="text-xs">{{ message.sender }}</p>
+                                <p>
+                                    <span v-if="!message.isCurrentUser" class="text-xs">{{ message.sender }} -</span>
+
+                                    <span class="mt-1 text-xs opacity-75">{{ message.timestamp }}</span>
+                                </p>
                                 <div class="markdown-content" v-html="renderMarkdown(message.content)"></div>
 
                                 <!-- Display message attachments if any -->
@@ -672,8 +676,6 @@ onBeforeUnmount(() => {
                                         </a>
                                     </div>
                                 </div>
-
-                                <p class="mt-1 text-xs opacity-75">{{ message.timestamp }}</p>
                             </div>
                         </div>
                     </div>
