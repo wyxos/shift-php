@@ -1,9 +1,10 @@
 <script lang="ts" setup>
-import { onMounted, ref, shallowRef, onBeforeUnmount } from 'vue';
+import { onMounted, ref, shallowRef, onBeforeUnmount, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import axios from '../axios-config';
 import Editor from '@toast-ui/editor';
 import '@toast-ui/editor/dist/toastui-editor.css';
+import { marked } from 'marked';
 
 const router = useRouter();
 const route = useRoute();
@@ -23,15 +24,24 @@ const externalMessages = ref<any[]>([]);
 const threadLoading = ref(false);
 const threadError = ref<string | null>(null);
 
-// Toast Editor reference
-const editorRef = shallowRef<Editor | null>(null);
-const editorContainerRef = ref<HTMLElement | null>(null);
+// Toast Editor references
+const messageEditorRef = shallowRef<Editor | null>(null);
+const messageEditorContainerRef = ref<HTMLElement | null>(null);
+
+// Description Editor reference
+const descriptionEditorRef = shallowRef<Editor | null>(null);
+const descriptionEditorContainerRef = ref<HTMLElement | null>(null);
 
 // Thread attachment state
 const threadTempIdentifier = ref(Date.now().toString() + '_thread');
 const threadAttachments = ref<any[]>([]);
 const isThreadUploading = ref(false);
 const threadUploadError = ref<string | null>(null);
+
+// Function to render markdown content
+function renderMarkdown(content: string) {
+    return marked(content);
+}
 
 const editTaskData = ref({
     title: '',
@@ -215,8 +225,8 @@ async function sendMessage(event?: Event) {
         event.stopPropagation();
     }
 
-    // Get content from the editor
-    const editorContent = editorRef.value?.getMarkdown() || '';
+    // Get content from the message editor
+    const editorContent = messageEditorRef.value?.getMarkdown() || '';
 
     if (!editorContent.trim() && threadAttachments.value.length === 0) return;
 
@@ -245,8 +255,8 @@ async function sendMessage(event?: Event) {
         externalMessages.value.push(message);
 
         // Clear editor
-        if (editorRef.value) {
-            editorRef.value.setMarkdown('');
+        if (messageEditorRef.value) {
+            messageEditorRef.value.setMarkdown('');
         }
 
         threadAttachments.value = [];
@@ -273,10 +283,13 @@ async function updateTask() {
         // Get the environment from the config or default to 'production'
         const environment = import.meta.env.VITE_APP_ENV || 'production';
 
+        // Get description content from the editor
+        const descriptionContent = descriptionEditorRef.value?.getMarkdown() || editTaskData.value.description;
+
         // Create the payload with task data
         const payload = {
             title: editTaskData.value.title,
-            description: editTaskData.value.description,
+            description: descriptionContent,
             status: editTaskData.value.status,
             priority: editTaskData.value.priority,
             source_url,
@@ -298,15 +311,16 @@ function cancel() {
     router.push({ name: 'task-list' });
 }
 
-// Initialize the editor when component is mounted
+// Initialize the editors when component is mounted
 onMounted(() => {
     fetchTask();
 
-    // Initialize Toast Editor after DOM is ready
+    // Initialize Toast Editors after DOM is ready
     setTimeout(() => {
-        if (editorContainerRef.value) {
-            editorRef.value = new Editor({
-                el: editorContainerRef.value,
+        // Initialize message editor
+        if (messageEditorContainerRef.value) {
+            messageEditorRef.value = new Editor({
+                el: messageEditorContainerRef.value,
                 height: '200px',
                 initialEditType: 'markdown',
                 previewStyle: 'tab',
@@ -321,16 +335,166 @@ onMounted(() => {
             });
         }
     }, 0);
+
+    // Initialize description editor with a longer delay to ensure DOM is ready
+    let retryCount = 0;
+    const maxRetries = 5;
+
+    const initDescriptionEditor = () => {
+        // Check if we should attempt initialization (not loading and no fetch error)
+        const shouldInitialize = !fetchLoading.value && !fetchError.value;
+
+        if (shouldInitialize && descriptionEditorContainerRef.value) {
+            console.log('Initializing description editor');
+            try {
+                // Check if the editor is already initialized
+                if (descriptionEditorRef.value) {
+                    console.log('Description editor already initialized');
+                    return;
+                }
+
+                descriptionEditorRef.value = new Editor({
+                    el: descriptionEditorContainerRef.value,
+                    height: '250px',
+                    initialEditType: 'markdown',
+                    previewStyle: 'tab',
+                    toolbarItems: [
+                        ['heading', 'bold', 'italic', 'strike'],
+                        ['hr', 'quote'],
+                        ['ul', 'ol', 'task', 'indent', 'outdent'],
+                        ['table', 'link'],
+                        ['code', 'codeblock']
+                    ],
+                    hideModeSwitch: true // Only allow markdown mode
+                });
+
+                // Set initial content if available
+                if (editTaskData.value.description) {
+                    descriptionEditorRef.value.setMarkdown(editTaskData.value.description);
+                }
+
+                console.log('Description editor initialized successfully');
+            } catch (error) {
+                console.error('Error initializing description editor:', error);
+            }
+        } else {
+            const reason = fetchLoading.value ? 'form is still loading' :
+                          fetchError.value ? 'fetch error occurred' :
+                          'container not found';
+
+            console.error(`Description editor initialization skipped: ${reason} (attempt ${retryCount + 1}/${maxRetries})`);
+
+            // Retry after a delay if we haven't exceeded max retries
+            if (retryCount < maxRetries) {
+                retryCount++;
+                setTimeout(initDescriptionEditor, 200);
+            }
+        }
+    };
+
+    // Start initialization with a longer delay
+    setTimeout(initDescriptionEditor, 300);
+
+    // Also watch for when fetchLoading changes to false (data loaded)
+    watch(fetchLoading, (newValue) => {
+        if (newValue === false && !descriptionEditorRef.value) {
+            console.log('Data loaded, attempting to initialize description editor');
+            // Reset retry count for this new attempt
+            retryCount = 0;
+            // Small delay to ensure DOM is updated
+            setTimeout(initDescriptionEditor, 100);
+        }
+    });
 });
 
-// Clean up the editor when component is unmounted
+// Clean up the editors when component is unmounted
 onBeforeUnmount(() => {
-    if (editorRef.value) {
-        editorRef.value.destroy();
-        editorRef.value = null;
+    if (messageEditorRef.value) {
+        messageEditorRef.value.destroy();
+        messageEditorRef.value = null;
+    }
+
+    if (descriptionEditorRef.value) {
+        descriptionEditorRef.value.destroy();
+        descriptionEditorRef.value = null;
     }
 });
 </script>
+
+<style>
+/* Basic styling for markdown content */
+.markdown-content {
+  line-height: 1.5;
+}
+
+.markdown-content h1,
+.markdown-content h2,
+.markdown-content h3,
+.markdown-content h4,
+.markdown-content h5,
+.markdown-content h6 {
+  margin-top: 1em;
+  margin-bottom: 0.5em;
+  font-weight: bold;
+}
+
+.markdown-content h1 { font-size: 1.5em; }
+.markdown-content h2 { font-size: 1.3em; }
+.markdown-content h3 { font-size: 1.2em; }
+
+.markdown-content p {
+  margin-bottom: 1em;
+}
+
+.markdown-content ul,
+.markdown-content ol {
+  margin-left: 1.5em;
+  margin-bottom: 1em;
+}
+
+.markdown-content code {
+  background-color: rgba(0, 0, 0, 0.05);
+  padding: 0.2em 0.4em;
+  border-radius: 3px;
+  font-family: monospace;
+}
+
+.markdown-content pre {
+  background-color: rgba(0, 0, 0, 0.05);
+  padding: 1em;
+  border-radius: 3px;
+  overflow-x: auto;
+  margin-bottom: 1em;
+}
+
+.markdown-content blockquote {
+  border-left: 4px solid #ddd;
+  padding-left: 1em;
+  color: #666;
+  margin-bottom: 1em;
+}
+
+.markdown-content a {
+  color: #0366d6;
+  text-decoration: underline;
+}
+
+.markdown-content table {
+  border-collapse: collapse;
+  margin-bottom: 1em;
+  width: 100%;
+}
+
+.markdown-content table th,
+.markdown-content table td {
+  border: 1px solid #ddd;
+  padding: 0.5em;
+}
+
+.markdown-content table th {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+</style>
 
 <template>
     <div class="flex flex-1 flex-col overflow-hidden rounded-2xl">
@@ -355,7 +519,7 @@ onBeforeUnmount(() => {
                     </div>
                     <div>
                         <label class="mb-1 block text-sm font-medium">Description</label>
-                        <textarea v-model="editTaskData.description" class="w-full rounded border px-2 py-1" rows="4"></textarea>
+                        <div ref="descriptionEditorContainerRef" class="w-full rounded border" style="min-height: 250px;"></div>
                     </div>
                     <div class="flex gap-4">
                         <div>
@@ -482,7 +646,7 @@ onBeforeUnmount(() => {
                                 class="inline-block max-w-3/4 rounded-lg p-3"
                             >
                                 <p v-if="!message.isCurrentUser" class="text-sm font-semibold">{{ message.sender }}</p>
-                                <p>{{ message.content }}</p>
+                                <div v-html="renderMarkdown(message.content)" class="markdown-content"></div>
 
                                 <!-- Display message attachments if any -->
                                 <div v-if="message.attachments && message.attachments.length > 0" class="mt-2">
@@ -537,7 +701,7 @@ onBeforeUnmount(() => {
                 <div class="flex flex-col">
                     <div class="mb-2 flex flex-col">
                         <!-- Toast Editor Container -->
-                        <div ref="editorContainerRef" class="mb-2 rounded-md border"></div>
+                        <div ref="messageEditorContainerRef" class="mb-2 rounded-md border"></div>
 
                         <div class="flex">
                             <label
