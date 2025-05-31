@@ -609,7 +609,7 @@ onBeforeUnmount(() => {
                         <div v-if="editError" class="text-sm text-red-600">{{ editError }}</div>
                     </div>
                     <div>
-                        <button :disabled="loading" class="mt-2 rounded bg-amber-600 px-4 py-1 font-bold text-white hover:bg-amber-700" type="submit">
+                        <button :disabled="loading" class="mt-2 rounded bg-blue-600 px-4 py-1 font-bold text-white hover:bg-blue-700" type="submit">
                             {{ loading ? 'Saving...' : 'Save' }}
                         </button>
                         <button
@@ -648,12 +648,12 @@ onBeforeUnmount(() => {
                             <div
                                 :class="
                                     message.isCurrentUser
-                                        ? 'rounded-br-none bg-amber-600 font-bold text-white'
+                                        ? 'rounded-br-none bg-blue-600 font-bold text-white'
                                         : 'rounded-bl-none bg-gray-200 text-gray-800'
                                 "
                                 class="inline-block max-w-3/4 rounded-lg p-3"
                             >
-                                <p v-if="!message.isCurrentUser" class="text-sm font-semibold">{{ message.sender }}</p>
+                                <p v-if="!message.isCurrentUser" class="text-xs">{{ message.sender }}</p>
                                 <div class="markdown-content" v-html="renderMarkdown(message.content)"></div>
 
                                 <!-- Display message attachments if any -->
@@ -713,7 +713,7 @@ onBeforeUnmount(() => {
 
                         <div class="flex">
                             <label
-                                class="flex cursor-pointer items-center rounded-l-md bg-gray-200 px-3 py-2 text-gray-700 hover:bg-gray-300 focus:ring-2 focus:ring-amber-500 focus:outline-none"
+                                class="flex cursor-pointer items-center rounded-l-md bg-gray-200 px-3 py-2 text-gray-700 hover:bg-gray-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                             >
                                 <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                     <path
@@ -726,7 +726,7 @@ onBeforeUnmount(() => {
                                 <input class="hidden" multiple type="file" @change="handleThreadFileUpload" />
                             </label>
                             <button
-                                class="flex-grow rounded-r-md bg-amber-600 px-4 py-2 text-white hover:bg-amber-700 focus:ring-2 focus:ring-amber-500 focus:outline-none"
+                                class="flex-grow rounded-r-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                                 type="button"
                                 @click.prevent="sendMessage($event)"
                             >
