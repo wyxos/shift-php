@@ -165,19 +165,19 @@ class ShiftTaskController extends Controller
         try {
             // Prepare query parameters - only include simple parameters in the query
             $params = [
-                'project' => $project
+                'project' => $project,
+                'user' => [
+                    'name' => auth()->user()->name,
+                    'email' => auth()->user()->email,
+                    'id' => auth()->user()->id,
+                    'environment' => config('app.env'),
+                    'url' => config('app.url'),
+                ],
             ];
 
             // Add user and metadata information to headers instead of query params
             $response = Http::withToken($token)
                 ->acceptJson()
-                ->withHeaders([
-                    'X-User-Name' => auth()->user()->name,
-                    'X-User-Email' => auth()->user()->email,
-                    'X-User-Id' => auth()->user()->id,
-                    'X-Environment' => config('app.env'),
-                    'X-App-Url' => config('app.url'),
-                ])
                 ->get($baseUrl . '/api/tasks/' . $id, $params);
 
             if ($response->successful()) {
