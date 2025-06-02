@@ -1,5 +1,5 @@
-<script setup lang="ts">
-import { ref, onMounted } from 'vue';
+<script lang="ts" setup>
+import { onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import axios from '../axios-config';
 
@@ -44,7 +44,7 @@ async function deleteTask(taskId: number) {
     try {
         await axios.delete(`/shift/api/tasks/${taskId}`);
         // Remove the task from the list
-        tasks.value = tasks.value.filter(task => task.id !== taskId);
+        tasks.value = tasks.value.filter((task) => task.id !== taskId);
     } catch (e: any) {
         error.value = e.response?.data?.error || e.message || 'Failed to delete task';
     } finally {
@@ -56,12 +56,12 @@ onMounted(fetchTasks);
 </script>
 
 <template>
-    <div class="mx-auto mt-12 max-w-xl rounded-2xl bg-white p-6 shadow-lg">
+    <div class="mx-auto mt-12 w-full rounded-2xl bg-white p-6 shadow-lg">
         <div class="mb-6 flex items-center justify-between">
             <h1 class="text-2xl font-bold">Tasks</h1>
             <button
-                @click="router.push({ name: 'create-task' })"
                 class="rounded border border-emerald-200 bg-emerald-50 px-4 py-2 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-100"
+                @click="router.push({ name: 'create-task' })"
             >
                 + Create
             </button>
@@ -75,7 +75,6 @@ onMounted(fetchTasks);
             <li v-for="task in tasks" :key="task.id" class="flex flex-col py-3 sm:flex-row sm:items-center sm:gap-4">
                 <span class="flex-1 text-lg font-medium">{{ task.title }}</span>
                 <span
-                    class="inline-block rounded-full px-2 py-1 text-xs"
                     :class="
                         task.status === 'pending'
                             ? 'border border-yellow-200 bg-yellow-50 text-yellow-600'
@@ -83,19 +82,20 @@ onMounted(fetchTasks);
                               ? 'border border-emerald-200 bg-emerald-50 text-emerald-700'
                               : 'border border-gray-200 bg-gray-100 text-gray-500'
                     "
+                    class="inline-block rounded-full px-2 py-1 text-xs"
                     >{{ task.status }}</span
                 >
                 <span class="ml-2 text-xs text-gray-400 uppercase">{{ task.priority }}</span>
                 <button
-                    @click="editTask(task.id)"
                     class="mt-2 ml-2 rounded border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700 transition hover:bg-amber-100 sm:mt-0"
+                    @click="editTask(task.id)"
                 >
                     Edit
                 </button>
                 <button
-                    @click="deleteTask(task.id)"
                     :disabled="deleteLoading === task.id"
                     class="mt-2 ml-2 rounded border border-red-200 bg-red-50 px-3 py-1 text-xs font-semibold text-red-700 transition hover:bg-red-100 sm:mt-0"
+                    @click="deleteTask(task.id)"
                 >
                     {{ deleteLoading === task.id ? 'Deleting...' : 'Delete' }}
                 </button>
