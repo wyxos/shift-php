@@ -1,6 +1,6 @@
 <?php
 
-namespace Wyxos\Shift;
+namespace Wyxos\Shift\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Http;
@@ -67,7 +67,7 @@ class InstallShiftCommand extends Command
             if (preg_match($pattern, $envContents)) {
                 $envContents = preg_replace($pattern, "{$key}=\"{$value}\"", $envContents);
             } else {
-                $envContents .= PHP_EOL."{$key}=\"{$value}\"";
+                $envContents .= PHP_EOL . "{$key}=\"{$value}\"";
             }
         }
 

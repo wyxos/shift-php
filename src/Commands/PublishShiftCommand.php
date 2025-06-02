@@ -1,6 +1,6 @@
 <?php
 
-namespace Wyxos\Shift;
+namespace Wyxos\Shift\Commands;
 
 use Illuminate\Console\Command;
 
