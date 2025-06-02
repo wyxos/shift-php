@@ -3,6 +3,9 @@
 namespace Wyxos\Shift;
 
 use Illuminate\Support\ServiceProvider;
+use Wyxos\Shift\Commands\InstallShiftCommand;
+use Wyxos\Shift\Commands\PublishShiftCommand;
+use Wyxos\Shift\Commands\ShiftTestCommand;
 
 class ShiftServiceProvider extends ServiceProvider
 {
@@ -15,11 +18,11 @@ class ShiftServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        $this->loadRoutesFrom(__DIR__.'/../routes/shift.php');
+        $this->loadRoutesFrom(__DIR__ . '/../routes/shift.php');
 
         // Publish public assets separately
         $this->publishes([
-            __DIR__.'/../public' => public_path(''),
+            __DIR__ . '/../public' => public_path(''),
         ], 'shift-assets');
 
         // Publish config separately
@@ -29,7 +32,7 @@ class ShiftServiceProvider extends ServiceProvider
 
         // Combined group for convenience
         $this->publishes([
-            __DIR__.'/../public' => public_path(''),
+            __DIR__ . '/../public' => public_path(''),
             __DIR__ . '/../config/shift.php' => config_path('shift.php'),
         ], 'shift');
 

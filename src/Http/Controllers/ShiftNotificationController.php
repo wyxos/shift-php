@@ -3,6 +3,7 @@
 namespace Wyxos\Shift\Http\Controllers;
 
 use App\Models\User;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Log;
 use Wyxos\Shift\TaskThreadUpdated;
@@ -12,16 +13,7 @@ class ShiftNotificationController extends Controller
     public function store()
     {
         $request = request();
-
-        $user = User::find($request->input('payload.user_id'));
-
-        $user->notify(new TaskThreadUpdated($request->input('payload')));
-
-        return response()->json([
-            'production' => app()->isProduction(),
-            'message' => 'Notification processed successfully',
-        ]);
-
+        
         $request->validate([
             'handler' => 'required|string',
             'payload' => 'required|array',
@@ -33,7 +25,7 @@ class ShiftNotificationController extends Controller
         $source = $request->input('source');
 
         // Log the incoming notification
-        \Illuminate\Support\Facades\Log::info('Received notification from SHIFT', [
+        Log::info('Received notification from SHIFT', [
             'handler' => $handler,
             'payload' => $payload,
             'source' => $source,
@@ -56,13 +48,17 @@ class ShiftNotificationController extends Controller
      * Handle thread update notifications.
      *
      * @param array $payload
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     protected function handleThreadUpdate(array $payload)
     {
-       return response()->json([
-           'production' => app()->isProduction(),
-           'user' => User::find($payload['user_id']),
-       ]);
+        $user = User::find($payload['user_id']);
+
+        $user->notify(new TaskThreadUpdated($payload));
+
+        return response()->json([
+            'production' => app()->isProduction(),
+            'message' => 'Notification processed successfully',
+        ]);
     }
 }
