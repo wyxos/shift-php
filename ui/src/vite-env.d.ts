@@ -6,5 +6,6 @@ interface Window {
         logoutRoute: string;
         baseUrl: string;
         appName: string;
+        username: string;
     };
 }
