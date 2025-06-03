@@ -29,9 +29,6 @@ async function fetchTasks() {
     }
 }
 
-function editTask(taskId: number) {
-    router.push({ name: 'edit-task', params: { id: taskId.toString() } });
-}
 
 async function deleteTask(taskId: number) {
     if (!confirm('Are you sure you want to delete this task?')) {
@@ -86,12 +83,13 @@ onMounted(fetchTasks);
                     >{{ task.status }}</span
                 >
                 <span class="ml-2 text-xs text-gray-400 uppercase">{{ task.priority }}</span>
-                <button
-                    class="mt-2 ml-2 rounded border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700 transition hover:bg-amber-100 sm:mt-0"
-                    @click="editTask(task.id)"
+                <router-link
+                    :to="{ name: 'edit-task', params: { id: task.id.toString() } }"
+                    class="mt-2 ml-2 rounded border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700 transition hover:bg-amber-100 sm:mt-0 inline-block text-center"
+                    title="Click to edit, Ctrl+Click to open in new tab"
                 >
                     Edit
-                </button>
+                </router-link>
                 <button
                     :disabled="deleteLoading === task.id"
                     class="mt-2 ml-2 rounded border border-red-200 bg-red-50 px-3 py-1 text-xs font-semibold text-red-700 transition hover:bg-red-100 sm:mt-0"
