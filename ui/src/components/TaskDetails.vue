@@ -39,11 +39,6 @@ function goBack() {
     router.push({ name: 'task-list' })
 }
 
-function editTask() {
-    if (task.value) {
-        router.push({ name: 'edit-task', params: { id: task.value.id.toString() } })
-    }
-}
 
 onMounted(fetchTask)
 </script>
@@ -67,12 +62,14 @@ onMounted(fetchTask)
             <div><span class="font-semibold">Status:</span> {{ task.status }}</div>
             <div><span class="font-semibold">Priority:</span> {{ task.priority }}</div>
             <div class="mt-4">
-                <button
-                    @click="editTask"
-                    class="px-3 py-1 rounded text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 transition"
+                <router-link
+                    v-if="task"
+                    :to="{ name: 'edit-task', params: { id: task.id.toString() } }"
+                    class="px-3 py-1 rounded text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 transition inline-block text-center"
+                    title="Click to edit, Ctrl+Click to open in new tab"
                 >
                     Edit Task
-                </button>
+                </router-link>
             </div>
         </div>
     </div>
