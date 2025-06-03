@@ -97,13 +97,18 @@ class ShiftController extends Controller
         $baseUrl = config('app.url');
         $appName = config('app.name');
 
+        // Get authenticated user if available
+        $user = auth()->user();
+        $username = $user ? $user->name : null;
+
         $script = <<<SCRIPT
 <script>
     window.shiftConfig = {
         loginRoute: '{$loginRoute}',
         logoutRoute: '{$logoutRoute}',
         baseUrl: '{$baseUrl}',
-        appName: '{$appName}'
+        appName: '{$appName}',
+        username: '{$username}'
     };
 </script>
 SCRIPT;
