@@ -645,6 +645,11 @@ onBeforeUnmount(() => {
                             :class="message.isCurrentUser ? 'text-right' : 'text-left'"
                             class="mb-3"
                         >
+                            <p>
+                                <span v-if="!message.isCurrentUser" class="text-xs">{{ message.sender }} -</span>
+
+                                <span class="mt-1 text-xs opacity-75">{{ message.timestamp }}</span>
+                            </p>
                             <div
                                 :class="
                                     message.isCurrentUser
@@ -653,11 +658,6 @@ onBeforeUnmount(() => {
                                 "
                                 class="inline-block max-w-3/4 min-w-1/3 rounded-lg p-3"
                             >
-                                <p>
-                                    <span v-if="!message.isCurrentUser" class="text-xs">{{ message.sender }} -</span>
-
-                                    <span class="mt-1 text-xs opacity-75">{{ message.timestamp }}</span>
-                                </p>
                                 <div class="markdown-content" v-html="renderMarkdown(message.content)"></div>
 
                                 <!-- Display message attachments if any -->
