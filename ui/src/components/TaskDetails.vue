@@ -2,6 +2,8 @@
 import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import axios from '../axios-config'
+import { Card, CardHeader, CardTitle, CardContent } from './ui/card'
+import { Button } from './ui/button'
 
 type Task = {
     id: number
@@ -44,33 +46,29 @@ onMounted(fetchTask)
 </script>
 
 <template>
-    <div class="max-w-xl mx-auto mt-12 p-6 bg-white rounded-2xl shadow-lg">
-        <div class="flex items-center justify-between mb-6">
-            <h1 class="text-2xl font-bold">Task Details</h1>
-            <button
-                @click="goBack"
-                class="px-4 py-2 rounded text-xs font-semibold bg-gray-50 text-gray-700 border border-gray-200 hover:bg-gray-100 transition"
-            >
-                Back to List
-            </button>
-        </div>
-
-        <div v-if="loading" class="text-gray-500 text-center py-8">Loading...</div>
-        <div v-else-if="error" class="text-red-600 text-center py-8">{{ error }}</div>
-        <div v-else-if="task" class="p-4 rounded-xl bg-gray-50 border border-gray-200">
-            <div><span class="font-semibold">Title:</span> {{ task.title }}</div>
-            <div><span class="font-semibold">Status:</span> {{ task.status }}</div>
-            <div><span class="font-semibold">Priority:</span> {{ task.priority }}</div>
-            <div class="mt-4">
-                <router-link
-                    v-if="task"
-                    :to="{ name: 'edit-task', params: { id: task.id.toString() } }"
-                    class="px-3 py-1 rounded text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 transition inline-block text-center"
-                    title="Click to edit, Ctrl+Click to open in new tab"
-                >
-                    Edit Task
-                </router-link>
+    <Card class="mx-auto mt-6 w-full max-w-xl">
+        <CardHeader class="flex items-center justify-between">
+            <CardTitle>Task Details</CardTitle>
+            <Button variant="outline" size="sm" @click="goBack">Back to List</Button>
+        </CardHeader>
+        <CardContent>
+            <div v-if="loading" class="text-gray-500 text-center py-8">Loading...</div>
+            <div v-else-if="error" class="text-red-600 text-center py-8">{{ error }}</div>
+            <div v-else-if="task" class="space-y-1">
+                <div><span class="font-semibold">Title:</span> {{ task.title }}</div>
+                <div><span class="font-semibold">Status:</span> {{ task.status }}</div>
+                <div><span class="font-semibold">Priority:</span> {{ task.priority }}</div>
+                <div class="mt-4">
+                    <router-link
+                        v-if="task"
+                        :to="{ name: 'edit-task', params: { id: task.id.toString() } }"
+                        class="px-3 py-1 rounded text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 transition inline-block text-center"
+                        title="Click to edit, Ctrl+Click to open in new tab"
+                    >
+                        Edit Task
+                    </router-link>
+                </div>
             </div>
-        </div>
-    </div>
+        </CardContent>
+    </Card>
 </template>

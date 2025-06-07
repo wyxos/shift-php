@@ -5,6 +5,8 @@ import { marked } from 'marked';
 import { onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import axios from '../axios-config';
+import { Card, CardHeader, CardTitle, CardContent } from './ui/card';
+import { Button } from './ui/button';
 
 const router = useRouter();
 const route = useRoute();
@@ -503,16 +505,12 @@ onBeforeUnmount(() => {
 </style>
 
 <template>
-    <div class="flex w-full flex-1 flex-col overflow-hidden rounded bg-white p-4">
-        <div class="mb-4 flex items-center justify-between">
-            <h1 class="text-2xl font-bold">Edit Task</h1>
-            <button
-                class="rounded border border-gray-200 bg-gray-50 px-4 py-2 text-xs font-semibold text-gray-700 transition hover:bg-gray-100"
-                @click="cancel"
-            >
-                Cancel
-            </button>
-        </div>
+    <Card class="flex w-full flex-1 flex-col overflow-hidden">
+        <CardHeader class="flex items-center justify-between">
+            <CardTitle>Edit Task</CardTitle>
+            <Button variant="outline" size="sm" @click="cancel">Cancel</Button>
+        </CardHeader>
+        <CardContent class="flex-1 overflow-hidden">
 
         <div class="flex flex-1 justify-center gap-6 overflow-hidden">
             <div class="flex flex-col">
@@ -609,17 +607,12 @@ onBeforeUnmount(() => {
                         <div v-if="editError" class="text-sm text-red-600">{{ editError }}</div>
                     </div>
                     <div>
-                        <button :disabled="loading" class="mt-2 rounded bg-blue-600 px-4 py-1 font-bold text-white hover:bg-blue-700" type="submit">
+                        <Button :disabled="loading" class="mt-2" type="submit">
                             {{ loading ? 'Saving...' : 'Save' }}
-                        </button>
-                        <button
-                            :disabled="loading"
-                            class="ml-2 rounded bg-gray-200 px-4 py-1 font-bold text-gray-600 hover:bg-gray-300"
-                            type="button"
-                            @click="cancel"
-                        >
+                        </Button>
+                        <Button :disabled="loading" variant="secondary" class="ml-2" type="button" @click="cancel">
                             Cancel
-                        </button>
+                        </Button>
                     </div>
                 </form>
             </div>
@@ -739,5 +732,6 @@ onBeforeUnmount(() => {
                 </div>
             </div>
         </div>
-    </div>
+    </CardContent>
+    </Card>
 </template>

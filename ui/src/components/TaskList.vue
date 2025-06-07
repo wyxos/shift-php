@@ -2,6 +2,8 @@
 import { onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import axios from '../axios-config';
+import { Card, CardHeader, CardTitle, CardContent } from './ui/card';
+import { Button } from './ui/button';
 
 type Task = {
     id: number;
@@ -53,17 +55,14 @@ onMounted(fetchTasks);
 </script>
 
 <template>
-    <div class="mx-auto mt-12 w-full rounded-2xl bg-white p-6 shadow-lg">
-        <div class="mb-6 flex items-center justify-between">
-            <h1 class="text-2xl font-bold">Tasks</h1>
-            <button
-                class="rounded border border-emerald-200 bg-emerald-50 px-4 py-2 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-100"
-                @click="router.push({ name: 'create-task' })"
-            >
+    <Card class="mx-auto mt-6 w-full max-w-3xl">
+        <CardHeader class="flex items-center justify-between">
+            <CardTitle>Tasks</CardTitle>
+            <Button variant="outline" size="sm" @click="router.push({ name: 'create-task' })">
                 + Create
-            </button>
-        </div>
-
+            </Button>
+        </CardHeader>
+        <CardContent>
         <div v-if="loading" class="py-8 text-center text-gray-500">Loading...</div>
         <div v-else-if="error" class="py-8 text-center text-red-600">{{ error }}</div>
         <div v-else-if="tasks.length === 0" class="py-8 text-center text-gray-500">No tasks found</div>
@@ -99,5 +98,6 @@ onMounted(fetchTasks);
                 </button>
             </li>
         </ul>
-    </div>
+        </CardContent>
+    </Card>
 </template>

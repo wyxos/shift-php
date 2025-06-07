@@ -2,6 +2,8 @@
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import axios from '../axios-config';
+import { Card, CardHeader, CardTitle, CardContent, CardFooter } from './ui/card';
+import { Button } from './ui/button';
 
 const router = useRouter();
 const createError = ref<string | null>(null);
@@ -106,17 +108,12 @@ function cancel() {
 </script>
 
 <template>
-    <div class="mx-auto mt-12 w-full rounded-2xl bg-white p-6 shadow-lg">
-        <div class="mb-6 flex items-center justify-between">
-            <h1 class="text-2xl font-bold">Create Task</h1>
-            <button
-                class="rounded border border-gray-200 bg-gray-50 px-4 py-2 text-xs font-semibold text-gray-700 transition hover:bg-gray-100"
-                @click="cancel"
-            >
-                Cancel
-            </button>
-        </div>
-
+    <Card class="mx-auto mt-6 w-full max-w-xl">
+        <CardHeader class="flex items-center justify-between">
+            <CardTitle>Create Task</CardTitle>
+            <Button variant="outline" size="sm" @click="cancel">Cancel</Button>
+        </CardHeader>
+        <CardContent>
         <form class="space-y-3" @submit.prevent="createTask">
             <div>
                 <label class="mb-1 block text-sm font-medium">Title</label>
@@ -167,19 +164,15 @@ function cancel() {
                 </div>
             </div>
             <div v-if="createError" class="text-sm text-red-600">{{ createError }}</div>
-            <div>
-                <button :disabled="loading" class="mt-2 rounded bg-emerald-600 px-4 py-1 font-bold text-white hover:bg-emerald-700" type="submit">
+            <CardFooter class="pt-0">
+                <Button :disabled="loading" type="submit" class="mt-2">
                     {{ loading ? 'Creating...' : 'Create' }}
-                </button>
-                <button
-                    :disabled="loading"
-                    class="ml-2 rounded bg-gray-200 px-4 py-1 font-bold text-gray-600 hover:bg-gray-300"
-                    type="button"
-                    @click="cancel"
-                >
+                </Button>
+                <Button :disabled="loading" variant="secondary" class="ml-2" type="button" @click="cancel">
                     Cancel
-                </button>
-            </div>
+                </Button>
+            </CardFooter>
         </form>
-    </div>
+        </CardContent>
+    </Card>
 </template>
