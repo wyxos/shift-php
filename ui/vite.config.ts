@@ -25,7 +25,12 @@ https = {
 };
 
 export default defineConfig(({ command }) => ({
-    plugins: [vue(), tailwindcss()],
+  plugins: [vue(), tailwindcss()],
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src'),
+    },
+  },
     base: command === 'serve' ? '/' : '/shift-assets/',
     build: {
         outDir: path.resolve(__dirname, '../public/shift-assets'), // Outputs to ../public/shift

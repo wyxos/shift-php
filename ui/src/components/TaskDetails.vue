@@ -2,6 +2,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import axios from '../axios-config'
+import { ArrowLeft, Pencil } from 'lucide-vue-next'
 
 type Task = {
     id: number
@@ -50,7 +51,9 @@ onMounted(fetchTask)
             <button
                 @click="goBack"
                 class="px-4 py-2 rounded text-xs font-semibold bg-gray-50 text-gray-700 border border-gray-200 hover:bg-gray-100 transition"
+                title="Back to List"
             >
+                <ArrowLeft class="h-4 w-4 mr-1 inline-block" />
                 Back to List
             </button>
         </div>
@@ -68,6 +71,7 @@ onMounted(fetchTask)
                     class="px-3 py-1 rounded text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 transition inline-block text-center"
                     title="Click to edit, Ctrl+Click to open in new tab"
                 >
+                    <Pencil class="h-4 w-4 mr-1 inline-block" />
                     Edit Task
                 </router-link>
             </div>

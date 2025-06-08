@@ -5,6 +5,13 @@ import { marked } from 'marked';
 import { onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import axios from '../axios-config';
+import { X, Trash2, Save, Send } from 'lucide-vue-next';
+import Button from './ui/button.vue';
+import Input from './ui/input.vue';
+import Select from './ui/select.vue';
+import Label from './ui/label.vue';
+import FormItem from './ui/form-item.vue';
+import Skeleton from './ui/skeleton.vue';
 
 const router = useRouter();
 const route = useRoute();
@@ -506,53 +513,62 @@ onBeforeUnmount(() => {
     <div class="flex w-full flex-1 flex-col overflow-hidden rounded bg-white p-4">
         <div class="mb-4 flex items-center justify-between">
             <h1 class="text-2xl font-bold">Edit Task</h1>
-            <button
-                class="rounded border border-gray-200 bg-gray-50 px-4 py-2 text-xs font-semibold text-gray-700 transition hover:bg-gray-100"
+            <Button
+                variant="outline"
+                size="sm"
                 @click="cancel"
+                title="Cancel"
             >
-                Cancel
-            </button>
+                <X class="h-4 w-4" />
+            </Button>
         </div>
 
         <div class="flex flex-1 justify-center gap-6 overflow-hidden">
-            <div class="flex flex-col">
-                <div v-if="fetchLoading" class="py-8 text-center text-gray-500">Loading task data...</div>
+            <FormItem class="flex flex-col">
+                <div v-if="fetchLoading" class="space-y-4 py-8">
+                    <Skeleton class="h-10 w-full" />
+                    <Skeleton class="h-40 w-full" />
+                    <div class="flex gap-4">
+                        <Skeleton class="h-10 w-1/2" />
+                        <Skeleton class="h-10 w-1/2" />
+                    </div>
+                </div>
                 <div v-else-if="fetchError" class="py-8 text-center text-red-600">{{ fetchError }}</div>
                 <form v-else class="flex flex-1 flex-col gap-3 overflow-hidden" @submit.prevent="updateTask">
-                    <div class="flex-1 space-y-3 overflow-auto">
-                        <div>
-                            <label class="mb-1 block text-sm font-medium">Title</label>
-                            <input v-model="editTaskData.title" class="w-full rounded border px-2 py-1" required type="text" />
-                        </div>
-                        <div>
-                            <label class="mb-1 block text-sm font-medium">Description</label>
+                    <FormItem class="flex-1 space-y-3 overflow-auto">
+                        <FormItem>
+                            <Label>Title</Label>
+                            <Input v-model="editTaskData.title" required />
+                        </FormItem>
+                        <FormItem>
+                            <Label>Description</Label>
                             <div ref="descriptionEditorContainerRef" class="w-full rounded border" style="min-height: 250px"></div>
-                        </div>
+                        </FormItem>
                         <div class="flex gap-4">
-                            <div>
-                                <label class="mb-1 block text-sm font-medium">Status</label>
-                                <select v-model="editTaskData.status" class="rounded border px-2 py-1">
+                            <FormItem class="flex-1">
+                                <Label>Status</Label>
+                                <Select v-model="editTaskData.status">
                                     <option value="pending">Pending</option>
                                     <option disabled value="in-progress">In progress</option>
                                     <option value="awaiting-feedback">Awaiting feedback</option>
                                     <option value="completed">Completed</option>
                                     <option value="closed">Closed</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="mb-1 block text-sm font-medium">Priority</label>
-                                <select v-model="editTaskData.priority" class="rounded border px-2 py-1">
+                                </Select>
+                            </FormItem>
+                            <FormItem class="flex-1">
+                                <Label>Priority</Label>
+                                <Select v-model="editTaskData.priority">
                                     <option value="low">Low</option>
                                     <option value="medium">Medium</option>
                                     <option value="high">High</option>
-                                </select>
-                            </div>
+                                </Select>
+                            </FormItem>
                         </div>
 
                         <!-- Existing Attachments -->
-                        <div v-if="existingAttachments.length > 0" class="mt-4">
-                            <label class="mb-1 block text-sm font-medium">Existing Attachments</label>
-                            <div class="rounded border bg-gray-50 p-2">
+                        <FormItem v-if="existingAttachments.length > 0" class="mt-4">
+                            <Label>Existing Attachments</Label>
+                            <div class="rounded border bg-card p-2">
                                 <div v-for="attachment in existingAttachments" :key="attachment.id" class="flex items-center justify-between py-1">
                                     <div class="flex items-center">
                                         <svg class="mr-2 h-4 w-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
@@ -562,27 +578,30 @@ onBeforeUnmount(() => {
                                                 fill-rule="evenodd"
                                             />
                                         </svg>
-                                        <a :href="attachment.url" class="text-sm text-blue-600 hover:underline" target="_blank">
+                                        <a :href="attachment.url" class="text-sm text-primary hover:underline" target="_blank">
                                             {{ attachment.original_filename }}
                                         </a>
                                     </div>
-                                    <button class="text-xs text-red-600 hover:text-red-800" type="button" @click="deleteAttachment(attachment.id)">
-                                        Remove
-                                    </button>
+                                    <Button variant="destructive" size="sm" type="button" @click="deleteAttachment(attachment.id)" title="Remove">
+                                        <Trash2 class="h-4 w-4" />
+                                    </Button>
                                 </div>
                             </div>
-                        </div>
+                        </FormItem>
 
                         <!-- New Attachments -->
-                        <div class="mt-4">
-                            <label class="mb-1 block text-sm font-medium">Add New Attachments</label>
+                        <FormItem class="mt-4">
+                            <Label>Add New Attachments</Label>
                             <input :disabled="isUploading" class="w-full rounded border px-2 py-1" multiple type="file" @change="handleFileChange" />
 
                             <!-- Upload error message -->
                             <div v-if="uploadError" class="mt-1 text-sm text-red-500">{{ uploadError }}</div>
 
                             <!-- Loading indicator -->
-                            <div v-if="isUploading" class="mt-1 text-sm text-blue-500">Uploading files...</div>
+                            <div v-if="isUploading" class="mt-2">
+                                <Skeleton class="h-6 w-3/4" />
+                                <Skeleton class="mt-1 h-6 w-1/2" />
+                            </div>
 
                             <!-- List of uploaded files -->
                             <div v-if="uploadedFiles.length > 0" class="mt-3">
@@ -599,37 +618,56 @@ onBeforeUnmount(() => {
                                             </svg>
                                             <span class="truncate">{{ file.original_filename }}</span>
                                         </div>
-                                        <button :disabled="loading" class="text-red-600 hover:text-red-900" type="button" @click="removeFile(file)">
-                                            Remove
-                                        </button>
+                                        <Button :disabled="loading" variant="destructive" size="sm" type="button" @click="removeFile(file)" title="Remove">
+                                            <Trash2 class="h-4 w-4" />
+                                        </Button>
                                     </li>
                                 </ul>
                             </div>
-                        </div>
+                        </FormItem>
                         <div v-if="editError" class="text-sm text-red-600">{{ editError }}</div>
-                    </div>
+                    </FormItem>
                     <div>
-                        <button :disabled="loading" class="mt-2 rounded bg-blue-600 px-4 py-1 font-bold text-white hover:bg-blue-700" type="submit">
+                        <Button :disabled="loading" variant="primary" class="mt-2" type="submit" title="Save">
+                            <Save class="h-4 w-4 mr-1" />
                             {{ loading ? 'Saving...' : 'Save' }}
-                        </button>
-                        <button
+                        </Button>
+                        <Button
                             :disabled="loading"
-                            class="ml-2 rounded bg-gray-200 px-4 py-1 font-bold text-gray-600 hover:bg-gray-300"
+                            variant="outline"
+                            class="ml-2"
                             type="button"
                             @click="cancel"
+                            title="Cancel"
                         >
+                            <X class="h-4 w-4 mr-1" />
                             Cancel
-                        </button>
+                        </Button>
                     </div>
                 </form>
-            </div>
+            </FormItem>
 
             <!-- Thread Section (outside the form) -->
             <div class="flex h-full w-[600px] flex-col overflow-hidden">
                 <!-- External Thread Section -->
                 <h3 class="mb-2 text-sm font-medium">Comments</h3>
                 <!-- Thread loading indicator -->
-                <div v-if="threadLoading" class="py-4 text-center text-gray-500">Loading thread messages...</div>
+                <div v-if="threadLoading" class="space-y-3 py-4">
+                    <div class="flex items-start gap-2">
+                        <Skeleton variant="circle" class="h-8 w-8" />
+                        <div class="w-3/4 space-y-2">
+                            <Skeleton class="h-4 w-1/4" />
+                            <Skeleton class="h-20 w-full" />
+                        </div>
+                    </div>
+                    <div class="flex items-start justify-end gap-2">
+                        <div class="w-3/4 space-y-2">
+                            <Skeleton class="h-4 w-1/4 ml-auto" />
+                            <Skeleton class="h-16 w-full" />
+                        </div>
+                        <Skeleton variant="circle" class="h-8 w-8" />
+                    </div>
+                </div>
                 <div v-else-if="threadError" class="py-4 text-center text-red-600">{{ threadError }}</div>
 
                 <div v-else class="flex flex-1 flex-col overflow-hidden">
@@ -653,8 +691,8 @@ onBeforeUnmount(() => {
                             <div
                                 :class="
                                     message.isCurrentUser
-                                        ? 'rounded-br-none bg-blue-600 font-bold text-white'
-                                        : 'rounded-bl-none bg-gray-200 text-gray-800'
+                                        ? 'rounded-br-none bg-primary font-bold text-primary-foreground'
+                                        : 'rounded-bl-none bg-muted text-muted-foreground'
                                 "
                                 class="inline-block max-w-3/4 min-w-1/3 rounded-lg p-3"
                             >
@@ -695,7 +733,9 @@ onBeforeUnmount(() => {
                                     </svg>
                                     <span class="truncate">{{ file.original_filename }}</span>
                                 </div>
-                                <button class="text-red-600 hover:text-red-900" type="button" @click="removeThreadAttachment(file)">Remove</button>
+                                <Button variant="destructive" size="sm" type="button" @click="removeThreadAttachment(file)" title="Remove">
+                                    <Trash2 class="h-4 w-4" />
+                                </Button>
                             </li>
                         </ul>
                     </div>
@@ -704,7 +744,10 @@ onBeforeUnmount(() => {
                     <div v-if="threadUploadError" class="mb-2 text-sm text-red-500">{{ threadUploadError }}</div>
 
                     <!-- Thread loading indicator -->
-                    <div v-if="isThreadUploading" class="mb-2 text-sm text-blue-500">Uploading attachment...</div>
+                    <div v-if="isThreadUploading" class="mb-2 space-y-1">
+                        <Skeleton class="h-5 w-2/3" />
+                        <Skeleton class="h-5 w-1/2" />
+                    </div>
                 </div>
 
                 <!-- Message input with Toast Editor and attachment button -->
@@ -727,13 +770,16 @@ onBeforeUnmount(() => {
                                 </svg>
                                 <input class="hidden" multiple type="file" @change="handleThreadFileUpload" />
                             </label>
-                            <button
-                                class="flex-grow rounded-r-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                            <Button
+                                variant="primary"
+                                class="flex-grow rounded-r-md"
                                 type="button"
                                 @click.prevent="sendMessage($event)"
+                                title="Send"
                             >
+                                <Send class="h-4 w-4 mr-1" />
                                 Send
-                            </button>
+                            </Button>
                         </div>
                     </div>
                 </div>
