@@ -1,7 +1,19 @@
 <script lang="ts" setup>
-import { ref } from 'vue';
+import Editor from '@toast-ui/editor';
+import '@toast-ui/editor/dist/toastui-editor.css';
+import { ref, shallowRef, onMounted, onBeforeUnmount } from 'vue';
 import { useRouter } from 'vue-router';
 import axios from '../axios-config';
+import { X, Trash2, Plus } from 'lucide-vue-next';
+import Button from './ui/button.vue';
+import Input from './ui/input.vue';
+import Select from './ui/select.vue';
+import Label from './ui/label.vue';
+import FormItem from './ui/form-item.vue';
+import Card from './ui/card.vue';
+import CardHeader from './ui/card-header.vue';
+import CardTitle from './ui/card-title.vue';
+import CardContent from './ui/card-content.vue';
 
 const router = useRouter();
 const createError = ref<string | null>(null);
@@ -10,6 +22,10 @@ const isUploading = ref(false);
 const uploadError = ref<string | null>(null);
 const uploadedFiles = ref<any[]>([]);
 const tempIdentifier = ref(Date.now().toString());
+
+// Description Editor reference
+const descriptionEditorRef = shallowRef<Editor | null>(null);
+const descriptionEditorContainerRef = ref<HTMLElement | null>(null);
 
 const newTask = ref({
     title: '',
@@ -79,10 +95,13 @@ async function createTask() {
         // Get the environment from the config or default to 'production'
         const environment = import.meta.env.VITE_APP_ENV || 'production';
 
+        // Get description content from the editor
+        const descriptionContent = descriptionEditorRef.value?.getMarkdown() || '';
+
         // Create the payload with task data and temp_identifier for attachments
         const payload = {
             title: newTask.value.title,
-            description: newTask.value.description,
+            description: descriptionContent,
             priority: newTask.value.priority,
             source_url,
             environment,
@@ -103,39 +122,73 @@ async function createTask() {
 function cancel() {
     router.push({ name: 'task-list' });
 }
+
+// Initialize the editor when component is mounted
+onMounted(() => {
+    // Initialize Toast Editor after DOM is ready
+    setTimeout(() => {
+        if (descriptionEditorContainerRef.value) {
+            descriptionEditorRef.value = new Editor({
+                el: descriptionEditorContainerRef.value,
+                height: '250px',
+                initialEditType: 'markdown',
+                previewStyle: 'tab',
+                toolbarItems: [
+                    ['heading', 'bold', 'italic', 'strike'],
+                    ['hr', 'quote'],
+                    ['ul', 'ol', 'task', 'indent', 'outdent'],
+                    ['table', 'link'],
+                    ['code', 'codeblock'],
+                ],
+                hideModeSwitch: true, // Only allow markdown mode
+            });
+        }
+    }, 0);
+});
+
+// Clean up the editor when component is unmounted
+onBeforeUnmount(() => {
+    if (descriptionEditorRef.value) {
+        descriptionEditorRef.value.destroy();
+        descriptionEditorRef.value = null;
+    }
+});
 </script>
 
 <template>
-    <div class="mx-auto mt-12 w-full rounded-2xl bg-white p-6 shadow-lg">
-        <div class="mb-6 flex items-center justify-between">
-            <h1 class="text-2xl font-bold">Create Task</h1>
-            <button
-                class="rounded border border-gray-200 bg-gray-50 px-4 py-2 text-xs font-semibold text-gray-700 transition hover:bg-gray-100"
+    <Card class="mx-auto mt-12 w-full">
+        <CardHeader class="flex flex-row items-center justify-between">
+            <CardTitle>Create Task</CardTitle>
+            <Button
+                variant="outline"
+                size="sm"
                 @click="cancel"
+                title="Cancel"
             >
-                Cancel
-            </button>
-        </div>
+                <X class="h-4 w-4" />
+            </Button>
+        </CardHeader>
 
-        <form class="space-y-3" @submit.prevent="createTask">
-            <div>
-                <label class="mb-1 block text-sm font-medium">Title</label>
-                <input v-model="newTask.title" class="w-full rounded border px-2 py-1" required type="text" />
-            </div>
-            <div>
-                <label class="mb-1 block text-sm font-medium">Description</label>
-                <textarea v-model="newTask.description" class="w-full rounded border px-2 py-1" rows="3" type="text"></textarea>
-            </div>
-            <div>
-                <label class="mb-1 block text-sm font-medium">Priority</label>
-                <select v-model="newTask.priority" class="rounded border px-2 py-1">
+        <CardContent>
+            <form class="space-y-3" @submit.prevent="createTask">
+            <FormItem>
+                <Label>Title</Label>
+                <Input v-model="newTask.title" required />
+            </FormItem>
+            <FormItem>
+                <Label>Description</Label>
+                <div ref="descriptionEditorContainerRef" class="w-full rounded border" style="min-height: 250px"></div>
+            </FormItem>
+            <FormItem>
+                <Label>Priority</Label>
+                <Select v-model="newTask.priority">
                     <option value="low">Low</option>
                     <option value="medium">Medium</option>
                     <option value="high">High</option>
-                </select>
-            </div>
-            <div>
-                <label class="mb-1 block text-sm font-medium">Attachments</label>
+                </Select>
+            </FormItem>
+            <FormItem>
+                <Label>Attachments</Label>
                 <input :disabled="isUploading" class="w-full rounded border px-2 py-1" multiple type="file" @change="handleFileChange" />
 
                 <!-- Upload error message -->
@@ -159,27 +212,32 @@ function cancel() {
                                 </svg>
                                 <span class="truncate">{{ file.original_filename }}</span>
                             </div>
-                            <button :disabled="loading" class="text-red-600 hover:text-red-900" type="button" @click="removeFile(file)">
-                                Remove
-                            </button>
+                            <Button :disabled="loading" variant="destructive" size="sm" type="button" @click="removeFile(file)" title="Remove">
+                                <Trash2 class="h-4 w-4" />
+                            </Button>
                         </li>
                     </ul>
                 </div>
-            </div>
-            <div v-if="createError" class="text-sm text-red-600">{{ createError }}</div>
-            <div>
-                <button :disabled="loading" class="mt-2 rounded bg-emerald-600 px-4 py-1 font-bold text-white hover:bg-emerald-700" type="submit">
+            </FormItem>
+            <FormItem v-if="createError" :error="createError"></FormItem>
+            <FormItem>
+                <Button :disabled="loading" variant="primary" class="mt-2" type="submit" title="Create">
+                    <Plus class="h-4 w-4 mr-1" />
                     {{ loading ? 'Creating...' : 'Create' }}
-                </button>
-                <button
+                </Button>
+                <Button
                     :disabled="loading"
-                    class="ml-2 rounded bg-gray-200 px-4 py-1 font-bold text-gray-600 hover:bg-gray-300"
+                    variant="outline"
+                    class="ml-2"
                     type="button"
                     @click="cancel"
+                    title="Cancel"
                 >
+                    <X class="h-4 w-4 mr-1" />
                     Cancel
-                </button>
-            </div>
+                </Button>
+            </FormItem>
         </form>
-    </div>
+        </CardContent>
+    </Card>
 </template>
