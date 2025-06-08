@@ -528,7 +528,7 @@ onBeforeUnmount(() => {
         </CardHeader>
 
         <CardContent class="flex flex-1 justify-center gap-6 overflow-hidden ">
-            <FormItem class="flex flex-col  h-full">
+            <FormItem class="flex flex-col h-full flex-1">
                     <div v-if="fetchLoading" class="space-y-4 py-8">
                         <Skeleton class="h-10 w-full" />
                         <Skeleton class="h-40 w-full" />
