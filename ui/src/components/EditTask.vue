@@ -12,6 +12,10 @@ import Select from './ui/select.vue';
 import Label from './ui/label.vue';
 import FormItem from './ui/form-item.vue';
 import Skeleton from './ui/skeleton.vue';
+import Card from './ui/card.vue';
+import CardHeader from './ui/card-header.vue';
+import CardTitle from './ui/card-title.vue';
+import CardContent from './ui/card-content.vue';
 
 const router = useRouter();
 const route = useRoute();
@@ -510,9 +514,9 @@ onBeforeUnmount(() => {
 </style>
 
 <template>
-    <div class="flex w-full flex-1 flex-col overflow-hidden rounded bg-white p-4">
-        <div class="mb-4 flex items-center justify-between">
-            <h1 class="text-2xl font-bold">Edit Task</h1>
+    <Card class="w-full flex-1 flex flex-col overflow-hidden">
+        <CardHeader class="flex flex-row items-center justify-between">
+            <CardTitle>Edit Task</CardTitle>
             <Button
                 variant="outline"
                 size="sm"
@@ -521,134 +525,134 @@ onBeforeUnmount(() => {
             >
                 <X class="h-4 w-4" />
             </Button>
-        </div>
+        </CardHeader>
 
-        <div class="flex flex-1 justify-center gap-6 overflow-hidden">
-            <FormItem class="flex flex-col">
-                <div v-if="fetchLoading" class="space-y-4 py-8">
-                    <Skeleton class="h-10 w-full" />
-                    <Skeleton class="h-40 w-full" />
-                    <div class="flex gap-4">
-                        <Skeleton class="h-10 w-1/2" />
-                        <Skeleton class="h-10 w-1/2" />
-                    </div>
-                </div>
-                <div v-else-if="fetchError" class="py-8 text-center text-red-600">{{ fetchError }}</div>
-                <form v-else class="flex flex-1 flex-col gap-3 overflow-hidden" @submit.prevent="updateTask">
-                    <FormItem class="flex-1 space-y-3 overflow-auto">
-                        <FormItem>
-                            <Label>Title</Label>
-                            <Input v-model="editTaskData.title" required />
-                        </FormItem>
-                        <FormItem>
-                            <Label>Description</Label>
-                            <div ref="descriptionEditorContainerRef" class="w-full rounded border" style="min-height: 250px"></div>
-                        </FormItem>
+        <CardContent class="flex flex-1 justify-center gap-6 overflow-hidden ">
+            <FormItem class="flex flex-col  h-full">
+                    <div v-if="fetchLoading" class="space-y-4 py-8">
+                        <Skeleton class="h-10 w-full" />
+                        <Skeleton class="h-40 w-full" />
                         <div class="flex gap-4">
-                            <FormItem class="flex-1">
-                                <Label>Status</Label>
-                                <Select v-model="editTaskData.status">
-                                    <option value="pending">Pending</option>
-                                    <option disabled value="in-progress">In progress</option>
-                                    <option value="awaiting-feedback">Awaiting feedback</option>
-                                    <option value="completed">Completed</option>
-                                    <option value="closed">Closed</option>
-                                </Select>
-                            </FormItem>
-                            <FormItem class="flex-1">
-                                <Label>Priority</Label>
-                                <Select v-model="editTaskData.priority">
-                                    <option value="low">Low</option>
-                                    <option value="medium">Medium</option>
-                                    <option value="high">High</option>
-                                </Select>
-                            </FormItem>
+                            <Skeleton class="h-10 w-1/2" />
+                            <Skeleton class="h-10 w-1/2" />
                         </div>
-
-                        <!-- Existing Attachments -->
-                        <FormItem v-if="existingAttachments.length > 0" class="mt-4">
-                            <Label>Existing Attachments</Label>
-                            <div class="rounded border bg-card p-2">
-                                <div v-for="attachment in existingAttachments" :key="attachment.id" class="flex items-center justify-between py-1">
-                                    <div class="flex items-center">
-                                        <svg class="mr-2 h-4 w-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                                            <path
-                                                clip-rule="evenodd"
-                                                d="M8 4a3 3 0 00-3 3v4a5 5 0 0010 0V7a1 1 0 112 0v4a7 7 0 11-14 0V7a5 5 0 0110 0v4a3 3 0 11-6 0V7a1 1 0 012 0v4a1 1 0 102 0V7a3 3 0 00-3-3z"
-                                                fill-rule="evenodd"
-                                            />
-                                        </svg>
-                                        <a :href="attachment.url" class="text-sm text-primary hover:underline" target="_blank">
-                                            {{ attachment.original_filename }}
-                                        </a>
-                                    </div>
-                                    <Button variant="destructive" size="sm" type="button" @click="deleteAttachment(attachment.id)" title="Remove">
-                                        <Trash2 class="h-4 w-4" />
-                                    </Button>
-                                </div>
-                            </div>
-                        </FormItem>
-
-                        <!-- New Attachments -->
-                        <FormItem class="mt-4">
-                            <Label>Add New Attachments</Label>
-                            <input :disabled="isUploading" class="w-full rounded border px-2 py-1" multiple type="file" @change="handleFileChange" />
-
-                            <!-- Upload error message -->
-                            <div v-if="uploadError" class="mt-1 text-sm text-red-500">{{ uploadError }}</div>
-
-                            <!-- Loading indicator -->
-                            <div v-if="isUploading" class="mt-2">
-                                <Skeleton class="h-6 w-3/4" />
-                                <Skeleton class="mt-1 h-6 w-1/2" />
+                    </div>
+                    <div v-else-if="fetchError" class="py-8 text-center text-red-600">{{ fetchError }}</div>
+                    <form v-else class="flex flex-1 flex-col gap-3 " @submit.prevent="updateTask">
+                        <FormItem class="flex-1 space-y-3 ">
+                            <FormItem>
+                                <Label>Title</Label>
+                                <Input v-model="editTaskData.title" required />
+                            </FormItem>
+                            <FormItem>
+                                <Label>Description</Label>
+                                <div ref="descriptionEditorContainerRef" class="w-full rounded border" style="min-height: 250px"></div>
+                            </FormItem>
+                            <div class="flex gap-4">
+                                <FormItem class="flex-1">
+                                    <Label>Status</Label>
+                                    <Select v-model="editTaskData.status">
+                                        <option value="pending">Pending</option>
+                                        <option disabled value="in-progress">In progress</option>
+                                        <option value="awaiting-feedback">Awaiting feedback</option>
+                                        <option value="completed">Completed</option>
+                                        <option value="closed">Closed</option>
+                                    </Select>
+                                </FormItem>
+                                <FormItem class="flex-1">
+                                    <Label>Priority</Label>
+                                    <Select v-model="editTaskData.priority">
+                                        <option value="low">Low</option>
+                                        <option value="medium">Medium</option>
+                                        <option value="high">High</option>
+                                    </Select>
+                                </FormItem>
                             </div>
 
-                            <!-- List of uploaded files -->
-                            <div v-if="uploadedFiles.length > 0" class="mt-3">
-                                <p class="text-sm text-gray-600">Uploaded files:</p>
-                                <ul class="mt-2 divide-y divide-gray-200 rounded-md border border-gray-200">
-                                    <li v-for="file in uploadedFiles" :key="file.path" class="flex items-center justify-between px-3 py-2 text-sm">
+                            <!-- Existing Attachments -->
+                            <FormItem v-if="existingAttachments.length > 0" class="mt-4">
+                                <Label>Existing Attachments</Label>
+                                <div class="rounded border bg-card p-2">
+                                    <div v-for="attachment in existingAttachments" :key="attachment.id" class="flex items-center justify-between py-1">
                                         <div class="flex items-center">
-                                            <svg class="mr-2 h-5 w-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                                            <svg class="mr-2 h-4 w-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
                                                 <path
                                                     clip-rule="evenodd"
                                                     d="M8 4a3 3 0 00-3 3v4a5 5 0 0010 0V7a1 1 0 112 0v4a7 7 0 11-14 0V7a5 5 0 0110 0v4a3 3 0 11-6 0V7a1 1 0 012 0v4a1 1 0 102 0V7a3 3 0 00-3-3z"
                                                     fill-rule="evenodd"
                                                 />
                                             </svg>
-                                            <span class="truncate">{{ file.original_filename }}</span>
+                                            <a :href="attachment.url" class="text-sm text-primary hover:underline" target="_blank">
+                                                {{ attachment.original_filename }}
+                                            </a>
                                         </div>
-                                        <Button :disabled="loading" variant="destructive" size="sm" type="button" @click="removeFile(file)" title="Remove">
+                                        <Button variant="destructive" size="sm" type="button" @click="deleteAttachment(attachment.id)" title="Remove">
                                             <Trash2 class="h-4 w-4" />
                                         </Button>
-                                    </li>
-                                </ul>
-                            </div>
+                                    </div>
+                                </div>
+                            </FormItem>
+
+                            <!-- New Attachments -->
+                            <FormItem class="mt-4">
+                                <Label>Add New Attachments</Label>
+                                <input :disabled="isUploading" class="w-full rounded border px-2 py-1" multiple type="file" @change="handleFileChange" />
+
+                                <!-- Upload error message -->
+                                <div v-if="uploadError" class="mt-1 text-sm text-red-500">{{ uploadError }}</div>
+
+                                <!-- Loading indicator -->
+                                <div v-if="isUploading" class="mt-2">
+                                    <Skeleton class="h-6 w-3/4" />
+                                    <Skeleton class="mt-1 h-6 w-1/2" />
+                                </div>
+
+                                <!-- List of uploaded files -->
+                                <div v-if="uploadedFiles.length > 0" class="mt-3">
+                                    <p class="text-sm text-gray-600">Uploaded files:</p>
+                                    <ul class="mt-2 divide-y divide-gray-200 rounded-md border border-gray-200">
+                                        <li v-for="file in uploadedFiles" :key="file.path" class="flex items-center justify-between px-3 py-2 text-sm">
+                                            <div class="flex items-center">
+                                                <svg class="mr-2 h-5 w-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path
+                                                        clip-rule="evenodd"
+                                                        d="M8 4a3 3 0 00-3 3v4a5 5 0 0010 0V7a1 1 0 112 0v4a7 7 0 11-14 0V7a5 5 0 0110 0v4a3 3 0 11-6 0V7a1 1 0 012 0v4a1 1 0 102 0V7a3 3 0 00-3-3z"
+                                                        fill-rule="evenodd"
+                                                    />
+                                                </svg>
+                                                <span class="truncate">{{ file.original_filename }}</span>
+                                            </div>
+                                            <Button :disabled="loading" variant="destructive" size="sm" type="button" @click="removeFile(file)" title="Remove">
+                                                <Trash2 class="h-4 w-4" />
+                                            </Button>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </FormItem>
+                            <div v-if="editError" class="text-sm text-red-600">{{ editError }}</div>
                         </FormItem>
-                        <div v-if="editError" class="text-sm text-red-600">{{ editError }}</div>
-                    </FormItem>
-                    <div>
-                        <Button :disabled="loading" variant="primary" class="mt-2" type="submit" title="Save">
-                            <Save class="h-4 w-4 mr-1" />
-                            {{ loading ? 'Saving...' : 'Save' }}
-                        </Button>
-                        <Button
-                            :disabled="loading"
-                            variant="outline"
-                            class="ml-2"
-                            type="button"
-                            @click="cancel"
-                            title="Cancel"
-                        >
-                            <X class="h-4 w-4 mr-1" />
-                            Cancel
-                        </Button>
-                    </div>
-                </form>
+                        <div>
+                            <Button :disabled="loading" variant="primary" class="mt-2" type="submit" title="Save">
+                                <Save class="h-4 w-4 mr-1" />
+                                {{ loading ? 'Saving...' : 'Save' }}
+                            </Button>
+                            <Button
+                                :disabled="loading"
+                                variant="outline"
+                                class="ml-2"
+                                type="button"
+                                @click="cancel"
+                                title="Cancel"
+                            >
+                                <X class="h-4 w-4 mr-1" />
+                                Cancel
+                            </Button>
+                        </div>
+                    </form>
             </FormItem>
 
             <!-- Thread Section (outside the form) -->
-            <div class="flex h-full w-[600px] flex-col overflow-hidden">
+            <div class="flex w-[600px] flex-col  h-full overflow-hidden">
                 <!-- External Thread Section -->
                 <h3 class="mb-2 text-sm font-medium">Comments</h3>
                 <!-- Thread loading indicator -->
@@ -670,9 +674,9 @@ onBeforeUnmount(() => {
                 </div>
                 <div v-else-if="threadError" class="py-4 text-center text-red-600">{{ threadError }}</div>
 
-                <div v-else class="flex flex-1 flex-col overflow-hidden">
+                <div v-else class="flex-1 overflow-auto">
                     <!-- Messages container with fixed height and scrolling -->
-                    <div class="mb-4 flex-1 overflow-auto rounded bg-gray-50 px-2">
+                    <div class="mb-4 rounded bg-gray-50 px-2">
                         <div v-if="externalMessages.length === 0" class="py-4 text-center text-gray-500">
                             No messages yet. Start the conversation!
                         </div>
@@ -784,6 +788,6 @@ onBeforeUnmount(() => {
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
+        </CardContent>
+    </Card>
 </template>

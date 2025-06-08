@@ -9,7 +9,7 @@ const props = defineProps<{
 <template>
   <div
     :class="
-      cn('p-6 pt-0', props.class)
+      cn('p-4 pt-0', props.class)
     "
   >
     <slot />

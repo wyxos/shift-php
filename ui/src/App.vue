@@ -74,10 +74,8 @@ const isSidebarOpen = ref(false);
             </aside>
 
             <!-- Main content -->
-            <main class="flex-1 overflow-auto p-4">
-                <div class="container mx-auto">
-                    <router-view></router-view>
-                </div>
+            <main class="flex-1 flex flex-col overflow-hidden p-4">
+                <router-view></router-view>
             </main>
         </div>
 
