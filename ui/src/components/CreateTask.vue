@@ -156,7 +156,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-    <Card class="mx-auto mt-12 w-full">
+    <Card class="w-full">
         <CardHeader class="flex flex-row items-center justify-between">
             <CardTitle>Create Task</CardTitle>
             <Button
