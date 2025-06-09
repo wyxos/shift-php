@@ -332,7 +332,7 @@ onMounted(() => {
         if (messageEditorContainerRef.value) {
             messageEditorRef.value = new Editor({
                 el: messageEditorContainerRef.value,
-                height: '200px',
+                height: 'auto',
                 initialEditType: 'markdown',
                 previewStyle: 'tab',
                 toolbarItems: [
@@ -344,6 +344,23 @@ onMounted(() => {
                 ],
                 hideModeSwitch: true, // Only allow markdown mode
             });
+
+            // Add event listener to adjust height based on content
+            const editorEl = messageEditorContainerRef.value.querySelector('.toastui-editor-main .ProseMirror');
+            if (editorEl) {
+                const observer = new MutationObserver(() => {
+                    const editorHeight = editorEl.scrollHeight;
+                    editorEl.style.height = 'auto';
+                    editorEl.style.maxHeight = '400px';
+                    editorEl.style.overflowY = editorHeight > 400 ? 'auto' : 'hidden';
+                });
+
+                observer.observe(editorEl, {
+                    childList: true,
+                    subtree: true,
+                    characterData: true
+                });
+            }
         }
     }, 0);
 
@@ -366,7 +383,7 @@ onMounted(() => {
 
                 descriptionEditorRef.value = new Editor({
                     el: descriptionEditorContainerRef.value,
-                    height: '250px',
+                    height: 'auto',
                     initialEditType: 'markdown',
                     previewStyle: 'tab',
                     toolbarItems: [
@@ -378,6 +395,23 @@ onMounted(() => {
                     ],
                     hideModeSwitch: true, // Only allow markdown mode
                 });
+
+                // Add event listener to adjust height based on content
+                const editorEl = descriptionEditorContainerRef.value.querySelector('.toastui-editor-main .ProseMirror');
+                if (editorEl) {
+                    const observer = new MutationObserver(() => {
+                        const editorHeight = editorEl.scrollHeight;
+                        editorEl.style.height = 'auto';
+                        editorEl.style.maxHeight = '400px';
+                        editorEl.style.overflowY = editorHeight > 400 ? 'auto' : 'hidden';
+                    });
+
+                    observer.observe(editorEl, {
+                        childList: true,
+                        subtree: true,
+                        characterData: true
+                    });
+                }
 
                 // Set initial content if available
                 if (editTaskData.value.description) {
