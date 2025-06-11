@@ -34,6 +34,7 @@ const deletedAttachmentIds = ref<number[]>([]);
 const externalMessages = ref<any[]>([]);
 const threadLoading = ref(false);
 const threadError = ref<string | null>(null);
+const messagesContainerRef = ref<HTMLElement | null>(null);
 
 // Toast Editor references
 const messageEditorRef = shallowRef<Editor | null>(null);
@@ -94,6 +95,15 @@ async function fetchTask() {
     }
 }
 
+// Function to scroll to the bottom of the messages container
+function scrollToBottom() {
+    setTimeout(() => {
+        if (messagesContainerRef.value) {
+            messagesContainerRef.value.scrollTop = messagesContainerRef.value.scrollHeight;
+        }
+    }, 0);
+}
+
 // Load task threads from the server
 async function loadTaskThreads(taskId: string) {
     threadLoading.value = true;
@@ -111,6 +121,9 @@ async function loadTaskThreads(taskId: string) {
                 isCurrentUser: thread.is_current_user,
                 attachments: thread.attachments || [],
             }));
+
+            // Scroll to bottom after messages are loaded
+            scrollToBottom();
         }
     } catch (e: any) {
         threadError.value = e.response?.data?.error || e.message || 'Error loading threads';
@@ -272,6 +285,9 @@ async function sendMessage(event?: Event) {
 
         threadAttachments.value = [];
         threadTempIdentifier.value = Date.now().toString() + '_thread';
+
+        // Scroll to bottom to show the new message
+        scrollToBottom();
     } catch (e: any) {
         console.error('Error sending message:', e);
         threadError.value = e.response?.data?.error || e.message || 'Failed to send message';
@@ -708,7 +724,7 @@ onBeforeUnmount(() => {
                 </div>
                 <div v-else-if="threadError" class="py-4 text-center text-red-600">{{ threadError }}</div>
 
-                <div v-else class="flex-1 overflow-auto">
+                <div v-else ref="messagesContainerRef" class="flex-1 overflow-auto">
                     <!-- Messages container with fixed height and scrolling -->
                     <div class="mb-4 rounded bg-gray-50 px-2">
                         <div v-if="externalMessages.length === 0" class="py-4 text-center text-gray-500">
