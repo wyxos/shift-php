@@ -362,7 +362,7 @@ onMounted(() => {
             });
 
             // Add event listener to adjust height based on content
-            const editorEl = messageEditorContainerRef.value.querySelector('.toastui-editor-main .ProseMirror');
+            const editorEl = messageEditorContainerRef.value.querySelector('.toastui-editor-main .ProseMirror') as HTMLElement;
             if (editorEl) {
                 const observer = new MutationObserver(() => {
                     const editorHeight = editorEl.scrollHeight;
@@ -413,7 +413,7 @@ onMounted(() => {
                 });
 
                 // Add event listener to adjust height based on content
-                const editorEl = descriptionEditorContainerRef.value.querySelector('.toastui-editor-main .ProseMirror');
+                const editorEl = descriptionEditorContainerRef.value.querySelector('.toastui-editor-main .ProseMirror') as HTMLElement;
                 if (editorEl) {
                     const observer = new MutationObserver(() => {
                         const editorHeight = editorEl.scrollHeight;
