@@ -7,6 +7,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Log;
 use Wyxos\Shift\TaskCreated;
+use Wyxos\Shift\TasksAwaitingFeedback;
 use Wyxos\Shift\TaskThreadUpdated;
 
 class ShiftNotificationController extends Controller
@@ -38,6 +39,8 @@ class ShiftNotificationController extends Controller
                 return $this->handleThreadUpdate($payload);
             case 'task.created':
                 return $this->handleTaskCreated($payload);
+            case 'tasks.awaiting_feedback':
+                return $this->handleTasksAwaitingFeedback($payload);
             default:
                 return response()->json([
                     'production' => app()->isProduction(),
@@ -76,6 +79,24 @@ class ShiftNotificationController extends Controller
         $user = User::find($payload['user_id']);
 
         $user->notify(new TaskCreated($payload));
+
+        return response()->json([
+            'production' => app()->isProduction(),
+            'message' => 'Notification processed successfully',
+        ]);
+    }
+
+    /**
+     * Handle tasks awaiting feedback notifications.
+     *
+     * @param array $payload
+     * @return JsonResponse
+     */
+    protected function handleTasksAwaitingFeedback(array $payload)
+    {
+        $user = User::find($payload['user_id']);
+
+        $user->notify(new TasksAwaitingFeedback($payload));
 
         return response()->json([
             'production' => app()->isProduction(),
