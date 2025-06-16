@@ -13,7 +13,7 @@ class ShiftTaskController extends Controller
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function index()
+    public function index(Request $request)
     {
         $apiToken = config('shift.token');
         $project = config('shift.project');
@@ -29,22 +29,29 @@ class ShiftTaskController extends Controller
 
             $project = config('shift.project');
 
+            $params = [
+                'project' => $project,
+                'user' => [
+                    'name' => auth()->user()->name,
+                    'email' => auth()->user()->email,
+                    'id' => auth()->user()->id,
+                    'environment' => config('app.env'),
+                    'url' => config('app.url'),
+                ],
+                'metadata' => [
+                    'url' => config('app.url'),
+                    'environment' => config('app.env'),
+                ],
+            ];
+
+            // Add status filter if provided
+            if ($request->has('status')) {
+                $params['status'] = $request->status;
+            }
+
             $response = Http::withToken($apiToken)
                 ->acceptJson()
-                ->get($url, [
-                    'project' => $project,
-                    'user' => [
-                        'name' => auth()->user()->name,
-                        'email' => auth()->user()->email,
-                        'id' => auth()->user()->id,
-                        'environment' => config('app.env'),
-                        'url' => config('app.url'),
-                    ],
-                    'metadata' => [
-                        'url' => config('app.url'),
-                        'environment' => config('app.env'),
-                    ],
-                ]);
+                ->get($url, $params);
 
             if ($response->successful()) {
                 return response()->json($response->json());
