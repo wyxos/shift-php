@@ -158,7 +158,7 @@ onMounted(() => {
                             <span>{{ option.label }}</span>
                         </label>
                     </div>
-                    <Button variant="secondary" size="xs" @click="resetFilters">Reset</Button>
+                    <Button variant="secondary" size="sm" @click="resetFilters">Reset</Button>
                 </div>
                 <Button
                     variant="primary"
