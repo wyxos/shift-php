@@ -9,7 +9,6 @@ import CardHeader from './ui/card-header.vue';
 import CardTitle from './ui/card-title.vue';
 import CardContent from './ui/card-content.vue';
 import Badge from './ui/badge.vue';
-import Select from './ui/select.vue';
 import Label from './ui/label.vue';
 
 type Task = {
@@ -25,11 +24,9 @@ const tasks = ref<Task[]>([]);
 const loading = ref(true);
 const error = ref<string | null>(null);
 const deleteLoading = ref<number | null>(null);
-const statusFilter = ref<string>('');
 
-// Status options for the filter
+// Status options, mirrored from app
 const statusOptions = [
-    { value: '', label: 'All Statuses' },
     { value: 'pending', label: 'Pending' },
     { value: 'in-progress', label: 'In Progress' },
     { value: 'awaiting-feedback', label: 'Awaiting Feedback' },
@@ -37,14 +34,33 @@ const statusOptions = [
     { value: 'closed', label: 'Closed' },
 ];
 
+// Track selected statuses as an array for checkbox filters
+const selectedStatuses = ref<string[]>([]);
+
+function getAllStatusValues(): string[] {
+    return statusOptions.map((o) => o.value);
+}
+
+function normalizeStatusesFromRoute(q: unknown): string[] {
+    if (!q || (Array.isArray(q) && q.length === 0)) return getAllStatusValues();
+    if (Array.isArray(q)) {
+        const vals = q.map(String).filter(Boolean);
+        return vals.length ? vals : getAllStatusValues();
+    }
+    return [String(q)].filter(Boolean);
+}
+
 async function fetchTasks() {
     loading.value = true;
     error.value = null;
     try {
-        // Add status filter to request if selected
-        const params: Record<string, string> = {};
-        if (statusFilter.value) {
-            params.status = statusFilter.value;
+        // Send array of statuses only when a subset is selected; if all selected, omit to show all
+        const params: Record<string, any> = {};
+        if (
+            selectedStatuses.value.length > 0 &&
+            selectedStatuses.value.length < statusOptions.length
+        ) {
+            params.status = selectedStatuses.value;
         }
 
         const response = await axios.get('/shift/api/tasks', { params });
@@ -56,20 +72,31 @@ async function fetchTasks() {
     }
 }
 
-// Update URL when filter changes
+// Update URL when filters change
 function updateUrlWithFilters() {
+    const isAll = selectedStatuses.value.length === statusOptions.length;
     router.push({
         query: {
-            ...(statusFilter.value ? { status: statusFilter.value } : {})
-        }
+            ...(isAll ? {} : { status: selectedStatuses.value }),
+        },
     });
 }
 
-// Watch for changes to the status filter
-watch(statusFilter, () => {
+// Watch for changes to the status checkboxes
+watch(
+    selectedStatuses,
+    () => {
+        fetchTasks();
+        updateUrlWithFilters();
+    },
+    { deep: true },
+);
+
+function resetFilters() {
+    selectedStatuses.value = getAllStatusValues();
     fetchTasks();
-    updateUrlWithFilters();
-});
+    router.push({ query: {} });
+}
 
 async function deleteTask(taskId: number) {
     if (!confirm('Are you sure you want to delete this task?')) {
@@ -103,11 +130,8 @@ function getStatusVariant(status: string) {
 
 // Initialize filters from URL parameters on mount
 onMounted(() => {
-    // Check if status filter is in URL
-    if (route.query.status) {
-        statusFilter.value = route.query.status as string;
-    }
-
+    // Preload statuses from URL; if none provided, default to all checked
+    selectedStatuses.value = normalizeStatusesFromRoute(route.query.status);
     fetchTasks();
 });
 </script>
@@ -117,18 +141,24 @@ onMounted(() => {
         <CardHeader class="flex flex-row items-center justify-between">
             <CardTitle>Tasks</CardTitle>
             <div class="flex items-center gap-4">
-                <div class="flex items-center gap-2">
+                <div class="flex items-center gap-3">
                     <Filter class="h-4 w-4 text-muted-foreground" />
-                    <Label for="status-filter" class="text-sm">Status:</Label>
-                    <Select
-                        id="status-filter"
-                        v-model="statusFilter"
-                        class="w-40"
-                    >
-                        <option v-for="option in statusOptions" :key="option.value" :value="option.value">
-                            {{ option.label }}
-                        </option>
-                    </Select>
+                    <Label class="text-sm">Status:</Label>
+                    <div class="flex flex-wrap items-center gap-3">
+                        <label
+                            v-for="option in statusOptions"
+                            :key="option.value"
+                            class="flex items-center gap-2 text-sm"
+                        >
+                            <input
+                                type="checkbox"
+                                :value="option.value"
+                                v-model="selectedStatuses"
+                            />
+                            <span>{{ option.label }}</span>
+                        </label>
+                    </div>
+                    <Button variant="secondary" size="xs" @click="resetFilters">Reset</Button>
                 </div>
                 <Button
                     variant="primary"
@@ -154,14 +184,13 @@ onMounted(() => {
                     </Badge>
                     <span class="ml-2 text-xs text-muted-foreground uppercase">{{ task.priority }}</span>
                     <div class="mt-2 flex space-x-2 sm:mt-0">
-                        <Button
-                            variant="secondary"
-                            size="sm"
-                            @click="router.push({ name: 'edit-task', params: { id: task.id.toString() } })"
+                        <router-link
+                            :to="{ name: 'edit-task', params: { id: task.id.toString() } }"
+                            class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring border border-input bg-transparent shadow-sm hover:bg-accent hover:text-accent-foreground h-8 px-3"
                             title="Edit"
                         >
                             <Pencil class="h-4 w-4" />
-                        </Button>
+                        </router-link>
                         <Button
                             variant="destructive"
                             size="sm"
