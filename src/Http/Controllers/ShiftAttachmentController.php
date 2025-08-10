@@ -314,21 +314,21 @@ class ShiftAttachmentController extends Controller
                 ]);
 
             if ($response->successful()) {
-                // Get the content type and filename from the response headers
-                $contentType = $response->header('Content-Type');
-                $contentDisposition = $response->header('Content-Disposition');
-
-                // Extract filename from Content-Disposition header
-                $filename = 'attachment';
-                if ($contentDisposition && preg_match('/filename="(.+)"/', $contentDisposition, $matches)) {
-                    $filename = $matches[1];
+                // Forward upstream headers so images can render inline when appropriate
+                $headers = [];
+                foreach (['Content-Type', 'Content-Disposition', 'Cache-Control', 'Last-Modified', 'ETag'] as $h) {
+                    $val = $response->header($h);
+                    if (!is_null($val)) {
+                        $headers[$h] = $val;
+                    }
                 }
 
-                // Return the file as a download
-                return response($response->body(), 200, [
-                    'Content-Type' => $contentType,
-                    'Content-Disposition' => 'attachment; filename="' . $filename . '"',
-                ]);
+                // If upstream did not set Content-Disposition for images, do not force download
+                if (!isset($headers['Content-Disposition'])) {
+                    // no-op, let browser decide based on Content-Type
+                }
+
+                return response($response->body(), 200, $headers);
             }
 
             return response()->json(['error' => $response->json()['message'] ?? 'Failed to download attachment'], 422);
