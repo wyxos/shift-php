@@ -27,6 +27,7 @@ Route::middleware(config('shift.routes.middleware'))->group(function () {
     Route::post('/shift/api/attachments/upload-multiple', [ShiftAttachmentController::class, 'uploadMultiple'])->name('attachments.upload-multiple');
     Route::delete('/shift/api/attachments/remove-temp', [ShiftAttachmentController::class, 'removeTemp'])->name('attachments.remove-temp');
     Route::get('/shift/api/attachments/list-temp', [ShiftAttachmentController::class, 'listTemp'])->name('attachments.list-temp');
+    Route::get('/shift/api/attachments/{attachment}/download', [ShiftAttachmentController::class, 'download'])->name('attachments.download');
 
     Route::get('/shift/{page?}', [ShiftController::class, 'index'])
         ->name('shift.dashboard')

@@ -12,6 +12,18 @@ const COMPOSER_PATH = path.join(PACKAGE_DIR, 'composer.json');
 const UI_PATH = path.join(PACKAGE_DIR, './ui');
 const git = simpleGit();
 
+function getArgValue(flag) {
+    const idx = process.argv.indexOf(flag);
+    if (idx !== -1 && process.argv[idx + 1]) {
+        return process.argv[idx + 1];
+    }
+    const prefixed = process.argv.find(a => a.startsWith(`${flag}=`));
+    if (prefixed) {
+        return prefixed.split('=').slice(1).join('=');
+    }
+    return null;
+}
+
 async function getCurrentVersion() {
     const composer = await fs.readJson(COMPOSER_PATH);
     return composer.version || '0.0.0';
@@ -32,14 +44,26 @@ async function main() {
         const currentVersion = await getCurrentVersion();
         const suggestedVersion = calculateNextPatch(currentVersion);
 
-        const { version } = await inquirer.prompt([
-            {
-                name: 'version',
-                message: `Enter version to release (current: ${currentVersion})`,
-                default: suggestedVersion,
-                validate: input => semver.valid(input) ? true : 'Must be a valid semver (e.g., 1.0.0)',
-            },
-        ]);
+        // Support non-interactive mode via CLI arg or env var
+        const cliVersion = getArgValue('--version') || getArgValue('-v') || process.env.RELEASE_VERSION;
+        let version = cliVersion;
+
+        if (version) {
+            if (!semver.valid(version)) {
+                throw new Error(`Invalid version provided: ${version}`);
+            }
+            console.log(`Using provided version: ${version}`);
+        } else {
+            const answers = await inquirer.prompt([
+                {
+                    name: 'version',
+                    message: `Enter version to release (current: ${currentVersion})`,
+                    default: suggestedVersion,
+                    validate: input => semver.valid(input) ? true : 'Must be a valid semver (e.g., 1.0.0)',
+                },
+            ]);
+            version = answers.version;
+        }
 
         console.log(`🚀 Releasing version ${version}`);
 
