@@ -5,54 +5,69 @@ import os from 'os';
 import path from 'path';
 import { defineConfig } from 'vite';
 
-let https = {};
+export default defineConfig(({ command }) => {
+  const isServe = command === 'serve';
 
-let certBasePath = '';
+  // Only add HTTPS when valid certs are found (dev only)
+  let httpsOptions: { key: string; cert: string } | undefined = undefined;
 
-if (process.platform === 'win32') {
-    certBasePath = path.join(os.homedir(), '.config', 'herd', 'config', 'valet', 'Certificates');
-}
+  if (isServe) {
+    let certBasePath = '';
 
-if (process.platform === 'darwin') {
-    certBasePath = path.join(os.homedir(), 'Library', 'Application Support', 'Herd', 'config', 'valet', 'Certificates');
-}
+    if (process.platform === 'win32') {
+      certBasePath = path.join(os.homedir(), '.config', 'herd', 'config', 'valet', 'Certificates');
+    } else if (process.platform === 'darwin') {
+      certBasePath = path.join(os.homedir(), 'Library', 'Application Support', 'Herd', 'config', 'valet', 'Certificates');
+    }
 
-const certName = 'shift-sdk-package.test';
+    const certName = process.env.VITE_CERT_NAME || 'shift-sdk-package.test';
+    const keyPath = process.env.VITE_SSL_KEY_PATH || path.join(certBasePath, `${certName}.key`);
+    const certPath = process.env.VITE_SSL_CERT_PATH || path.join(certBasePath, `${certName}.crt`);
 
-https = {
-    key: fs.readFileSync(path.join(certBasePath, `${certName}.key`), 'utf8'),
-    cert: fs.readFileSync(path.join(certBasePath, `${certName}.crt`), 'utf8'),
-};
+    if (fs.existsSync(keyPath) && fs.existsSync(certPath)) {
+      httpsOptions = {
+        key: fs.readFileSync(keyPath, 'utf8'),
+        cert: fs.readFileSync(certPath, 'utf8'),
+      };
+    }
+  }
 
-export default defineConfig(({ command }) => ({
-  plugins: [vue(), tailwindcss()],
-  resolve: {
-    alias: {
-      '@': path.resolve(__dirname, './src'),
+  const config = {
+    plugins: [vue(), tailwindcss()],
+    resolve: {
+      alias: {
+        '@': path.resolve(__dirname, './src'),
+      },
     },
-  },
-    base: command === 'serve' ? '/' : '/shift-assets/',
+    base: isServe ? '/' : '/shift-assets/',
     build: {
-        outDir: path.resolve(__dirname, '../public/shift-assets'), // Outputs to ../public/shift
-        assetsDir: 'assets', // This makes assets output to ../public/shift/assets
-        emptyOutDir: true, // Cleans output directory before build
+      outDir: path.resolve(__dirname, '../public/shift-assets'),
+      assetsDir: 'assets',
+      emptyOutDir: true,
     },
     server: {
-        host: 'shift-sdk-package.test',
-        port: 5174,
-        strictPort: true,
-        hmr: {
-            host: 'shift-sdk-package.test',
+      host: process.env.VITE_DEV_HOST || 'shift-sdk-package.test',
+      port: 5174,
+      strictPort: true,
+      hmr: {
+        host: process.env.VITE_DEV_HOST || 'shift-sdk-package.test',
+      },
+      cors: true,
+      proxy: {
+        '/shift/api': {
+          target: process.env.VITE_PROXY_TARGET || 'https://shift-sdk-package.test',
+          changeOrigin: true,
+          secure: false,
         },
-        https: https,
-        cors: true,
-        proxy: {
-            // Proxy API requests to the Laravel backend
-            '/shift/api': {
-                target: 'https://shift-sdk-package.test',
-                changeOrigin: true,
-                secure: false,
-            },
-        },
+      },
     },
-}));
+  };
+
+  // Conditionally attach https only when certs are available to satisfy TS types
+  if (httpsOptions) {
+    // @ts-expect-error - Vite types accept https options object here
+    config.server.https = httpsOptions;
+  }
+
+  return config;
+});

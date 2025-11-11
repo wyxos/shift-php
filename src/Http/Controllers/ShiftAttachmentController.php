@@ -282,4 +282,93 @@ class ShiftAttachmentController extends Controller
             return response()->json(['error' => 'Failed to list attachments: ' . $e->getMessage()], 500);
         }
     }
+
+    /**
+     * Proxy a download request for an attachment from the SHIFT API.
+     *
+     * @param int $attachmentId
+     * @return \Illuminate\Http\Response|\Illuminate\Http\RedirectResponse
+     */
+    public function download(int $attachmentId)
+    {
+        $apiToken = config('shift.token');
+        $project = config('shift.project');
+
+        if (empty($apiToken) || empty($project)) {
+            return response()->json(['error' => 'SHIFT configuration missing. Please install Shift package and configure SHIFT_TOKEN and SHIFT_PROJECT in .env'], 500);
+        }
+
+        $baseUrl = config('shift.url');
+
+        try {
+            $parsed = parse_url($baseUrl);
+            $host = $parsed['host'] ?? '';
+            $isLocalInsecureHost = app()->environment('local') && ($host === 'localhost' || $host === '127.0.0.1' || str_ends_with($host, '.test'));
+
+            $params = [
+                'project' => $project,
+                'user' => [
+                    'name' => auth()->user()->name,
+                    'email' => auth()->user()->email,
+                    'id' => auth()->user()->id,
+                    'environment' => config('app.env'),
+                    'url' => config('app.url'),
+                ],
+                'metadata' => [
+                    'url' => config('app.url'),
+                    'environment' => config('app.env'),
+                ],
+            ];
+
+            // Stream the file from SHIFT. Depending on backend behavior this may:
+            // - Return a binary body with headers
+            // - Return a 302 redirect to a signed URL
+            // - Return JSON containing a URL
+            $client = Http::withToken($apiToken)
+                ->retry(2, 200)
+                ->timeout(60)
+                ->connectTimeout(10);
+
+            // In local dev with .test/self-signed certs, disable TLS verification for convenience
+            if ($isLocalInsecureHost) {
+                $client = $client->withoutVerifying();
+            }
+
+            // Do a regular GET (no streaming) to avoid mismatched Content-Length after decompression
+            $response = $client->get($baseUrl . '/api/attachments/' . $attachmentId . '/download', $params);
+
+            // Handle explicit redirect
+            if ($response->status() === 302 && $response->header('Location')) {
+                return redirect()->away($response->header('Location'));
+            }
+
+            // Handle JSON body providing a URL
+            $json = null;
+            try {
+                $json = $response->json();
+            } catch (\Throwable $t) {
+                // Non-JSON response; ignore
+            }
+            if (is_array($json) && isset($json['url'])) {
+                return redirect()->away($json['url']);
+            }
+
+            // Handle successful binary response by proxying headers/body
+            if ($response->successful()) {
+                // Only forward safe headers; omit Content-Length/Encoding to prevent browser aborts
+                $headers = [];
+                foreach (['Content-Type', 'Content-Disposition', 'Cache-Control'] as $header) {
+                    if ($response->header($header)) {
+                        $headers[$header] = $response->header($header);
+                    }
+                }
+
+                return response($response->body(), 200, $headers);
+            }
+
+            return response()->json(['error' => $json['message'] ?? 'Failed to download attachment'], $response->status() ?: 422);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Failed to download attachment: ' . $e->getMessage()], 500);
+        }
+    }
 }
