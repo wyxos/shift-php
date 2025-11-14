@@ -4,6 +4,7 @@ namespace Wyxos\Shift\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
+use Symfony\Component\Process\Process;
 
 class ToggleShiftCommand extends Command
 {
@@ -67,9 +68,25 @@ class ToggleShiftCommand extends Command
         File::put($composerPath, json_encode($composer, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n");
 
         $this->line('');
-        $this->warn('Next step: composer update wyxos/shift-php');
+        $this->info('Running composer update...');
+        $this->line('');
 
-        return Command::SUCCESS;
+        // Run composer update
+        $process = new Process(['composer', 'update', 'wyxos/shift-php', '--no-interaction'], base_path());
+        $process->setTimeout(300); // 5 minute timeout
+        $process->run(function ($type, $buffer) {
+            $this->output->write($buffer);
+        });
+
+        if ($process->isSuccessful()) {
+            $this->line('');
+            $this->info('✓ Successfully switched to ' . ($targetLocal ? 'local' : 'online') . ' version!');
+            return Command::SUCCESS;
+        } else {
+            $this->line('');
+            $this->error('Composer update failed. Please review the output above.');
+            return Command::FAILURE;
+        }
     }
 
     /**
