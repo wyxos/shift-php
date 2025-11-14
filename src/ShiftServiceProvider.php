@@ -6,6 +6,7 @@ use Illuminate\Support\ServiceProvider;
 use Wyxos\Shift\Commands\InstallShiftCommand;
 use Wyxos\Shift\Commands\PublishShiftCommand;
 use Wyxos\Shift\Commands\ShiftTestCommand;
+use Wyxos\Shift\Commands\ToggleShiftCommand;
 
 class ShiftServiceProvider extends ServiceProvider
 {
@@ -41,6 +42,7 @@ class ShiftServiceProvider extends ServiceProvider
                 InstallShiftCommand::class,
                 ShiftTestCommand::class,
                 PublishShiftCommand::class,
+                ToggleShiftCommand::class,
             ]);
         }
     }
