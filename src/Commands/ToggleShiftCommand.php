@@ -8,7 +8,7 @@ use Symfony\Component\Process\Process;
 
 class ToggleShiftCommand extends Command
 {
-    protected $signature = 'shift:toggle {--local : Force local mode} {--online : Force online mode} {--path= : Custom path to local SDK package}';
+    protected $signature = 'shift:toggle {--local : Force local mode} {--online : Force online mode} {--path= : Custom path to local SDK package} {--no-update : Skip composer update}';
 
     protected $description = 'Toggle between local and online versions of the SHIFT SDK package in composer.json';
 
@@ -40,36 +40,56 @@ class ToggleShiftCommand extends Command
 
         // Determine target state
         $targetLocal = $forceLocal ? true : ($forceOnline ? false : !$isLocal);
+        $skipUpdate = $this->option('no-update');
 
         if ($isLocal === $targetLocal) {
             $this->info('Already using ' . ($targetLocal ? 'local' : 'online') . ' version.');
+            if ($skipUpdate) {
+                return Command::SUCCESS;
+            }
+            $this->line('');
+            $this->info('Running composer update to ensure latest version...');
+            $this->line('');
+        }
+
+        // Only update composer.json if we're actually switching modes
+        if ($isLocal !== $targetLocal) {
+            if ($targetLocal) {
+                $sdkPath = $this->getLocalSdkPath();
+                $fullPath = base_path($sdkPath);
+                
+                if (!File::exists($fullPath . '/composer.json')) {
+                    $this->error("Local SDK package not found at: {$fullPath}");
+                    $this->line('');
+                    $this->line("You can specify a custom path using: --path=/path/to/shift-php");
+                    return Command::FAILURE;
+                }
+                
+                $this->switchToLocal($composer, $sdkPath);
+                $this->info("✓ Switched to local version (path: {$sdkPath})");
+            } else {
+                $this->switchToOnline($composer);
+                $this->info('✓ Switched to online version');
+            }
+
+            // Write updated composer.json
+            File::put($composerPath, json_encode($composer, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n");
+        }
+
+        // Skip composer update if --no-update flag is set
+        if ($skipUpdate) {
             return Command::SUCCESS;
         }
 
-        if ($targetLocal) {
-            $sdkPath = $this->getLocalSdkPath();
-            $fullPath = base_path($sdkPath);
-            
-            if (!File::exists($fullPath . '/composer.json')) {
-                $this->error("Local SDK package not found at: {$fullPath}");
-                $this->line('');
-                $this->line("You can specify a custom path using: --path=/path/to/shift-php");
-                return Command::FAILURE;
-            }
-            
-            $this->switchToLocal($composer, $sdkPath);
-            $this->info("✓ Switched to local version (path: {$sdkPath})");
+        if ($isLocal === $targetLocal) {
+            // Already in target mode, just update
+            $this->line('');
         } else {
-            $this->switchToOnline($composer);
-            $this->info('✓ Switched to online version');
+            // Switching modes, show update message
+            $this->line('');
+            $this->info('Running composer update...');
+            $this->line('');
         }
-
-        // Write updated composer.json
-        File::put($composerPath, json_encode($composer, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n");
-
-        $this->line('');
-        $this->info('Running composer update...');
-        $this->line('');
 
         // Run composer update
         $process = new Process(['composer', 'update', 'wyxos/shift-php', '--no-interaction'], base_path());
