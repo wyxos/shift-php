@@ -6,9 +6,9 @@ use Illuminate\Console\Command;
 
 class PublishShiftCommand extends Command
 {
-    protected $signature = 'shift:publish {--group=all : The asset group to publish (config, assets, all)}';
+    protected $signature = 'shift:publish {--group=public : The asset group to publish (config, public, all)}';
 
-    protected $description = 'Publish SHIFT SDK assets (config, assets, or all).';
+    protected $description = 'Publish SHIFT SDK assets (config, public assets, or all). Defaults to public assets only.';
 
     public function handle()
     {
