@@ -6,16 +6,13 @@ import { onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import axios from '../axios-config';
 import { X, Trash2, Save, Send } from 'lucide-vue-next';
-import Button from './ui/button.vue';
-import Input from './ui/input.vue';
+import { Button } from '@shift/ui/button';
+import { Input } from '@shift/ui/input';
+import { Label } from '@shift/ui/label';
+import { Skeleton } from '@shift/ui/skeleton';
+import { Card, CardHeader, CardTitle, CardContent } from '@shift/ui/card';
 import Select from './ui/select.vue';
-import Label from './ui/label.vue';
 import FormItem from './ui/form-item.vue';
-import Skeleton from './ui/skeleton.vue';
-import Card from './ui/card.vue';
-import CardHeader from './ui/card-header.vue';
-import CardTitle from './ui/card-title.vue';
-import CardContent from './ui/card-content.vue';
 
 const router = useRouter();
 const route = useRoute();
@@ -682,7 +679,7 @@ onBeforeUnmount(() => {
                             <div v-if="editError" class="text-sm text-red-600">{{ editError }}</div>
                         </FormItem>
                         <div>
-                            <Button :disabled="loading" variant="primary" class="mt-2" type="submit" title="Save">
+                            <Button :disabled="loading" variant="default" class="mt-2" type="submit" title="Save">
                                 <Save class="h-4 w-4 mr-1" />
                                 {{ loading ? 'Saving...' : 'Save' }}
                             </Button>
@@ -825,7 +822,7 @@ onBeforeUnmount(() => {
                                 <input class="hidden" multiple type="file" @change="handleThreadFileUpload" />
                             </label>
                             <Button
-                                variant="primary"
+                                variant="default"
                                 class="flex-grow rounded-r-md"
                                 type="button"
                                 @click.prevent="sendMessage($event)"

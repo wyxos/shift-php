@@ -4,7 +4,12 @@
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@shift/components/*": ["../../../resources/js/components/*"],
+      "@shift/lib/*": ["../../../resources/js/lib/*"],
+      "@shift/composables/*": ["../../../resources/js/composables/*"],
+      "@shift/ui/*": ["../../../resources/js/components/ui/*"],
+      "@shift/utils": ["../../../resources/js/lib/utils"]
     },
 
     /* Linting */

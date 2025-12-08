@@ -5,15 +5,12 @@ import { ref, shallowRef, onMounted, onBeforeUnmount } from 'vue';
 import { useRouter } from 'vue-router';
 import axios from '../axios-config';
 import { X, Trash2, Plus } from 'lucide-vue-next';
-import Button from './ui/button.vue';
-import Input from './ui/input.vue';
+import { Button } from '@shift/ui/button';
+import { Input } from '@shift/ui/input';
+import { Label } from '@shift/ui/label';
+import { Card, CardHeader, CardTitle, CardContent } from '@shift/ui/card';
 import Select from './ui/select.vue';
-import Label from './ui/label.vue';
 import FormItem from './ui/form-item.vue';
-import Card from './ui/card.vue';
-import CardHeader from './ui/card-header.vue';
-import CardTitle from './ui/card-title.vue';
-import CardContent from './ui/card-content.vue';
 
 const router = useRouter();
 const createError = ref<string | null>(null);
@@ -238,7 +235,7 @@ onBeforeUnmount(() => {
             </FormItem>
             <FormItem v-if="createError" :error="createError"></FormItem>
             <FormItem>
-                <Button :disabled="loading" variant="primary" class="mt-2" type="submit" title="Create">
+                <Button :disabled="loading" variant="default" class="mt-2" type="submit" title="Create">
                     <Plus class="h-4 w-4 mr-1" />
                     {{ loading ? 'Creating...' : 'Create' }}
                 </Button>
