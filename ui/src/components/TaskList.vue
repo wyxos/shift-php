@@ -3,13 +3,10 @@ import { onMounted, ref, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import axios from '../axios-config';
 import { Pencil, Trash2, Plus, Filter } from 'lucide-vue-next';
-import Button from './ui/button.vue';
-import Card from './ui/card.vue';
-import CardHeader from './ui/card-header.vue';
-import CardTitle from './ui/card-title.vue';
-import CardContent from './ui/card-content.vue';
+import { Button } from '@shift/ui/button';
+import { Card, CardHeader, CardTitle, CardContent } from '@shift/ui/card';
 import Badge from './ui/badge.vue';
-import Label from './ui/label.vue';
+import { Label } from '@shift/ui/label';
 
 type Task = {
     id: number;
@@ -161,7 +158,7 @@ onMounted(() => {
                     <Button variant="secondary" size="sm" @click="resetFilters">Reset</Button>
                 </div>
                 <Button
-                    variant="primary"
+                    variant="default"
                     size="sm"
                     @click="router.push({ name: 'create-task' })"
                 >
