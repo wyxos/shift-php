@@ -37,6 +37,11 @@ export default defineConfig(({ command }) => {
     resolve: {
       alias: {
         '@': path.resolve(__dirname, './src'),
+        '@shift/components': path.resolve(__dirname, '../../../resources/js/components'),
+        '@shift/lib': path.resolve(__dirname, '../../../resources/js/lib'),
+        '@shift/composables': path.resolve(__dirname, '../../../resources/js/composables'),
+        '@shift/ui': path.resolve(__dirname, '../../../resources/js/components/ui'),
+        '@shift/utils': path.resolve(__dirname, '../../../resources/js/lib/utils.ts'),
       },
     },
     base: isServe ? '/' : '/shift-assets/',
