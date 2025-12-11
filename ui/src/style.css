@@ -1,1 +1,6 @@
 @import "../../../../resources/css/app.css";
+
+/* Ensure Tailwind scans the shift app's UI components for class generation */
+@source "../../../../resources/js/components/**/*.vue";
+@source "../../../../resources/js/layouts/**/*.vue";
+@source "./**/*.vue";

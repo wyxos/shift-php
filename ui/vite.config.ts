@@ -35,14 +35,47 @@ export default defineConfig(({ command }) => {
   const config = {
     plugins: [vue(), tailwindcss()],
     resolve: {
-      alias: {
-        '@': path.resolve(__dirname, './src'),
-        '@shift/components': path.resolve(__dirname, '../../../resources/js/components'),
-        '@shift/lib': path.resolve(__dirname, '../../../resources/js/lib'),
-        '@shift/composables': path.resolve(__dirname, '../../../resources/js/composables'),
-        '@shift/ui': path.resolve(__dirname, '../../../resources/js/components/ui'),
-        '@shift/utils': path.resolve(__dirname, '../../../resources/js/lib/utils.ts'),
-      },
+      alias: [
+        // Map shift's @/ imports to shift resources (must come before shift-php's @ alias)
+        {
+          find: /^@\/components\/(.*)$/,
+          replacement: path.resolve(__dirname, '../../../resources/js/components/$1'),
+        },
+        {
+          find: /^@\/lib\/(.*)$/,
+          replacement: path.resolve(__dirname, '../../../resources/js/lib/$1'),
+        },
+        {
+          find: /^@\/composables\/(.*)$/,
+          replacement: path.resolve(__dirname, '../../../resources/js/composables/$1'),
+        },
+        // Shift-php's own @ alias (for files in shift-php/src)
+        {
+          find: /^@\/(.*)$/,
+          replacement: path.resolve(__dirname, './src/$1'),
+        },
+        // Shift component aliases
+        {
+          find: /^@shift\/components\/(.*)$/,
+          replacement: path.resolve(__dirname, '../../../resources/js/components/$1'),
+        },
+        {
+          find: /^@shift\/lib\/(.*)$/,
+          replacement: path.resolve(__dirname, '../../../resources/js/lib/$1'),
+        },
+        {
+          find: /^@shift\/composables\/(.*)$/,
+          replacement: path.resolve(__dirname, '../../../resources/js/composables/$1'),
+        },
+        {
+          find: /^@shift\/ui\/(.*)$/,
+          replacement: path.resolve(__dirname, '../../../resources/js/components/ui/$1'),
+        },
+        {
+          find: /^@shift\/utils$/,
+          replacement: path.resolve(__dirname, '../../../resources/js/lib/utils.ts'),
+        },
+      ],
     },
     base: isServe ? '/' : '/shift-assets/',
     build: {
