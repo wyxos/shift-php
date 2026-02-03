@@ -7,5 +7,6 @@ interface Window {
         baseUrl: string;
         appName: string;
         username: string;
+        email?: string;
     };
 }

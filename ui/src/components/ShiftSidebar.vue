@@ -1,11 +1,22 @@
 <script setup lang="ts">
-import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarGroup, SidebarGroupLabel } from '@shift/ui/sidebar';
+import {
+    Sidebar,
+    SidebarContent,
+    SidebarFooter,
+    SidebarGroup,
+    SidebarGroupLabel,
+    SidebarHeader,
+    SidebarMenu,
+    SidebarMenuButton,
+    SidebarMenuItem,
+} from '@shift/ui/sidebar';
 import { useRoute } from 'vue-router';
 import { Inbox } from 'lucide-vue-next';
 import AppLogo from '@shift/components/AppLogo.vue';
 
 const appUrl = window.shiftConfig.baseUrl;
 const username = window.shiftConfig.username;
+const userEmail = window.shiftConfig.email;
 const route = useRoute();
 
 const mainNavItems = [
@@ -36,11 +47,7 @@ const mainNavItems = [
                 <SidebarGroupLabel>Platform</SidebarGroupLabel>
                 <SidebarMenu>
                     <SidebarMenuItem v-for="item in mainNavItems" :key="item.title">
-                        <SidebarMenuButton 
-                            as-child 
-                            :is-active="route.path === item.href"
-                            :tooltip="item.title"
-                        >
+                        <SidebarMenuButton as-child :is-active="route.path === item.href" :tooltip="item.title">
                             <router-link :to="item.href">
                                 <component :is="item.icon" />
                                 <span>{{ item.title }}</span>
@@ -51,15 +58,16 @@ const mainNavItems = [
             </SidebarGroup>
         </SidebarContent>
 
-        <SidebarFooter v-if="username">
+        <SidebarFooter>
             <SidebarMenu>
-                <SidebarMenuItem>
+                <SidebarMenuItem v-if="username">
                     <SidebarMenuButton size="lg" class="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground">
-                        <div class="flex aspect-square size-8 items-center justify-center rounded-md bg-sidebar-primary text-sidebar-primary-foreground">
+                        <div class="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
                             <span class="text-xs font-semibold">{{ username.charAt(0).toUpperCase() }}</span>
                         </div>
                         <div class="grid flex-1 text-left text-sm leading-tight">
-                            <span class="truncate font-semibold">{{ username }}</span>
+                            <span class="truncate font-medium">{{ username }}</span>
+                            <span v-if="userEmail" class="truncate text-xs text-muted-foreground">{{ userEmail }}</span>
                         </div>
                     </SidebarMenuButton>
                 </SidebarMenuItem>
