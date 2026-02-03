@@ -8,6 +8,12 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
+      "@/components/*": ["../../../resources/js/components/*"],
+      "@/components/ui/*": ["../../../resources/js/components/ui/*"],
+      "@/lib/*": ["../../../resources/js/lib/*"],
+      "@/composables/*": ["../../../resources/js/composables/*"],
+      "@/types": ["../../../resources/js/types/index.d.ts"],
+      "@/types/*": ["../../../resources/js/types/*"],
       "@shift/components/*": ["../../../resources/js/components/*"],
       "@shift/lib/*": ["../../../resources/js/lib/*"],
       "@shift/composables/*": ["../../../resources/js/composables/*"],
