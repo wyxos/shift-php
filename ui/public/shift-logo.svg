@@ -7,10 +7,10 @@
     </linearGradient>
   </defs>
   <g fill="url(#shift-blue)" transform="translate(0 64) scale(3.2)">
-    <path d="M32 20h86l-10 8H22z"/>
-    <path d="M40 34h64l-8 4H32z"/>
-    <path d="M24 44h98l-12 8H12z"/>
-    <path d="M44 58h68l-8 4H36z"/>
-    <path d="M14 68h110l-14 8H0z"/>
+    <path d="M32 24h86l-10 12H22z"/>
+    <path d="M40 42h64l-8 6H32z"/>
+    <path d="M24 54h98l-12 12H12z"/>
+    <path d="M44 72h68l-8 6H36z"/>
+    <path d="M14 84h110l-14 12H0z"/>
   </g>
 </svg>
