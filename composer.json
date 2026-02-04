@@ -14,7 +14,18 @@
     }
   ],
   "minimum-stability": "stable",
-  "require": [],
+  "require": {
+    "wyxos/shift-shared": "*"
+  },
+  "repositories": [
+    {
+      "type": "path",
+      "url": "../shift-shared",
+      "options": {
+        "symlink": true
+      }
+    }
+  ],
   "extra": {
     "laravel": {
       "providers": [

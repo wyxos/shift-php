@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <defs>
+    <linearGradient id="shift-blue" x1="0" y1="0" x2="512" y2="0" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0B1D4D"/>
+      <stop offset="0.5" stop-color="#123B8C"/>
+      <stop offset="1" stop-color="#1B4DB5"/>
+    </linearGradient>
+  </defs>
+  <g fill="url(#shift-blue)" transform="translate(0 64) scale(3.2)">
+    <path d="M32 20h86l-10 8H22z"/>
+    <path d="M40 34h64l-8 4H32z"/>
+    <path d="M24 44h98l-12 8H12z"/>
+    <path d="M44 58h68l-8 4H36z"/>
+    <path d="M14 68h110l-14 8H0z"/>
+  </g>
+</svg>

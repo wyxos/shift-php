@@ -46,8 +46,16 @@ export default defineConfig(({ command }) => {
           replacement: path.resolve(__dirname, '../../../resources/js/lib/$1'),
         },
         {
+          find: /^@\/extensions\/(.*)$/,
+          replacement: path.resolve(__dirname, '../../../resources/js/extensions/$1'),
+        },
+        {
           find: /^@\/composables\/(.*)$/,
           replacement: path.resolve(__dirname, '../../../resources/js/composables/$1'),
+        },
+        {
+          find: /^@shared\/(.*)$/,
+          replacement: path.resolve(__dirname, '../../shift-shared-ui/src/$1'),
         },
         // Shift-php's own @ alias (for files in shift-php/src)
         {
@@ -75,6 +83,30 @@ export default defineConfig(({ command }) => {
           find: /^@shift\/utils$/,
           replacement: path.resolve(__dirname, '../../../resources/js/lib/utils.ts'),
         },
+        {
+          find: /^@tiptap\/(.*)$/,
+          replacement: path.resolve(__dirname, 'node_modules/@tiptap/$1'),
+        },
+        {
+          find: /^highlight\.js\/(.*)$/,
+          replacement: path.resolve(__dirname, 'node_modules/highlight.js/$1'),
+        },
+        {
+          find: /^lowlight$/,
+          replacement: path.resolve(__dirname, 'node_modules/lowlight'),
+        },
+        {
+          find: /^emoji-picker-element$/,
+          replacement: path.resolve(__dirname, 'node_modules/emoji-picker-element'),
+        },
+        {
+          find: /^lucide-vue-next$/,
+          replacement: path.resolve(__dirname, 'node_modules/lucide-vue-next'),
+        },
+        {
+          find: /^axios$/,
+          replacement: path.resolve(__dirname, 'node_modules/axios'),
+        },
       ],
     },
     base: isServe ? '/' : '/shift-assets/',
@@ -87,6 +119,13 @@ export default defineConfig(({ command }) => {
       host: process.env.VITE_DEV_HOST || 'shift-sdk-package.test',
       port: 5174,
       strictPort: true,
+      fs: {
+        allow: [
+          path.resolve(__dirname),
+          path.resolve(__dirname, '../../shift-shared-ui'),
+          path.resolve(__dirname, '../../../resources'),
+        ],
+      },
       hmr: {
         host: process.env.VITE_DEV_HOST || 'shift-sdk-package.test',
       },
