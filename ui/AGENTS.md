@@ -1,5 +1,9 @@
 # SHIFT Dashboard UI (`packages/shift-php/ui/`)
 
+## PROFILE.md (Required)
+- Read and follow `PROFILE.md` in the repo root before making UI changes.
+- Its guidance on quality, naming, and refactoring is mandatory for all work.
+
 ## Package Identity
 - Vue 3 + Vite SPA for the `/shift` dashboard shipped with the PHP SDK package.
 - Built output is written to `packages/shift-php/public/shift-assets/` (do not hand-edit).
