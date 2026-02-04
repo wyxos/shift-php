@@ -6,15 +6,28 @@
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc -b && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "lint": "eslint . --fix",
+    "lint:check": "eslint .",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.1.7",
     "@toast-ui/editor": "^3.2.2",
     "@toast-ui/editor-plugin-color-syntax": "^3.1.0",
+    "@tiptap/core": "^2.6.6",
+    "@tiptap/extension-code-block-lowlight": "^2.26.1",
+    "@tiptap/extension-image": "^2.6.6",
+    "@tiptap/extension-placeholder": "^2.6.6",
+    "@tiptap/starter-kit": "^2.6.6",
+    "@tiptap/vue-3": "^2.6.6",
     "axios": "^1.9.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "emoji-picker-element": "^1.26.3",
+    "highlight.js": "^11.11.1",
+    "lowlight": "^3.3.0",
     "lucide-vue-next": "^0.513.0",
     "marked": "^15.0.12",
     "shadcn-vue": "^2.2.0",
@@ -29,6 +42,15 @@
     "@vue/tsconfig": "^0.7.0",
     "typescript": "~5.8.3",
     "vite": "^6.3.5",
-    "vue-tsc": "^2.2.8"
+    "vue-tsc": "^2.2.8",
+    "@eslint/js": "^9.19.0",
+    "@vue/eslint-config-typescript": "^14.3.0",
+    "eslint": "^9.26.0",
+    "eslint-config-prettier": "^10.0.1",
+    "eslint-plugin-vue": "^9.32.0",
+    "typescript-eslint": "^8.23.0",
+    "vitest": "^3.2.3",
+    "@vue/test-utils": "^2.4.6",
+    "jsdom": "^26.1.0"
   }
 }

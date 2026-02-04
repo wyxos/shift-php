@@ -8,14 +8,22 @@
       "@/components/*": ["../../../resources/js/components/*"],
       "@/components/ui/*": ["../../../resources/js/components/ui/*"],
       "@/lib/*": ["../../../resources/js/lib/*"],
+      "@/extensions/*": ["../../../resources/js/extensions/*"],
       "@/composables/*": ["../../../resources/js/composables/*"],
+      "@shared/*": ["../../shift-shared-ui/src/*"],
       "@/types": ["../../../resources/js/types/index.d.ts"],
       "@/types/*": ["../../../resources/js/types/*"],
       "@shift/components/*": ["../../../resources/js/components/*"],
       "@shift/lib/*": ["../../../resources/js/lib/*"],
       "@shift/composables/*": ["../../../resources/js/composables/*"],
       "@shift/ui/*": ["../../../resources/js/components/ui/*"],
-      "@shift/utils": ["../../../resources/js/lib/utils"]
+      "@shift/utils": ["../../../resources/js/lib/utils"],
+      "axios": ["./node_modules/axios"],
+      "@tiptap/*": ["./node_modules/@tiptap/*"],
+      "lowlight": ["./node_modules/lowlight"],
+      "highlight.js/*": ["./node_modules/highlight.js/*"],
+      "emoji-picker-element": ["./node_modules/emoji-picker-element"],
+      "lucide-vue-next": ["./node_modules/lucide-vue-next"]
     },
 
     /* Linting */
@@ -26,5 +34,13 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.vue"]
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "src/**/*.vue",
+    "../../../resources/js/types/**/*.d.ts",
+    "../../shift-shared-ui/src/**/*.ts",
+    "../../shift-shared-ui/src/**/*.d.ts",
+    "../../shift-shared-ui/src/**/*.vue"
+  ]
 }
