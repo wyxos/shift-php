@@ -528,7 +528,7 @@ onMounted(() => {
   </Card>
 
   <Sheet v-model:open="createOpen">
-    <SheetContent side="right" class="flex h-full w-1/2 max-w-none flex-col p-0 lg:w-1/3">
+    <SheetContent side="right" class="flex h-full w-full max-w-none flex-col p-0 sm:w-1/2 sm:max-w-none lg:w-1/3">
       <form class="flex h-full flex-col" @submit.prevent="createTask">
         <SheetHeader class="p-0">
           <div class="px-6 pt-6 pb-3">
@@ -584,7 +584,7 @@ onMounted(() => {
   </Sheet>
 
   <Sheet v-model:open="editOpen">
-    <SheetContent side="right" class="flex h-full w-1/2 max-w-none flex-col p-0">
+    <SheetContent side="right" class="flex h-full w-full max-w-none flex-col p-0 sm:w-1/2 sm:max-w-none">
       <form class="flex h-full flex-col" @submit.prevent="saveEdit">
         <SheetHeader class="p-0">
           <div class="px-6 pt-6 pb-3">
