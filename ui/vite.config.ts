@@ -7,6 +7,7 @@ import { defineConfig } from 'vite';
 
 export default defineConfig(({ command }) => {
   const isServe = command === 'serve';
+  const portalResourcesPath = path.resolve(__dirname, '../../../../shift/resources/js');
 
   // Only add HTTPS when valid certs are found (dev only)
   let httpsOptions: { key: string; cert: string } | undefined = undefined;
@@ -33,29 +34,39 @@ export default defineConfig(({ command }) => {
   }
 
   const config = {
-    plugins: [vue(), tailwindcss()],
+    plugins: [
+      vue({
+        template: {
+          compilerOptions: {
+            // Treat web components as custom elements
+            isCustomElement: (tag) => tag === 'emoji-picker',
+          },
+        },
+      }),
+      tailwindcss(),
+    ],
     resolve: {
       alias: [
         // Map shift's @/ imports to shift resources (must come before shift-php's @ alias)
         {
           find: /^@\/components\/(.*)$/,
-          replacement: path.resolve(__dirname, '../../../resources/js/components/$1'),
+          replacement: path.resolve(portalResourcesPath, 'components/$1'),
         },
         {
           find: /^@\/lib\/(.*)$/,
-          replacement: path.resolve(__dirname, '../../../resources/js/lib/$1'),
+          replacement: path.resolve(portalResourcesPath, 'lib/$1'),
         },
         {
           find: /^@\/extensions\/(.*)$/,
-          replacement: path.resolve(__dirname, '../../../resources/js/extensions/$1'),
+          replacement: path.resolve(portalResourcesPath, 'extensions/$1'),
         },
         {
           find: /^@\/composables\/(.*)$/,
-          replacement: path.resolve(__dirname, '../../../resources/js/composables/$1'),
+          replacement: path.resolve(portalResourcesPath, 'composables/$1'),
         },
         {
           find: /^@shared\/(.*)$/,
-          replacement: path.resolve(__dirname, '../../shift-shared-ui/src/$1'),
+          replacement: path.resolve(portalResourcesPath, 'shared/$1'),
         },
         // Shift-php's own @ alias (for files in shift-php/src)
         {
@@ -65,23 +76,23 @@ export default defineConfig(({ command }) => {
         // Shift component aliases
         {
           find: /^@shift\/components\/(.*)$/,
-          replacement: path.resolve(__dirname, '../../../resources/js/components/$1'),
+          replacement: path.resolve(portalResourcesPath, 'components/$1'),
         },
         {
           find: /^@shift\/lib\/(.*)$/,
-          replacement: path.resolve(__dirname, '../../../resources/js/lib/$1'),
+          replacement: path.resolve(portalResourcesPath, 'lib/$1'),
         },
         {
           find: /^@shift\/composables\/(.*)$/,
-          replacement: path.resolve(__dirname, '../../../resources/js/composables/$1'),
+          replacement: path.resolve(portalResourcesPath, 'composables/$1'),
         },
         {
           find: /^@shift\/ui\/(.*)$/,
-          replacement: path.resolve(__dirname, '../../../resources/js/components/ui/$1'),
+          replacement: path.resolve(portalResourcesPath, 'components/ui/$1'),
         },
         {
           find: /^@shift\/utils$/,
-          replacement: path.resolve(__dirname, '../../../resources/js/lib/utils.ts'),
+          replacement: path.resolve(portalResourcesPath, 'lib/utils.ts'),
         },
         {
           find: /^@tiptap\/(.*)$/,
@@ -122,8 +133,7 @@ export default defineConfig(({ command }) => {
       fs: {
         allow: [
           path.resolve(__dirname),
-          path.resolve(__dirname, '../../shift-shared-ui'),
-          path.resolve(__dirname, '../../../resources'),
+          path.resolve(__dirname, '../../../../shift/resources'),
         ],
       },
       hmr: {
