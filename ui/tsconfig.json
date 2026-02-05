@@ -14,11 +14,14 @@
       "@/composables/*": ["../../../resources/js/composables/*"],
       "@/types": ["../../../resources/js/types/index.d.ts"],
       "@/types/*": ["../../../resources/js/types/*"],
+      "@shared/*": ["../../../resources/js/shared/*", "../../../../shift/resources/js/shared/*"],
       "@shift/components/*": ["../../../resources/js/components/*"],
       "@shift/lib/*": ["../../../resources/js/lib/*"],
       "@shift/composables/*": ["../../../resources/js/composables/*"],
       "@shift/ui/*": ["../../../resources/js/components/ui/*"],
-      "@shift/utils": ["../../../resources/js/lib/utils"]
+      "@shift/utils": ["../../../resources/js/lib/utils"],
+      "vue": ["./node_modules/vue"],
+      "@vue/*": ["./node_modules/@vue/*"]
     }
   }
 }
