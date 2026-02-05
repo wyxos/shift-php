@@ -7,7 +7,12 @@ import { defineConfig } from 'vite';
 
 export default defineConfig(({ command }) => {
   const isServe = command === 'serve';
-  const portalResourcesPath = path.resolve(__dirname, '../../../../shift/resources/js');
+  const portalResourcesPath = process.env.VITE_PORTAL_RESOURCES_PATH
+    ? path.resolve(process.env.VITE_PORTAL_RESOURCES_PATH)
+    : path.resolve(__dirname, '../../../resources/js');
+  const defaultSharedPath = path.resolve(portalResourcesPath, 'shared');
+  const fallbackSharedPath = path.resolve(__dirname, '../../../../shift/resources/js/shared');
+  const sharedResourcesPath = fs.existsSync(defaultSharedPath) ? defaultSharedPath : fallbackSharedPath;
 
   // Only add HTTPS when valid certs are found (dev only)
   let httpsOptions: { key: string; cert: string } | undefined = undefined;
@@ -66,7 +71,7 @@ export default defineConfig(({ command }) => {
         },
         {
           find: /^@shared\/(.*)$/,
-          replacement: path.resolve(portalResourcesPath, 'shared/$1'),
+          replacement: path.resolve(sharedResourcesPath, '$1'),
         },
         // Shift-php's own @ alias (for files in shift-php/src)
         {
@@ -133,7 +138,8 @@ export default defineConfig(({ command }) => {
       fs: {
         allow: [
           path.resolve(__dirname),
-          path.resolve(__dirname, '../../../../shift/resources'),
+          path.resolve(portalResourcesPath, '..'),
+          path.resolve(sharedResourcesPath, '..'),
         ],
       },
       hmr: {
