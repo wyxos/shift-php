@@ -6,7 +6,7 @@ import { Button } from '@shift/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@shift/ui/card'
 import { Input } from '@shift/ui/input'
 import { Label } from '@shift/ui/label'
-import { Sheet, SheetContent, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from '@shift/ui/sheet'
+import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from '@shift/ui/sheet'
 import Badge from './ui/badge.vue'
 import Select from './ui/select.vue'
 import ShiftEditor from '@shared/components/ShiftEditor.vue'
@@ -406,7 +406,9 @@ onMounted(() => {
             <SheetHeader class="p-0">
               <div class="px-6 pt-6 pb-3">
                 <SheetTitle>Filters</SheetTitle>
-                <p class="mt-1 text-sm text-muted-foreground">Refine your task list in real time.</p>
+                <SheetDescription class="mt-1 text-sm text-muted-foreground">
+                  Refine your task list in real time.
+                </SheetDescription>
               </div>
             </SheetHeader>
             <div class="flex-1 space-y-6 overflow-auto px-6 pb-6">
@@ -533,7 +535,9 @@ onMounted(() => {
         <SheetHeader class="p-0">
           <div class="px-6 pt-6 pb-3">
             <SheetTitle>Create Task</SheetTitle>
-            <p class="mt-1 text-sm text-muted-foreground">Add a new task to your project queue.</p>
+            <SheetDescription class="mt-1 text-sm text-muted-foreground">
+              Add a new task to your project queue.
+            </SheetDescription>
           </div>
         </SheetHeader>
 
@@ -589,7 +593,9 @@ onMounted(() => {
         <SheetHeader class="p-0">
           <div class="px-6 pt-6 pb-3">
             <SheetTitle>Task Details</SheetTitle>
-            <p class="mt-1 text-sm text-muted-foreground">Review updates and track the external thread.</p>
+            <SheetDescription class="mt-1 text-sm text-muted-foreground">
+              Review updates and track the external thread.
+            </SheetDescription>
           </div>
         </SheetHeader>
 
