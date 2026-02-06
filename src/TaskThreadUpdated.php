@@ -2,15 +2,11 @@
 
 namespace Wyxos\Shift;
 
-use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Notifications\Messages\MailMessage;
-use Illuminate\Notifications\Notification;
-use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Route;
+use Shift\Core\Notifications\TaskThreadUpdated as CoreTaskThreadUpdated;
 
-class TaskThreadUpdated extends Notification
+class TaskThreadUpdated extends CoreTaskThreadUpdated
 {
-    use Queueable;
 
     /**
      * Create a new notification instance.
@@ -24,43 +20,16 @@ class TaskThreadUpdated extends Notification
         //                request('created_at')
     }
 
-    /**
-     * Get the notification's delivery channels.
-     *
-     * @return array<int, string>
-     */
-    public function via(object $notifiable): array
+    protected function resolveUrl(): ?string
     {
-        return ['mail'];
-    }
+        if (!empty($this->data['url'])) {
+            return $this->data['url'];
+        }
 
-    /**
-     * Get the mail representation of the notification.
-     */
-    public function toMail(object $notifiable): MailMessage
-    {
-        $taskTitle = $this->data['task_title'] ?? 'Task #' . $this->data['task_id'];
-        $threadType = ucfirst($this->data['type']) . ' thread';
-        $snippet = Str::limit($this->data['content'], 120);
-        $url = route('shift.dashboard') . '/tasks/' . $this->data['task_id'] . '/edit';
+        if (Route::has('shift.dashboard')) {
+            return route('shift.dashboard') . '/tasks/' . $this->data['task_id'] . '/edit';
+        }
 
-        return (new MailMessage)
-            ->subject("New reply in {$threadType} for {$taskTitle}")
-            ->line("A new message was posted.")
-            ->line("Preview: \"{$snippet}\"")
-            ->action('View Thread', $url)
-            ->line('Please do not reply to this email directly.');
-    }
-
-    /**
-     * Get the array representation of the notification.
-     *
-     * @return array<string, mixed>
-     */
-    public function toArray(object $notifiable): array
-    {
-        return [
-            //
-        ];
+        return null;
     }
 }
