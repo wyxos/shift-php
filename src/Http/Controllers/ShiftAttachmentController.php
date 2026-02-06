@@ -5,7 +5,7 @@ namespace Wyxos\Shift\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Http;
-use Wyxos\ShiftShared\ChunkedUploadConfig;
+use Shift\Core\ChunkedUploadConfig;
 
 class ShiftAttachmentController extends Controller
 {
