@@ -1,4 +1,6 @@
 <script lang="ts" setup>
+import 'vue-sonner/style.css'
+import { Toaster } from 'vue-sonner'
 import AuthErrorModal from './components/AuthErrorModal.vue';
 import ShiftShell from './components/ShiftShell.vue';
 import ShiftSidebar from './components/ShiftSidebar.vue';
@@ -20,4 +22,6 @@ const loginUrl = window.shiftConfig.loginRoute;
     </ShiftShell>
 
     <AuthErrorModal :redirect-url="loginUrl" />
+
+    <Toaster rich-colors />
 </template>
