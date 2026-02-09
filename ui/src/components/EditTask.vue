@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+/* eslint-disable max-lines */
 import Editor from '@toast-ui/editor';
 import '@toast-ui/editor/dist/toastui-editor.css';
 import { marked } from 'marked';

@@ -37,8 +37,10 @@ const stubs = {
   SheetContent: { template: '<div><slot /></div>' },
   SheetHeader: { template: '<div><slot /></div>' },
   SheetTitle: { template: '<div><slot /></div>' },
+  SheetDescription: { template: '<div><slot /></div>' },
   SheetFooter: { template: '<div><slot /></div>' },
   SheetTrigger: { template: '<div><slot /></div>' },
+  ImageLightbox: { template: '<div />' },
 }
 
 const seedTasks = [
