@@ -5,7 +5,7 @@ namespace Wyxos\Shift\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Http;
-use Shift\Core\ChunkedUploadConfig;
+use Wyxos\Shift\Support\ChunkedUploads;
 
 class ShiftAttachmentController extends Controller
 {
@@ -29,7 +29,7 @@ class ShiftAttachmentController extends Controller
         try {
             // Validate the request
         $request->validate([
-            'file' => 'required|file|max:'.ChunkedUploadConfig::MAX_UPLOAD_KB,
+            'file' => 'required|file|max:'.ChunkedUploads::maxUploadKb(),
             'temp_identifier' => 'required|string',
         ]);
 
@@ -87,7 +87,10 @@ class ShiftAttachmentController extends Controller
                 return response()->json($response->json());
             }
 
-            return response()->json(['error' => $response->json()['message'] ?? 'Failed to upload attachment'], 422);
+            return response()->json(
+                $response->json() ?: ['error' => $response->body() ?: 'Failed to upload attachment'],
+                $response->status()
+            );
         } catch (\Exception $e) {
             return response()->json(['error' => 'Failed to upload attachment: ' . $e->getMessage()], 500);
         }
@@ -109,7 +112,7 @@ class ShiftAttachmentController extends Controller
 
         $data = $request->validate([
             'filename' => 'required|string',
-            'size' => 'required|integer|min:1|max:'.ChunkedUploadConfig::MAX_UPLOAD_BYTES,
+            'size' => 'required|integer|min:1|max:'.ChunkedUploads::maxUploadBytes(),
             'temp_identifier' => 'required|string',
             'mime_type' => 'nullable|string',
         ]);
@@ -140,7 +143,10 @@ class ShiftAttachmentController extends Controller
                 return response()->json($response->json());
             }
 
-            return response()->json(['error' => $response->json()['message'] ?? 'Failed to initialize upload'], 422);
+            return response()->json(
+                $response->json() ?: ['error' => $response->body() ?: 'Failed to initialize upload'],
+                $response->status()
+            );
         } catch (\Exception $e) {
             return response()->json(['error' => 'Failed to initialize upload: ' . $e->getMessage()], 500);
         }
@@ -187,7 +193,10 @@ class ShiftAttachmentController extends Controller
                 return response()->json($response->json());
             }
 
-            return response()->json(['error' => $response->json()['message'] ?? 'Failed to fetch upload status'], 422);
+            return response()->json(
+                $response->json() ?: ['error' => $response->body() ?: 'Failed to fetch upload status'],
+                $response->status()
+            );
         } catch (\Exception $e) {
             return response()->json(['error' => 'Failed to fetch upload status: ' . $e->getMessage()], 500);
         }
@@ -210,7 +219,7 @@ class ShiftAttachmentController extends Controller
         $data = $request->validate([
             'upload_id' => 'required|string',
             'chunk_index' => 'required|integer|min:0',
-            'chunk' => 'required|file|max:'.ChunkedUploadConfig::CHUNK_SIZE_KB,
+            'chunk' => 'required|file|max:'.ChunkedUploads::chunkSizeKb(),
         ]);
 
         try {
@@ -272,7 +281,10 @@ class ShiftAttachmentController extends Controller
                 return response()->json($response->json());
             }
 
-            return response()->json(['error' => $response->json()['message'] ?? 'Failed to upload chunk'], 422);
+            return response()->json(
+                $response->json() ?: ['error' => $response->body() ?: 'Failed to upload chunk'],
+                $response->status()
+            );
         } catch (\Exception $e) {
             return response()->json(['error' => 'Failed to upload chunk: ' . $e->getMessage()], 500);
         }
@@ -319,7 +331,10 @@ class ShiftAttachmentController extends Controller
                 return response()->json($response->json());
             }
 
-            return response()->json(['error' => $response->json()['message'] ?? 'Failed to upload attachment'], 422);
+            return response()->json(
+                $response->json() ?: ['error' => $response->body() ?: 'Failed to complete upload'],
+                $response->status()
+            );
         } catch (\Exception $e) {
             return response()->json(['error' => 'Failed to upload attachment: ' . $e->getMessage()], 500);
         }
@@ -346,7 +361,7 @@ class ShiftAttachmentController extends Controller
             // Validate the request
             $request->validate([
                 'attachments' => 'required|array',
-                'attachments.*' => 'file',
+                'attachments.*' => 'file|max:'.ChunkedUploads::maxUploadKb(),
                 'temp_identifier' => 'required|string',
             ]);
 
@@ -408,7 +423,10 @@ class ShiftAttachmentController extends Controller
                 return response()->json($response->json());
             }
 
-            return response()->json(['error' => $response->json()['message'] ?? 'Failed to upload attachments'], 422);
+            return response()->json(
+                $response->json() ?: ['error' => $response->body() ?: 'Failed to upload attachments'],
+                $response->status()
+            );
         } catch (\Exception $e) {
             return response()->json(['error' => 'Failed to upload attachments: ' . $e->getMessage()], 500);
         }
@@ -459,7 +477,10 @@ class ShiftAttachmentController extends Controller
                 return response()->json(['message' => 'Attachment removed successfully']);
             }
 
-            return response()->json(['error' => $response->json()['message'] ?? 'Failed to remove attachment'], 422);
+            return response()->json(
+                $response->json() ?: ['error' => $response->body() ?: 'Failed to remove attachment'],
+                $response->status()
+            );
         } catch (\Exception $e) {
             return response()->json(['error' => 'Failed to remove attachment: ' . $e->getMessage()], 500);
         }
@@ -510,7 +531,10 @@ class ShiftAttachmentController extends Controller
                 return response()->json($response->json());
             }
 
-            return response()->json(['error' => $response->json()['message'] ?? 'Failed to list attachments'], 422);
+            return response()->json(
+                $response->json() ?: ['error' => $response->body() ?: 'Failed to list attachments'],
+                $response->status()
+            );
         } catch (\Exception $e) {
             return response()->json(['error' => 'Failed to list attachments: ' . $e->getMessage()], 500);
         }
@@ -538,7 +562,10 @@ class ShiftAttachmentController extends Controller
                 ]);
 
             if (! $response->successful()) {
-                return response()->json(['error' => $response->json()['message'] ?? 'Failed to fetch attachment'], 422);
+                return response()->json(
+                    $response->json() ?: ['error' => $response->body() ?: 'Failed to fetch attachment'],
+                    $response->status()
+                );
             }
 
             $headers = [];
