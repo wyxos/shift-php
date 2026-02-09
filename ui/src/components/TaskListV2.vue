@@ -117,8 +117,41 @@ function onRichContentClick(event: MouseEvent) {
   const img = target.closest('img') as HTMLImageElement | null
   if (!img) return
   // Only intercept images inside rich html blocks (editor tiles, rendered descriptions, thread content).
-  const inRich = Boolean(img.closest('.shift-rich')) || img.classList.contains('editor-tile')
+  const inRich = Boolean(img.closest('.shift-rich')) || Boolean(img.closest('.tiptap')) || img.classList.contains('editor-tile')
   if (!inRich) return
+  event.preventDefault()
+  event.stopPropagation()
+  openLightboxForImage(img)
+}
+
+function shouldHandleImage(img: HTMLImageElement) {
+  const inRich = Boolean(img.closest('.shift-rich')) || Boolean(img.closest('.tiptap')) || img.classList.contains('editor-tile')
+  if (!inRich) return { ok: false, inEditable: false }
+  const inEditable = Boolean(img.closest('[contenteditable="true"]'))
+  return { ok: true, inEditable }
+}
+
+function onGlobalClickCapture(event: MouseEvent) {
+  if (!editOpen.value) return
+  const target = event.target as HTMLElement | null
+  if (!target) return
+  const img = target.closest('img') as HTMLImageElement | null
+  if (!img) return
+  const { ok, inEditable } = shouldHandleImage(img)
+  if (!ok || inEditable) return
+  event.preventDefault()
+  event.stopPropagation()
+  openLightboxForImage(img)
+}
+
+function onGlobalDblClickCapture(event: MouseEvent) {
+  if (!editOpen.value) return
+  const target = event.target as HTMLElement | null
+  if (!target) return
+  const img = target.closest('img') as HTMLImageElement | null
+  if (!img) return
+  const { ok, inEditable } = shouldHandleImage(img)
+  if (!ok || !inEditable) return
   event.preventDefault()
   event.stopPropagation()
   openLightboxForImage(img)
@@ -154,8 +187,16 @@ function highlightTask(taskId: number) {
   }, 4500)
 }
 
+onMounted(() => {
+  // Capture phase so we can open the preview even if the editor stops propagation.
+  document.addEventListener('click', onGlobalClickCapture, true)
+  document.addEventListener('dblclick', onGlobalDblClickCapture, true)
+})
+
 onBeforeUnmount(() => {
   if (highlightTimer) window.clearTimeout(highlightTimer)
+  document.removeEventListener('click', onGlobalClickCapture, true)
+  document.removeEventListener('dblclick', onGlobalDblClickCapture, true)
 })
 
 const statusOptions = [
