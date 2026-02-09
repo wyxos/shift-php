@@ -5,11 +5,13 @@ import TaskListV2 from '../components/TaskListV2.vue'
 
 const getMock = vi.fn()
 const deleteMock = vi.fn()
+const postMock = vi.fn()
 
 vi.mock('@/axios-config', () => ({
   default: {
     get: (...args: any[]) => getMock(...args),
     delete: (...args: any[]) => deleteMock(...args),
+    post: (...args: any[]) => postMock(...args),
   },
 }))
 
@@ -32,7 +34,17 @@ const stubs = {
     props: ['modelValue'],
     template: '<select :value="modelValue" v-bind="$attrs" @change="$emit(\'update:modelValue\', $event.target.value)"><slot /></select>',
   },
-  ShiftEditor: { template: '<div />' },
+  ShiftEditor: {
+    props: ['modelValue'],
+    template: `<div>
+      <button
+        data-testid="stub-send"
+        @click="$emit('send', { html: '<p>hello</p>', attachments: [] })"
+      >
+        send
+      </button>
+    </div>`,
+  },
   Sheet: { template: '<div><slot /></div>' },
   SheetContent: { template: '<div><slot /></div>' },
   SheetHeader: { template: '<div><slot /></div>' },
@@ -65,6 +77,7 @@ describe('TaskListV2', () => {
   beforeEach(() => {
     getMock.mockReset()
     deleteMock.mockReset()
+    postMock.mockReset()
   })
 
   it('defaults to excluding completed and closed statuses', async () => {
@@ -102,5 +115,104 @@ describe('TaskListV2', () => {
     const rows = wrapper.findAll('[data-testid="task-row"]')
     expect(rows.length).toBe(1)
     expect(rows[0].text()).toContain('Auth issue')
+  })
+
+  it('loads comments when opening the edit sheet', async () => {
+    getMock
+      .mockResolvedValueOnce({ data: { data: seedTasks } }) // initial fetchTasks on mount
+      .mockResolvedValueOnce({
+        data: {
+          id: 1,
+          title: 'Auth issue',
+          priority: 'high',
+          description: '',
+          submitter: { email: 'someone@example.com' },
+          attachments: [],
+        },
+      }) // openEdit task fetch
+      .mockResolvedValueOnce({
+        data: {
+          external: [
+            {
+              id: 10,
+              sender_name: 'Alice',
+              is_current_user: false,
+              content: '<p>First</p>',
+              created_at: '2026-02-09T12:00:00Z',
+              attachments: [],
+            },
+            {
+              id: 11,
+              sender_name: 'You',
+              is_current_user: true,
+              content: '<p>Second</p>',
+              created_at: '2026-02-09T12:01:00Z',
+              attachments: [],
+            },
+          ],
+        },
+      }) // openEdit thread fetch
+
+    const wrapper = mount(TaskListV2, { global: { stubs } })
+    await flushPromises()
+    await nextTick()
+
+    const firstRow = wrapper.findAll('[data-testid="task-row"]')[0]
+    await firstRow.find('button[title="Edit"]').trigger('click')
+    await flushPromises()
+    await nextTick()
+
+    expect(getMock).toHaveBeenCalledWith('/shift/api/tasks/1')
+    expect(getMock).toHaveBeenCalledWith('/shift/api/tasks/1/threads')
+    expect(wrapper.text()).toContain('Comments')
+    expect(wrapper.text()).toContain('First')
+    expect(wrapper.text()).toContain('Second')
+  })
+
+  it('posts a new comment and renders it in the list', async () => {
+    getMock
+      .mockResolvedValueOnce({ data: { data: seedTasks } }) // initial fetchTasks on mount
+      .mockResolvedValueOnce({
+        data: {
+          id: 1,
+          title: 'Auth issue',
+          priority: 'high',
+          description: '',
+          submitter: { email: 'someone@example.com' },
+          attachments: [],
+        },
+      }) // openEdit task fetch
+      .mockResolvedValueOnce({ data: { external: [] } }) // openEdit thread fetch
+
+    postMock.mockResolvedValueOnce({
+      data: {
+        thread: {
+          id: 99,
+          sender_name: 'You',
+          is_current_user: true,
+          content: '<p>hello</p>',
+          created_at: '2026-02-09T12:02:00Z',
+          attachments: [],
+        },
+      },
+    })
+
+    const wrapper = mount(TaskListV2, { global: { stubs } })
+    await flushPromises()
+    await nextTick()
+
+    const firstRow = wrapper.findAll('[data-testid="task-row"]')[0]
+    await firstRow.find('button[title="Edit"]').trigger('click')
+    await flushPromises()
+    await nextTick()
+
+    // click the stub send button (we have multiple editors; use the one marked comments-editor)
+    const commentsEditor = wrapper.find('[data-testid="comments-editor"]')
+    await commentsEditor.find('[data-testid="stub-send"]').trigger('click')
+    await flushPromises()
+    await nextTick()
+
+    expect(postMock).toHaveBeenCalledWith('/shift/api/tasks/1/threads', expect.objectContaining({ content: '<p>hello</p>' }))
+    expect(wrapper.text()).toContain('hello')
   })
 })

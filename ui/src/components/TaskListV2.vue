@@ -35,11 +35,15 @@ type TaskDetail = Task & {
 }
 
 type ThreadMessage = {
-  id: number
+  clientId: string
+  id?: number
   author: string
   time: string
   content: string
   isYou?: boolean
+  pending?: boolean
+  failed?: boolean
+  attachments?: TaskAttachment[]
 }
 
 const tasks = ref<Task[]>([])
@@ -75,27 +79,10 @@ const editForm = ref({
 })
 
 const threadTempIdentifier = ref(Date.now().toString())
-const threadMessages = ref<ThreadMessage[]>([
-  {
-    id: 1,
-    author: 'Riley Sutton',
-    time: '2 days ago',
-    content: '<p>We should align the labels on the status chips so they feel consistent.</p>',
-  },
-  {
-    id: 2,
-    author: 'You',
-    time: '1 day ago',
-    content: '<p>Noted. I can also reuse the new editor styling so attachments feel cohesive.</p>',
-    isYou: true,
-  },
-  {
-    id: 3,
-    author: 'Riley Sutton',
-    time: 'Today',
-    content: '<p>Perfect. Let me know when a preview is ready and I will sanity check.</p>',
-  },
-])
+const threadLoading = ref(false)
+const threadSending = ref(false)
+const threadError = ref<string | null>(null)
+const threadMessages = ref<ThreadMessage[]>([])
 
 const commentsScrollRef = ref<HTMLElement | null>(null)
 
@@ -161,6 +148,53 @@ function scrollCommentsToBottom() {
   const el = commentsScrollRef.value
   if (!el) return
   el.scrollTop = el.scrollHeight
+}
+
+function formatThreadTime(value: any): string {
+  if (!value) return ''
+  const date = value instanceof Date ? value : new Date(String(value))
+  if (Number.isNaN(date.getTime())) return String(value)
+  return date.toLocaleString(undefined, {
+    month: 'short',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
+
+function mapThreadToMessage(thread: any): ThreadMessage {
+  const id = typeof thread?.id === 'number' ? (thread.id as number) : undefined
+  const author = String(thread?.sender_name ?? thread?.author ?? 'Unknown')
+  const isYou = Boolean(thread?.is_current_user ?? thread?.isYou)
+  const content = String(thread?.content ?? '')
+  const time = formatThreadTime(thread?.created_at)
+  const attachments = Array.isArray(thread?.attachments) ? (thread.attachments as TaskAttachment[]) : []
+  return {
+    clientId: id ? `thread-${id}` : `thread-${Date.now()}`,
+    id,
+    author,
+    time,
+    content,
+    isYou,
+    attachments,
+  }
+}
+
+async function fetchThreads(taskId: number) {
+  threadLoading.value = true
+  threadError.value = null
+  try {
+    const response = await axios.get(`/shift/api/tasks/${taskId}/threads`)
+    const payload = response.data?.data ?? response.data
+    const list = Array.isArray(payload?.external) ? payload.external : []
+    threadMessages.value = list.map(mapThreadToMessage)
+    await nextTick()
+    scrollCommentsToBottom()
+  } catch (e: any) {
+    threadError.value = e.response?.data?.error || e.response?.data?.message || e.message || 'Failed to load comments'
+  } finally {
+    threadLoading.value = false
+  }
 }
 
 watch(editOpen, async (open) => {
@@ -323,6 +357,9 @@ async function openEdit(taskId: number) {
   editError.value = null
   editTask.value = null
   editUploading.value = false
+  threadMessages.value = []
+  threadError.value = null
+  threadTempIdentifier.value = Date.now().toString()
 
   try {
     const response = await axios.get(`/shift/api/tasks/${taskId}`)
@@ -334,6 +371,8 @@ async function openEdit(taskId: number) {
       description: data?.description ?? '',
     }
     editTempIdentifier.value = Date.now().toString()
+    // Load comments in parallel so task details render immediately.
+    void fetchThreads(taskId)
   } catch (e: any) {
     editError.value = e.response?.data?.error || e.response?.data?.message || e.message || 'Failed to fetch task'
   } finally {
@@ -346,6 +385,8 @@ function closeEdit() {
   editTask.value = null
   editError.value = null
   editUploading.value = false
+  threadMessages.value = []
+  threadError.value = null
 }
 
 async function saveEdit() {
@@ -372,17 +413,44 @@ async function saveEdit() {
   }
 }
 
-function handleThreadSend(payload: { html: string }) {
+async function handleThreadSend(payload: { html: string; attachments?: any[] }) {
+  if (!editTask.value) return
   const html = payload?.html?.trim()
   if (!html) return
-  threadMessages.value.push({
-    id: Date.now(),
+
+  const localId = `local-${Date.now()}`
+  const optimistic: ThreadMessage = {
+    clientId: localId,
     author: window.shiftConfig?.username || 'You',
-    time: 'Just now',
+    time: 'Sending...',
     content: html,
     isYou: true,
-  })
-  threadTempIdentifier.value = Date.now().toString()
+    pending: true,
+    failed: false,
+  }
+  threadMessages.value = [...threadMessages.value, optimistic]
+
+  try {
+    threadSending.value = true
+    const response = await axios.post(`/shift/api/tasks/${editTask.value.id}/threads`, {
+      content: html,
+      temp_identifier: threadTempIdentifier.value,
+    })
+    const data = response.data?.data ?? response.data
+    const thread = data?.thread ?? data
+    const serverMsg = mapThreadToMessage(thread)
+    threadMessages.value = [...threadMessages.value.filter((m) => m.clientId !== localId), serverMsg]
+    threadTempIdentifier.value = Date.now().toString()
+  } catch (e: any) {
+    threadMessages.value = threadMessages.value.map((m) =>
+      m.clientId === localId ? { ...m, pending: false, failed: true, time: 'Failed to send' } : m,
+    )
+    toast.error('Failed to send comment', {
+      description: e.response?.data?.error || e.response?.data?.message || e.message || 'Unknown error',
+    })
+  } finally {
+    threadSending.value = false
+  }
 }
 
 function resetFilters() {
@@ -799,7 +867,6 @@ onMounted(() => {
               <div class="flex items-center justify-between border-b border-muted-foreground/10 px-4 py-3">
                 <div>
                   <h3 class="text-sm font-semibold text-foreground">Comments</h3>
-                  <p class="text-xs text-muted-foreground">Signal-style thread</p>
                 </div>
                 <div class="text-xs text-muted-foreground">{{ threadMessages.length }} message{{ threadMessages.length === 1 ? '' : 's' }}</div>
               </div>
@@ -808,9 +875,14 @@ onMounted(() => {
                 ref="commentsScrollRef"
                 class="flex-1 space-y-3 overflow-auto px-4 py-4"
               >
+                <div v-if="threadLoading" class="py-6 text-center text-sm text-muted-foreground">Loading comments...</div>
+                <div v-else-if="threadError" class="py-6 text-center text-sm text-destructive">{{ threadError }}</div>
+                <div v-else-if="threadMessages.length === 0" class="py-6 text-center text-sm text-muted-foreground">
+                  No comments yet.
+                </div>
                 <div
                   v-for="message in threadMessages"
-                  :key="message.id"
+                  :key="message.clientId"
                   class="flex"
                   :class="message.isYou ? 'justify-end' : 'justify-start'"
                 >
@@ -830,6 +902,18 @@ onMounted(() => {
                         class="shift-rich text-inherit [&_img]:my-2 [&_img]:max-w-full [&_img]:cursor-zoom-in [&_img]:rounded-lg [&_img]:shadow-sm"
                         v-html="message.content"
                       ></div>
+                      <div v-if="message.attachments?.length" class="mt-2 space-y-1">
+                        <a
+                          v-for="attachment in message.attachments"
+                          :key="attachment.id"
+                          :href="attachment.url"
+                          class="block truncate text-xs underline decoration-white/40 underline-offset-2 hover:decoration-white/70"
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          {{ attachment.original_filename }}
+                        </a>
+                      </div>
                     </div>
                     <div
                       class="mt-1 text-[11px] text-muted-foreground"
@@ -844,6 +928,7 @@ onMounted(() => {
               <div class="border-t border-muted-foreground/10 bg-background/80 px-4 py-3 backdrop-blur">
                 <Label class="mb-2 block text-xs text-muted-foreground">Reply</Label>
                 <ShiftEditor
+                  data-testid="comments-editor"
                   :temp-identifier="threadTempIdentifier"
                   :axios-instance="axios"
                   :upload-endpoints="uploadEndpoints"
