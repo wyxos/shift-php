@@ -1,5 +1,23 @@
 # SHIFT PHP SDK Package (`packages/shift-php/`)
 
+## Code edit instructions
+
+After you've finished editing
+
+- Use the jetbrains mcp (if available) to find any problems
+- Run format command if available
+- Run lint command if available
+
+## How to find problems
+
+- DO THIS FIRST: Check the jetbrains provided MCP server (one of intellij, pycharm, webstorm) using get_file_problems
+    - Only provide a file path if you know where the problem is, but not what the problem is. If you don't know where the problem is:
+        - Inspect code changes with git
+        - Run tests
+- Run tests
+- Run lint
+- Inspect changed files
+
 ## Package Identity
 - Laravel package that provides:
   - `/shift/**` dashboard (served from built SPA assets)
