@@ -12,7 +12,6 @@ class ShiftAttachmentController extends Controller
     /**
      * Upload a temporary attachment.
      *
-     * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */
     public function upload(Request $request)
@@ -28,60 +27,60 @@ class ShiftAttachmentController extends Controller
 
         try {
             // Validate the request
-        $request->validate([
-            'file' => 'required|file|max:'.ChunkedUploads::maxUploadKb(),
-            'temp_identifier' => 'required|string',
-        ]);
+            $request->validate([
+                'file' => 'required|file|max:'.ChunkedUploads::maxUploadKb(),
+                'temp_identifier' => 'required|string',
+            ]);
 
             // Create a multipart request with the file
             $multipartData = [
                 [
                     'name' => 'file',
                     'contents' => fopen($request->file('file')->getPathname(), 'r'),
-                    'filename' => $request->file('file')->getClientOriginalName()
+                    'filename' => $request->file('file')->getClientOriginalName(),
                 ],
                 [
                     'name' => 'temp_identifier',
-                    'contents' => $request->input('temp_identifier')
+                    'contents' => $request->input('temp_identifier'),
                 ],
                 [
                     'name' => 'project',
-                    'contents' => $project
+                    'contents' => $project,
                 ],
                 [
                     'name' => 'user[name]',
-                    'contents' => auth()->user()->name
+                    'contents' => auth()->user()->name,
                 ],
                 [
                     'name' => 'user[email]',
-                    'contents' => auth()->user()->email
+                    'contents' => auth()->user()->email,
                 ],
                 [
                     'name' => 'user[id]',
-                    'contents' => auth()->user()->id
+                    'contents' => auth()->user()->id,
                 ],
                 [
                     'name' => 'user[environment]',
-                    'contents' => config('app.env')
+                    'contents' => config('app.env'),
                 ],
                 [
                     'name' => 'user[url]',
-                    'contents' => config('app.url')
+                    'contents' => config('app.url'),
                 ],
                 [
                     'name' => 'metadata[url]',
-                    'contents' => config('app.url')
+                    'contents' => config('app.url'),
                 ],
                 [
                     'name' => 'metadata[environment]',
-                    'contents' => config('app.env')
+                    'contents' => config('app.env'),
                 ],
             ];
 
             $response = Http::withToken($apiToken)
                 ->acceptJson()
                 ->asMultipart()
-                ->post($baseUrl . '/api/attachments/upload', $multipartData);
+                ->post($baseUrl.'/api/attachments/upload', $multipartData);
 
             if ($response->successful()) {
                 return response()->json($response->json());
@@ -92,7 +91,7 @@ class ShiftAttachmentController extends Controller
                 $response->status()
             );
         } catch (\Exception $e) {
-            return response()->json(['error' => 'Failed to upload attachment: ' . $e->getMessage()], 500);
+            return response()->json(['error' => 'Failed to upload attachment: '.$e->getMessage()], 500);
         }
     }
 
@@ -120,7 +119,7 @@ class ShiftAttachmentController extends Controller
         try {
             $response = Http::withToken($apiToken)
                 ->acceptJson()
-                ->post($baseUrl . '/api/attachments/upload-init', [
+                ->post($baseUrl.'/api/attachments/upload-init', [
                     'filename' => $data['filename'],
                     'size' => $data['size'],
                     'temp_identifier' => $data['temp_identifier'],
@@ -148,7 +147,7 @@ class ShiftAttachmentController extends Controller
                 $response->status()
             );
         } catch (\Exception $e) {
-            return response()->json(['error' => 'Failed to initialize upload: ' . $e->getMessage()], 500);
+            return response()->json(['error' => 'Failed to initialize upload: '.$e->getMessage()], 500);
         }
     }
 
@@ -173,7 +172,7 @@ class ShiftAttachmentController extends Controller
         try {
             $response = Http::withToken($apiToken)
                 ->acceptJson()
-                ->get($baseUrl . '/api/attachments/upload-status', [
+                ->get($baseUrl.'/api/attachments/upload-status', [
                     'upload_id' => $data['upload_id'],
                     'project' => $project,
                     'user' => [
@@ -198,7 +197,7 @@ class ShiftAttachmentController extends Controller
                 $response->status()
             );
         } catch (\Exception $e) {
-            return response()->json(['error' => 'Failed to fetch upload status: ' . $e->getMessage()], 500);
+            return response()->json(['error' => 'Failed to fetch upload status: '.$e->getMessage()], 500);
         }
     }
 
@@ -275,7 +274,7 @@ class ShiftAttachmentController extends Controller
             $response = Http::withToken($apiToken)
                 ->acceptJson()
                 ->asMultipart()
-                ->post($baseUrl . '/api/attachments/upload-chunk', $multipart);
+                ->post($baseUrl.'/api/attachments/upload-chunk', $multipart);
 
             if ($response->successful()) {
                 return response()->json($response->json());
@@ -286,7 +285,7 @@ class ShiftAttachmentController extends Controller
                 $response->status()
             );
         } catch (\Exception $e) {
-            return response()->json(['error' => 'Failed to upload chunk: ' . $e->getMessage()], 500);
+            return response()->json(['error' => 'Failed to upload chunk: '.$e->getMessage()], 500);
         }
     }
 
@@ -311,7 +310,7 @@ class ShiftAttachmentController extends Controller
         try {
             $response = Http::withToken($apiToken)
                 ->acceptJson()
-                ->post($baseUrl . '/api/attachments/upload-complete', [
+                ->post($baseUrl.'/api/attachments/upload-complete', [
                     'upload_id' => $data['upload_id'],
                     'project' => $project,
                     'user' => [
@@ -336,14 +335,13 @@ class ShiftAttachmentController extends Controller
                 $response->status()
             );
         } catch (\Exception $e) {
-            return response()->json(['error' => 'Failed to upload attachment: ' . $e->getMessage()], 500);
+            return response()->json(['error' => 'Failed to upload attachment: '.$e->getMessage()], 500);
         }
     }
 
     /**
      * Upload multiple attachments at once.
      *
-     * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */
     public function uploadMultiple(Request $request)
@@ -369,39 +367,39 @@ class ShiftAttachmentController extends Controller
             $multipartData = [
                 [
                     'name' => 'temp_identifier',
-                    'contents' => $request->input('temp_identifier')
+                    'contents' => $request->input('temp_identifier'),
                 ],
                 [
                     'name' => 'project',
-                    'contents' => $project
+                    'contents' => $project,
                 ],
                 [
                     'name' => 'user[name]',
-                    'contents' => auth()->user()->name
+                    'contents' => auth()->user()->name,
                 ],
                 [
                     'name' => 'user[email]',
-                    'contents' => auth()->user()->email
+                    'contents' => auth()->user()->email,
                 ],
                 [
                     'name' => 'user[id]',
-                    'contents' => auth()->user()->id
+                    'contents' => auth()->user()->id,
                 ],
                 [
                     'name' => 'user[environment]',
-                    'contents' => config('app.env')
+                    'contents' => config('app.env'),
                 ],
                 [
                     'name' => 'user[url]',
-                    'contents' => config('app.url')
+                    'contents' => config('app.url'),
                 ],
                 [
                     'name' => 'metadata[url]',
-                    'contents' => config('app.url')
+                    'contents' => config('app.url'),
                 ],
                 [
                     'name' => 'metadata[environment]',
-                    'contents' => config('app.env')
+                    'contents' => config('app.env'),
                 ],
             ];
 
@@ -410,14 +408,14 @@ class ShiftAttachmentController extends Controller
                 $multipartData[] = [
                     'name' => "attachments[$index]",
                     'contents' => fopen($file->getPathname(), 'r'),
-                    'filename' => $file->getClientOriginalName()
+                    'filename' => $file->getClientOriginalName(),
                 ];
             }
 
             $response = Http::withToken($apiToken)
                 ->acceptJson()
                 ->asMultipart()
-                ->post($baseUrl . '/api/attachments/upload-multiple', $multipartData);
+                ->post($baseUrl.'/api/attachments/upload-multiple', $multipartData);
 
             if ($response->successful()) {
                 return response()->json($response->json());
@@ -428,14 +426,13 @@ class ShiftAttachmentController extends Controller
                 $response->status()
             );
         } catch (\Exception $e) {
-            return response()->json(['error' => 'Failed to upload attachments: ' . $e->getMessage()], 500);
+            return response()->json(['error' => 'Failed to upload attachments: '.$e->getMessage()], 500);
         }
     }
 
     /**
      * Remove a temporary attachment.
      *
-     * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */
     public function removeTemp(Request $request)
@@ -457,7 +454,7 @@ class ShiftAttachmentController extends Controller
 
             $response = Http::withToken($apiToken)
                 ->acceptJson()
-                ->delete($baseUrl . '/api/attachments/remove-temp', [
+                ->delete($baseUrl.'/api/attachments/remove-temp', [
                     'path' => $request->input('path'),
                     'project' => $project,
                     'user' => [
@@ -482,14 +479,13 @@ class ShiftAttachmentController extends Controller
                 $response->status()
             );
         } catch (\Exception $e) {
-            return response()->json(['error' => 'Failed to remove attachment: ' . $e->getMessage()], 500);
+            return response()->json(['error' => 'Failed to remove attachment: '.$e->getMessage()], 500);
         }
     }
 
     /**
      * List temporary attachments.
      *
-     * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */
     public function listTemp(Request $request)
@@ -511,7 +507,7 @@ class ShiftAttachmentController extends Controller
 
             $response = Http::withToken($apiToken)
                 ->acceptJson()
-                ->get($baseUrl . '/api/attachments/list-temp', [
+                ->get($baseUrl.'/api/attachments/list-temp', [
                     'temp_identifier' => $request->input('temp_identifier'),
                     'project' => $project,
                     'user' => [
@@ -536,7 +532,7 @@ class ShiftAttachmentController extends Controller
                 $response->status()
             );
         } catch (\Exception $e) {
-            return response()->json(['error' => 'Failed to list attachments: ' . $e->getMessage()], 500);
+            return response()->json(['error' => 'Failed to list attachments: '.$e->getMessage()], 500);
         }
     }
 
@@ -557,7 +553,7 @@ class ShiftAttachmentController extends Controller
         try {
             $response = Http::withToken($apiToken)
                 ->acceptJson()
-                ->get($baseUrl . '/api/attachments/temp/' . $temp . '/' . $filename, [
+                ->get($baseUrl.'/api/attachments/temp/'.$temp.'/'.$filename, [
                     'project' => $project,
                 ]);
 
@@ -578,14 +574,13 @@ class ShiftAttachmentController extends Controller
 
             return response($response->body(), $response->status(), $headers);
         } catch (\Exception $e) {
-            return response()->json(['error' => 'Failed to fetch attachment: ' . $e->getMessage()], 500);
+            return response()->json(['error' => 'Failed to fetch attachment: '.$e->getMessage()], 500);
         }
     }
 
     /**
      * Proxy a download request for an attachment from the SHIFT API.
      *
-     * @param int $attachmentId
      * @return \Illuminate\Http\Response|\Illuminate\Http\RedirectResponse
      */
     public function download(int $attachmentId)
@@ -634,7 +629,7 @@ class ShiftAttachmentController extends Controller
             }
 
             // Do a regular GET (no streaming) to avoid mismatched Content-Length after decompression
-            $response = $client->get($baseUrl . '/api/attachments/' . $attachmentId . '/download', $params);
+            $response = $client->get($baseUrl.'/api/attachments/'.$attachmentId.'/download', $params);
 
             // Handle explicit redirect
             if ($response->status() === 302 && $response->header('Location')) {
@@ -667,8 +662,7 @@ class ShiftAttachmentController extends Controller
 
             return response()->json(['error' => $json['message'] ?? 'Failed to download attachment'], $response->status() ?: 422);
         } catch (\Exception $e) {
-            return response()->json(['error' => 'Failed to download attachment: ' . $e->getMessage()], 500);
+            return response()->json(['error' => 'Failed to download attachment: '.$e->getMessage()], 500);
         }
     }
-
 }
