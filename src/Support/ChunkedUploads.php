@@ -45,4 +45,3 @@ final class ChunkedUploads
         return $value;
     }
 }
-
