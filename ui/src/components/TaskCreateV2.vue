@@ -2,6 +2,7 @@
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import axios from '@/axios-config'
+import { toast } from 'vue-sonner'
 import { Plus } from 'lucide-vue-next'
 import { Button } from '@shift/ui/button'
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@shift/ui/card'
@@ -63,7 +64,8 @@ async function createTask() {
     }
 
     await axios.post('/shift/api/tasks', payload)
-    router.push({ name: 'task-list-v2' })
+    toast.success('Task created', { description: 'Your task has been added to the queue.' })
+    await router.push({ name: 'task-list-v2' })
   } catch (e: any) {
     createError.value = e.response?.data?.error || e.response?.data?.message || e.message || 'Unknown error'
   } finally {

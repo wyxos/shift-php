@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+/* eslint-disable max-lines */
+import { computed, nextTick, onMounted, onBeforeUnmount, ref, watch } from 'vue'
 import axios from '@/axios-config'
 import { Filter, Pencil, Plus, Trash2 } from 'lucide-vue-next'
 import { Button } from '@shift/ui/button'
@@ -10,6 +11,8 @@ import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetT
 import Badge from './ui/badge.vue'
 import Select from './ui/select.vue'
 import ShiftEditor from '@shared/components/ShiftEditor.vue'
+import ImageLightbox from './ui/ImageLightbox.vue'
+import { toast } from 'vue-sonner'
 
 type Task = {
   id: number
@@ -45,6 +48,8 @@ const loading = ref(true)
 const error = ref<string | null>(null)
 const deleteLoading = ref<number | null>(null)
 const filtersOpen = ref(false)
+const highlightedTaskId = ref<number | null>(null)
+let highlightTimer: number | null = null
 
 const createOpen = ref(false)
 const createLoading = ref(false)
@@ -91,6 +96,67 @@ const threadMessages = ref<ThreadMessage[]>([
     content: '<p>Perfect. Let me know when a preview is ready and I will sanity check.</p>',
   },
 ])
+
+const commentsScrollRef = ref<HTMLElement | null>(null)
+
+const lightboxOpen = ref(false)
+const lightboxSrc = ref('')
+const lightboxAlt = ref('')
+
+function openLightboxForImage(img: HTMLImageElement) {
+  const src = img.currentSrc || img.src
+  if (!src) return
+  lightboxSrc.value = src
+  lightboxAlt.value = img.alt || img.title || 'Image'
+  lightboxOpen.value = true
+}
+
+function onRichContentClick(event: MouseEvent) {
+  const target = event.target as HTMLElement | null
+  if (!target) return
+  const img = target.closest('img') as HTMLImageElement | null
+  if (!img) return
+  // Only intercept images inside rich html blocks (editor tiles, rendered descriptions, thread content).
+  const inRich = Boolean(img.closest('.shift-rich')) || img.classList.contains('editor-tile')
+  if (!inRich) return
+  event.preventDefault()
+  event.stopPropagation()
+  openLightboxForImage(img)
+}
+
+function scrollCommentsToBottom() {
+  const el = commentsScrollRef.value
+  if (!el) return
+  el.scrollTop = el.scrollHeight
+}
+
+watch(editOpen, async (open) => {
+  if (!open) return
+  await nextTick()
+  scrollCommentsToBottom()
+})
+
+watch(
+  () => threadMessages.value.length,
+  async () => {
+    if (!editOpen.value) return
+    await nextTick()
+    scrollCommentsToBottom()
+  },
+)
+
+function highlightTask(taskId: number) {
+  highlightedTaskId.value = taskId
+  if (highlightTimer) window.clearTimeout(highlightTimer)
+  highlightTimer = window.setTimeout(() => {
+    highlightedTaskId.value = null
+    highlightTimer = null
+  }, 4500)
+}
+
+onBeforeUnmount(() => {
+  if (highlightTimer) window.clearTimeout(highlightTimer)
+})
 
 const statusOptions = [
   { value: 'pending', label: 'Pending' },
@@ -196,9 +262,13 @@ async function createTask() {
       temp_identifier: createTempIdentifier.value,
     }
 
-    await axios.post('/shift/api/tasks', payload)
+    const response = await axios.post('/shift/api/tasks', payload)
+    const created = response.data?.data ?? response.data
+    const createdId = typeof created?.id === 'number' ? (created.id as number) : null
     closeCreate()
     await fetchTasks()
+    if (createdId) highlightTask(createdId)
+    toast.success('Task created', { description: 'Your task has been added to the queue.' })
   } catch (e: any) {
     createError.value = e.response?.data?.error || e.response?.data?.message || e.message || 'Unknown error'
   } finally {
@@ -495,7 +565,12 @@ onMounted(() => {
           v-for="task in filteredTasks"
           :key="task.id"
           data-testid="task-row"
-          class="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:gap-4"
+          class="flex flex-col gap-3 py-4 transition sm:flex-row sm:items-center sm:gap-4"
+          :class="
+            highlightedTaskId === task.id
+              ? 'rounded-lg bg-sky-500/10 ring-2 ring-sky-500/40 ring-offset-2 ring-offset-background'
+              : ''
+          "
         >
           <div class="flex-1">
             <div class="text-lg font-medium text-card-foreground">{{ task.title }}</div>
@@ -594,16 +669,16 @@ onMounted(() => {
           <div class="px-6 pt-6 pb-3">
             <SheetTitle>Task Details</SheetTitle>
             <SheetDescription class="mt-1 text-sm text-muted-foreground">
-              Review updates and track the external thread.
+              Review updates and keep the comments moving.
             </SheetDescription>
           </div>
         </SheetHeader>
 
-        <div class="flex-1 overflow-auto px-6 pb-6">
+        <div class="flex-1 overflow-hidden px-6 pb-6" @click="onRichContentClick">
           <div v-if="editLoading" class="py-8 text-center text-muted-foreground">Loading task...</div>
           <div v-else-if="editError" class="py-8 text-center text-destructive">{{ editError }}</div>
-          <div v-else-if="editTask" class="grid gap-6 lg:grid-cols-2">
-            <div class="space-y-6">
+          <div v-else-if="editTask" class="grid h-full gap-6 lg:grid-cols-2">
+            <div class="space-y-6 overflow-auto pr-1">
               <div class="space-y-2">
                 <Label>Title</Label>
                 <template v-if="isOwner">
@@ -648,7 +723,11 @@ onMounted(() => {
                 </template>
                 <template v-else>
                   <div class="rounded-lg border border-muted-foreground/30 bg-muted/10 p-4 text-sm text-muted-foreground">
-                    <div v-if="editTask.description" class="tiptap" v-html="editTask.description"></div>
+                    <div
+                      v-if="editTask.description"
+                      class="tiptap shift-rich [&_img]:max-w-full [&_img]:cursor-zoom-in [&_img]:rounded-lg [&_img]:shadow-sm"
+                      v-html="editTask.description"
+                    ></div>
                     <div v-else>No description provided.</div>
                   </div>
                 </template>
@@ -675,36 +754,61 @@ onMounted(() => {
               </div>
             </div>
 
-            <div class="flex flex-col gap-4">
-              <div class="space-y-3">
-                <div class="flex items-center justify-between">
-                  <h3 class="text-sm font-semibold text-foreground">External Thread</h3>
-                  <span class="text-xs text-muted-foreground">Notion-style</span>
+            <div class="flex h-full flex-col overflow-hidden rounded-2xl border border-muted-foreground/10 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900/5 via-background to-background">
+              <div class="flex items-center justify-between border-b border-muted-foreground/10 px-4 py-3">
+                <div>
+                  <h3 class="text-sm font-semibold text-foreground">Comments</h3>
+                  <p class="text-xs text-muted-foreground">Signal-style thread</p>
                 </div>
-                <div class="space-y-3">
-                  <div
-                    v-for="message in threadMessages"
-                    :key="message.id"
-                    class="rounded-xl border border-muted-foreground/10 bg-background/70 p-3 shadow-sm"
-                  >
-                    <div class="mb-2 flex items-center justify-between text-xs text-muted-foreground">
-                      <span class="font-medium text-foreground">{{ message.author }}</span>
-                      <span>{{ message.time }}</span>
+                <div class="text-xs text-muted-foreground">{{ threadMessages.length }} message{{ threadMessages.length === 1 ? '' : 's' }}</div>
+              </div>
+
+              <div
+                ref="commentsScrollRef"
+                class="flex-1 space-y-3 overflow-auto px-4 py-4"
+              >
+                <div
+                  v-for="message in threadMessages"
+                  :key="message.id"
+                  class="flex"
+                  :class="message.isYou ? 'justify-end' : 'justify-start'"
+                >
+                  <div class="max-w-[86%]">
+                    <div
+                      class="rounded-2xl px-3 py-2 text-sm shadow-sm"
+                      :class="
+                        message.isYou
+                          ? 'rounded-br-md bg-sky-600 text-white'
+                          : 'rounded-bl-md border border-muted-foreground/10 bg-background/70 text-foreground'
+                      "
+                    >
+                      <div v-if="!message.isYou" class="mb-1 text-[11px] font-semibold text-foreground/80">
+                        {{ message.author }}
+                      </div>
+                      <div
+                        class="shift-rich text-inherit [&_img]:my-2 [&_img]:max-w-full [&_img]:cursor-zoom-in [&_img]:rounded-lg [&_img]:shadow-sm"
+                        v-html="message.content"
+                      ></div>
                     </div>
-                    <div class="text-sm text-muted-foreground" v-html="message.content"></div>
+                    <div
+                      class="mt-1 text-[11px] text-muted-foreground"
+                      :class="message.isYou ? 'text-right' : 'text-left'"
+                    >
+                      {{ message.time }}
+                    </div>
                   </div>
                 </div>
               </div>
 
-              <div class="mt-auto">
-                <Label class="mb-2 block">Reply</Label>
+              <div class="border-t border-muted-foreground/10 bg-background/80 px-4 py-3 backdrop-blur">
+                <Label class="mb-2 block text-xs text-muted-foreground">Reply</Label>
                 <ShiftEditor
                   :temp-identifier="threadTempIdentifier"
                   :axios-instance="axios"
                   :upload-endpoints="uploadEndpoints"
                   :remove-temp-url="removeTempUrl"
                   :resolve-temp-url="resolveTempUrl"
-                  placeholder="Reply to this thread..."
+                  placeholder="Write a comment..."
                   @send="handleThreadSend"
                 />
               </div>
@@ -726,4 +830,6 @@ onMounted(() => {
       </form>
     </SheetContent>
   </Sheet>
+
+  <ImageLightbox v-model:open="lightboxOpen" :src="lightboxSrc" :alt="lightboxAlt" />
 </template>
