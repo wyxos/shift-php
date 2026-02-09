@@ -5,6 +5,8 @@ namespace Wyxos\Shift\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Wyxos\Shift\Support\ChunkedUploads;
 
 class ShiftAttachmentController extends Controller
@@ -125,6 +127,10 @@ class ShiftAttachmentController extends Controller
         ]);
 
         try {
+            if ($guard = $this->guardAgainstRecursiveShiftUrl($baseUrl, $request)) {
+                return $guard;
+            }
+
             $response = Http::withToken($apiToken)
                 ->acceptJson()
                 ->post($baseUrl.'/api/attachments/upload-init', [
@@ -150,13 +156,66 @@ class ShiftAttachmentController extends Controller
                 return response()->json($response->json());
             }
 
+            $this->logUpstreamFailure('attachments.upload-init', $baseUrl, $project, $response->status(), (string) $response->body());
+
             return response()->json(
                 $response->json() ?: ['error' => $response->body() ?: 'Failed to initialize upload'],
                 $response->status()
             );
         } catch (\Throwable $e) {
-            return response()->json(['error' => 'Failed to initialize upload: '.$e->getMessage()], 500);
+            $traceId = (string) Str::uuid();
+            Log::error('shift-php: attachments.upload-init exception', [
+                'trace_id' => $traceId,
+                'shift_url' => $baseUrl,
+                'project' => $project,
+                'exception' => $e::class,
+                'message' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'error' => 'Failed to initialize upload: '.$e->getMessage(),
+                'trace_id' => $traceId,
+            ], 500);
         }
+    }
+
+    private function guardAgainstRecursiveShiftUrl(string $shiftUrl, Request $request): ?\Illuminate\Http\JsonResponse
+    {
+        $shiftHost = (string) (parse_url($shiftUrl, PHP_URL_HOST) ?: '');
+        $shiftPath = (string) (parse_url($shiftUrl, PHP_URL_PATH) ?: '');
+
+        $appHost = (string) (parse_url((string) config('app.url'), PHP_URL_HOST) ?: $request->getHost());
+
+        if ($shiftHost !== '' && $appHost !== '' && $shiftHost === $appHost && str_starts_with($shiftPath, '/shift')) {
+            $traceId = (string) Str::uuid();
+            Log::error('shift-php: SHIFT_URL misconfigured (recursive)', [
+                'trace_id' => $traceId,
+                'shift_url' => $shiftUrl,
+                'app_url' => config('app.url'),
+                'request_host' => $request->getHost(),
+            ]);
+
+            return response()->json([
+                'error' => 'SHIFT_URL appears to point at this same app (/shift). This causes recursive proxy calls. Set SHIFT_URL to the SHIFT server base URL (e.g. https://shift.wyxos.com).',
+                'trace_id' => $traceId,
+            ], 500);
+        }
+
+        return null;
+    }
+
+    private function logUpstreamFailure(string $endpoint, string $shiftUrl, string $project, int $status, string $body): void
+    {
+        $trimmedBody = Str::limit(trim($body), 4000, '...(truncated)');
+        $level = $status >= 500 || $status === 0 ? 'error' : 'warning';
+
+        Log::{$level}('shift-php: upstream request failed', [
+            'endpoint' => $endpoint,
+            'shift_url' => $shiftUrl,
+            'project' => $project,
+            'status' => $status,
+            'body' => $trimmedBody,
+        ]);
     }
 
     /**
