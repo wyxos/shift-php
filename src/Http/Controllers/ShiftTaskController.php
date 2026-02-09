@@ -23,18 +23,22 @@ class ShiftTaskController extends Controller
         }
 
         $baseUrl = config('shift.url');
+        $user = auth()->user();
+        if (! $user) {
+            return response()->json(['error' => 'Unauthenticated'], 401);
+        }
 
         try {
-            $url = $baseUrl . '/api/tasks';
+            $url = $baseUrl.'/api/tasks';
 
             $project = config('shift.project');
 
             $params = [
                 'project' => $project,
                 'user' => [
-                    'name' => auth()->user()->name,
-                    'email' => auth()->user()->email,
-                    'id' => auth()->user()->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'id' => $user->id,
                     'environment' => config('app.env'),
                     'url' => config('app.url'),
                 ],
@@ -58,15 +62,14 @@ class ShiftTaskController extends Controller
             }
 
             return response()->json(['error' => $response->json()['message'] ?? 'Failed to fetch tasks'], 500);
-        } catch (\Exception $e) {
-            return response()->json(['error' => 'Failed to fetch tasks: ' . $e->getMessage()], 500);
+        } catch (\Throwable $e) {
+            return response()->json(['error' => 'Failed to fetch tasks: '.$e->getMessage()], 500);
         }
     }
 
     /**
      * Store a newly created task in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\JsonResponse
      */
     public function store(Request $request)
@@ -78,6 +81,10 @@ class ShiftTaskController extends Controller
             return response()->json(['error' => 'SHIFT configuration missing. Please install Shift package and configure SHIFT_TOKEN and SHIFT_PROJECT in .env'], 500);
         }
         $baseUrl = config('shift.url');
+        $user = auth()->user();
+        if (! $user) {
+            return response()->json(['error' => 'Unauthenticated'], 401);
+        }
         try {
             // Regular JSON request with temp_identifier for attachments
             $payload = [
@@ -85,9 +92,9 @@ class ShiftTaskController extends Controller
                 'status' => 'pending',
                 'project' => $project,
                 'user' => [
-                    'name' => auth()->user()->name,
-                    'email' => auth()->user()->email,
-                    'id' => auth()->user()->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'id' => $user->id,
                     'environment' => config('app.env'),
                     'url' => config('app.url'),
                 ],
@@ -99,22 +106,21 @@ class ShiftTaskController extends Controller
 
             $response = Http::withToken($apiToken)
                 ->acceptJson()
-                ->post($baseUrl . '/api/tasks', $payload);
+                ->post($baseUrl.'/api/tasks', $payload);
 
             if ($response->successful()) {
                 return response()->json($response->json());
             }
 
             return response()->json(['error' => $response->json()['message'] ?? 'Failed to create task'], 422);
-        } catch (\Exception $e) {
-            return response()->json(['error' => 'Failed to create task: ' . $e->getMessage()], 500);
+        } catch (\Throwable $e) {
+            return response()->json(['error' => 'Failed to create task: '.$e->getMessage()], 500);
         }
     }
 
     /**
      * Update the specified task in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
      * @param  int  $id
      * @return \Illuminate\Http\JsonResponse
      */
@@ -127,6 +133,10 @@ class ShiftTaskController extends Controller
             return response()->json(['error' => 'SHIFT configuration missing. Please install Shift package and configure SHIFT_TOKEN and SHIFT_PROJECT in .env'], 500);
         }
         $baseUrl = config('shift.url');
+        $user = auth()->user();
+        if (! $user) {
+            return response()->json(['error' => 'Unauthenticated'], 401);
+        }
 
         try {
             // Regular JSON request with temp_identifier for attachments
@@ -134,9 +144,9 @@ class ShiftTaskController extends Controller
                 ...$request->all(),
                 'project' => $project,
                 'user' => [
-                    'name' => auth()->user()->name,
-                    'email' => auth()->user()->email,
-                    'id' => auth()->user()->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'id' => $user->id,
                     'environment' => config('app.env'),
                     'url' => config('app.url'),
                 ],
@@ -148,15 +158,15 @@ class ShiftTaskController extends Controller
 
             $response = Http::withToken($token)
                 ->acceptJson()
-                ->put($baseUrl . '/api/tasks/' . $id, $payload);
+                ->put($baseUrl.'/api/tasks/'.$id, $payload);
 
             if ($response->successful()) {
                 return response()->json(['message' => 'Task updated successfully']);
             }
 
             return response()->json(['error' => $response->json()['message'] ?? 'Failed to update task'], 422);
-        } catch (\Exception $e) {
-            return response()->json(['error' => 'Failed to update task: ' . $e->getMessage()], 500);
+        } catch (\Throwable $e) {
+            return response()->json(['error' => 'Failed to update task: '.$e->getMessage()], 500);
         }
     }
 
@@ -169,14 +179,18 @@ class ShiftTaskController extends Controller
             return response()->json(['error' => 'SHIFT configuration missing. Please install Shift package and configure SHIFT_TOKEN and SHIFT_PROJECT in .env'], 500);
         }
         $baseUrl = config('shift.url');
+        $user = auth()->user();
+        if (! $user) {
+            return response()->json(['error' => 'Unauthenticated'], 401);
+        }
         try {
             // Prepare query parameters - only include simple parameters in the query
             $params = [
                 'project' => $project,
                 'user' => [
-                    'name' => auth()->user()->name,
-                    'email' => auth()->user()->email,
-                    'id' => auth()->user()->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'id' => $user->id,
                     'environment' => config('app.env'),
                     'url' => config('app.url'),
                 ],
@@ -185,15 +199,15 @@ class ShiftTaskController extends Controller
             // Add user and metadata information to headers instead of query params
             $response = Http::withToken($token)
                 ->acceptJson()
-                ->get($baseUrl . '/api/tasks/' . $id, $params);
+                ->get($baseUrl.'/api/tasks/'.$id, $params);
 
             if ($response->successful()) {
                 return response()->json($response->json());
             }
 
             return response()->json(['error' => $response->json()['message'] ?? 'Failed to fetch task'], 500);
-        } catch (\Exception $e) {
-            return response()->json(['error' => 'Failed to fetch task: ' . $e->getMessage()], 500);
+        } catch (\Throwable $e) {
+            return response()->json(['error' => 'Failed to fetch task: '.$e->getMessage()], 500);
         }
     }
 
@@ -212,16 +226,20 @@ class ShiftTaskController extends Controller
             return response()->json(['error' => 'SHIFT configuration missing. Please install Shift package and configure SHIFT_TOKEN and SHIFT_PROJECT in .env'], 500);
         }
         $baseUrl = config('shift.url');
+        $user = auth()->user();
+        if (! $user) {
+            return response()->json(['error' => 'Unauthenticated'], 401);
+        }
 
         try {
             $response = Http::withToken($token)
                 ->acceptJson()
-                ->delete($baseUrl . '/api/tasks/' . $id, [
+                ->delete($baseUrl.'/api/tasks/'.$id, [
                     'project' => $project,
                     'user' => [
-                        'name' => auth()->user()->name,
-                        'email' => auth()->user()->email,
-                        'id' => auth()->user()->id,
+                        'name' => $user->name,
+                        'email' => $user->email,
+                        'id' => $user->id,
                         'environment' => config('app.env'),
                         'url' => config('app.url'),
                     ],
@@ -236,8 +254,8 @@ class ShiftTaskController extends Controller
             }
 
             return response()->json(['error' => $response->json()['message'] ?? 'Failed to delete task'], 422);
-        } catch (\Exception $e) {
-            return response()->json(['error' => 'Failed to delete task: ' . $e->getMessage()], 500);
+        } catch (\Throwable $e) {
+            return response()->json(['error' => 'Failed to delete task: '.$e->getMessage()], 500);
         }
     }
 }

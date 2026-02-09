@@ -24,6 +24,10 @@ class ShiftAttachmentController extends Controller
         }
 
         $baseUrl = config('shift.url');
+        $user = auth()->user();
+        if (! $user) {
+            return response()->json(['error' => 'Unauthenticated'], 401);
+        }
 
         try {
             // Validate the request
@@ -49,15 +53,15 @@ class ShiftAttachmentController extends Controller
                 ],
                 [
                     'name' => 'user[name]',
-                    'contents' => auth()->user()->name,
+                    'contents' => $user->name,
                 ],
                 [
                     'name' => 'user[email]',
-                    'contents' => auth()->user()->email,
+                    'contents' => $user->email,
                 ],
                 [
                     'name' => 'user[id]',
-                    'contents' => auth()->user()->id,
+                    'contents' => $user->id,
                 ],
                 [
                     'name' => 'user[environment]',
@@ -90,7 +94,7 @@ class ShiftAttachmentController extends Controller
                 $response->json() ?: ['error' => $response->body() ?: 'Failed to upload attachment'],
                 $response->status()
             );
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             return response()->json(['error' => 'Failed to upload attachment: '.$e->getMessage()], 500);
         }
     }
@@ -108,6 +112,10 @@ class ShiftAttachmentController extends Controller
         }
 
         $baseUrl = config('shift.url');
+        $user = auth()->user();
+        if (! $user) {
+            return response()->json(['error' => 'Unauthenticated'], 401);
+        }
 
         $data = $request->validate([
             'filename' => 'required|string',
@@ -126,9 +134,9 @@ class ShiftAttachmentController extends Controller
                     'mime_type' => $data['mime_type'] ?? null,
                     'project' => $project,
                     'user' => [
-                        'name' => auth()->user()->name,
-                        'email' => auth()->user()->email,
-                        'id' => auth()->user()->id,
+                        'name' => $user->name,
+                        'email' => $user->email,
+                        'id' => $user->id,
                         'environment' => config('app.env'),
                         'url' => config('app.url'),
                     ],
@@ -146,7 +154,7 @@ class ShiftAttachmentController extends Controller
                 $response->json() ?: ['error' => $response->body() ?: 'Failed to initialize upload'],
                 $response->status()
             );
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             return response()->json(['error' => 'Failed to initialize upload: '.$e->getMessage()], 500);
         }
     }
@@ -164,6 +172,10 @@ class ShiftAttachmentController extends Controller
         }
 
         $baseUrl = config('shift.url');
+        $user = auth()->user();
+        if (! $user) {
+            return response()->json(['error' => 'Unauthenticated'], 401);
+        }
 
         $data = $request->validate([
             'upload_id' => 'required|string',
@@ -176,9 +188,9 @@ class ShiftAttachmentController extends Controller
                     'upload_id' => $data['upload_id'],
                     'project' => $project,
                     'user' => [
-                        'name' => auth()->user()->name,
-                        'email' => auth()->user()->email,
-                        'id' => auth()->user()->id,
+                        'name' => $user->name,
+                        'email' => $user->email,
+                        'id' => $user->id,
                         'environment' => config('app.env'),
                         'url' => config('app.url'),
                     ],
@@ -196,7 +208,7 @@ class ShiftAttachmentController extends Controller
                 $response->json() ?: ['error' => $response->body() ?: 'Failed to fetch upload status'],
                 $response->status()
             );
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             return response()->json(['error' => 'Failed to fetch upload status: '.$e->getMessage()], 500);
         }
     }
@@ -214,6 +226,10 @@ class ShiftAttachmentController extends Controller
         }
 
         $baseUrl = config('shift.url');
+        $user = auth()->user();
+        if (! $user) {
+            return response()->json(['error' => 'Unauthenticated'], 401);
+        }
 
         $data = $request->validate([
             'upload_id' => 'required|string',
@@ -243,15 +259,15 @@ class ShiftAttachmentController extends Controller
                 ],
                 [
                     'name' => 'user[name]',
-                    'contents' => auth()->user()->name,
+                    'contents' => $user->name,
                 ],
                 [
                     'name' => 'user[email]',
-                    'contents' => auth()->user()->email,
+                    'contents' => $user->email,
                 ],
                 [
                     'name' => 'user[id]',
-                    'contents' => auth()->user()->id,
+                    'contents' => $user->id,
                 ],
                 [
                     'name' => 'user[environment]',
@@ -284,7 +300,7 @@ class ShiftAttachmentController extends Controller
                 $response->json() ?: ['error' => $response->body() ?: 'Failed to upload chunk'],
                 $response->status()
             );
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             return response()->json(['error' => 'Failed to upload chunk: '.$e->getMessage()], 500);
         }
     }
@@ -302,6 +318,10 @@ class ShiftAttachmentController extends Controller
         }
 
         $baseUrl = config('shift.url');
+        $user = auth()->user();
+        if (! $user) {
+            return response()->json(['error' => 'Unauthenticated'], 401);
+        }
 
         $data = $request->validate([
             'upload_id' => 'required|string',
@@ -314,9 +334,9 @@ class ShiftAttachmentController extends Controller
                     'upload_id' => $data['upload_id'],
                     'project' => $project,
                     'user' => [
-                        'name' => auth()->user()->name,
-                        'email' => auth()->user()->email,
-                        'id' => auth()->user()->id,
+                        'name' => $user->name,
+                        'email' => $user->email,
+                        'id' => $user->id,
                         'environment' => config('app.env'),
                         'url' => config('app.url'),
                     ],
@@ -334,7 +354,7 @@ class ShiftAttachmentController extends Controller
                 $response->json() ?: ['error' => $response->body() ?: 'Failed to complete upload'],
                 $response->status()
             );
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             return response()->json(['error' => 'Failed to upload attachment: '.$e->getMessage()], 500);
         }
     }
@@ -354,6 +374,10 @@ class ShiftAttachmentController extends Controller
         }
 
         $baseUrl = config('shift.url');
+        $user = auth()->user();
+        if (! $user) {
+            return response()->json(['error' => 'Unauthenticated'], 401);
+        }
 
         try {
             // Validate the request
@@ -375,15 +399,15 @@ class ShiftAttachmentController extends Controller
                 ],
                 [
                     'name' => 'user[name]',
-                    'contents' => auth()->user()->name,
+                    'contents' => $user->name,
                 ],
                 [
                     'name' => 'user[email]',
-                    'contents' => auth()->user()->email,
+                    'contents' => $user->email,
                 ],
                 [
                     'name' => 'user[id]',
-                    'contents' => auth()->user()->id,
+                    'contents' => $user->id,
                 ],
                 [
                     'name' => 'user[environment]',
@@ -425,7 +449,7 @@ class ShiftAttachmentController extends Controller
                 $response->json() ?: ['error' => $response->body() ?: 'Failed to upload attachments'],
                 $response->status()
             );
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             return response()->json(['error' => 'Failed to upload attachments: '.$e->getMessage()], 500);
         }
     }
@@ -445,6 +469,10 @@ class ShiftAttachmentController extends Controller
         }
 
         $baseUrl = config('shift.url');
+        $user = auth()->user();
+        if (! $user) {
+            return response()->json(['error' => 'Unauthenticated'], 401);
+        }
 
         try {
             // Validate the request
@@ -458,9 +486,9 @@ class ShiftAttachmentController extends Controller
                     'path' => $request->input('path'),
                     'project' => $project,
                     'user' => [
-                        'name' => auth()->user()->name,
-                        'email' => auth()->user()->email,
-                        'id' => auth()->user()->id,
+                        'name' => $user->name,
+                        'email' => $user->email,
+                        'id' => $user->id,
                         'environment' => config('app.env'),
                         'url' => config('app.url'),
                     ],
@@ -478,7 +506,7 @@ class ShiftAttachmentController extends Controller
                 $response->json() ?: ['error' => $response->body() ?: 'Failed to remove attachment'],
                 $response->status()
             );
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             return response()->json(['error' => 'Failed to remove attachment: '.$e->getMessage()], 500);
         }
     }
@@ -498,6 +526,10 @@ class ShiftAttachmentController extends Controller
         }
 
         $baseUrl = config('shift.url');
+        $user = auth()->user();
+        if (! $user) {
+            return response()->json(['error' => 'Unauthenticated'], 401);
+        }
 
         try {
             // Validate the request
@@ -511,9 +543,9 @@ class ShiftAttachmentController extends Controller
                     'temp_identifier' => $request->input('temp_identifier'),
                     'project' => $project,
                     'user' => [
-                        'name' => auth()->user()->name,
-                        'email' => auth()->user()->email,
-                        'id' => auth()->user()->id,
+                        'name' => $user->name,
+                        'email' => $user->email,
+                        'id' => $user->id,
                         'environment' => config('app.env'),
                         'url' => config('app.url'),
                     ],
@@ -531,7 +563,7 @@ class ShiftAttachmentController extends Controller
                 $response->json() ?: ['error' => $response->body() ?: 'Failed to list attachments'],
                 $response->status()
             );
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             return response()->json(['error' => 'Failed to list attachments: '.$e->getMessage()], 500);
         }
     }
@@ -573,7 +605,7 @@ class ShiftAttachmentController extends Controller
             }
 
             return response($response->body(), $response->status(), $headers);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             return response()->json(['error' => 'Failed to fetch attachment: '.$e->getMessage()], 500);
         }
     }
@@ -593,6 +625,10 @@ class ShiftAttachmentController extends Controller
         }
 
         $baseUrl = config('shift.url');
+        $user = auth()->user();
+        if (! $user) {
+            return response()->json(['error' => 'Unauthenticated'], 401);
+        }
 
         try {
             $parsed = parse_url($baseUrl);
@@ -602,9 +638,9 @@ class ShiftAttachmentController extends Controller
             $params = [
                 'project' => $project,
                 'user' => [
-                    'name' => auth()->user()->name,
-                    'email' => auth()->user()->email,
-                    'id' => auth()->user()->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'id' => $user->id,
                     'environment' => config('app.env'),
                     'url' => config('app.url'),
                 ],
@@ -661,7 +697,7 @@ class ShiftAttachmentController extends Controller
             }
 
             return response()->json(['error' => $json['message'] ?? 'Failed to download attachment'], $response->status() ?: 422);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             return response()->json(['error' => 'Failed to download attachment: '.$e->getMessage()], 500);
         }
     }
