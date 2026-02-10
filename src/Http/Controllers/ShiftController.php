@@ -2,11 +2,9 @@
 
 namespace Wyxos\Shift\Http\Controllers;
 
-use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\App;
-use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Http;
 
 class ShiftController extends Controller
 {
@@ -25,14 +23,13 @@ class ShiftController extends Controller
                 if ($response->successful()) {
                     $html = $response->body();
 
-
                     $viteUrl = rtrim($this->getViteDevServerUrl(), '/');
 
                     $replacements = [
                         '"/@vite/client"' => "\"{$viteUrl}/@vite/client\"",
-                        '"/src/'           => "\"{$viteUrl}/src/",
-                        "'/src/"           => "'{$viteUrl}/src/",
-                        "'/@vite/client'"  => "'{$viteUrl}/@vite/client'",
+                        '"/src/' => "\"{$viteUrl}/src/",
+                        "'/src/" => "'{$viteUrl}/src/",
+                        "'/@vite/client'" => "'{$viteUrl}/@vite/client'",
                     ];
 
                     foreach ($replacements as $search => $replace) {
@@ -65,6 +62,7 @@ class ShiftController extends Controller
     {
         try {
             $response = Http::timeout(1)->head($this->getViteDevServerUrl());
+
             return $response->successful();
         } catch (\Exception $e) {
             return false;
@@ -86,9 +84,6 @@ class ShiftController extends Controller
 
     /**
      * Inject the login route URL into the HTML.
-     *
-     * @param string $html
-     * @return string
      */
     private function injectLoginRoute(string $html): string
     {
@@ -100,20 +95,24 @@ class ShiftController extends Controller
         // Get authenticated user if available
         $user = auth()->user();
         $username = $user ? $user->name : null;
+        $email = $user ? $user->email : null;
+
+        $shiftConfig = json_encode([
+            'loginRoute' => $loginRoute,
+            'logoutRoute' => $logoutRoute,
+            'baseUrl' => $baseUrl,
+            'appName' => $appName,
+            'username' => $username,
+            'email' => $email,
+        ], JSON_UNESCAPED_SLASHES);
 
         $script = <<<SCRIPT
 <script>
-    window.shiftConfig = {
-        loginRoute: '{$loginRoute}',
-        logoutRoute: '{$logoutRoute}',
-        baseUrl: '{$baseUrl}',
-        appName: '{$appName}',
-        username: '{$username}'
-    };
+    window.shiftConfig = {$shiftConfig};
 </script>
 SCRIPT;
 
         // Inject just before the first <script type="module">
-        return preg_replace('/(<script\s+type="module")/i', $script . "\n$1", $html, 1);
+        return preg_replace('/(<script\s+type="module")/i', $script."\n$1", $html, 1);
     }
 }
