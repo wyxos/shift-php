@@ -91,6 +91,29 @@ const lightboxOpen = ref(false)
 const lightboxSrc = ref('')
 const lightboxAlt = ref('')
 
+function getShiftUserEmail(): string | null {
+  const email = (window.shiftConfig as any)?.email
+  if (typeof email === 'string' && email.trim()) return email.trim()
+  return null
+}
+
+function getTaskCreatorEmail(task: any): string | null {
+  const candidates = [
+    task?.submitter?.email,
+    task?.submitter_email,
+    task?.creator?.email,
+    task?.creator_email,
+    task?.created_by?.email,
+    task?.created_by_email,
+    task?.user?.email,
+    task?.user_email,
+  ]
+  for (const value of candidates) {
+    if (typeof value === 'string' && value.trim()) return value.trim()
+  }
+  return null
+}
+
 function openLightboxForImage(img: HTMLImageElement) {
   const src = img.currentSrc || img.src
   if (!src) return
@@ -148,7 +171,29 @@ function onGlobalDblClickCapture(event: MouseEvent) {
 function scrollCommentsToBottom() {
   const el = commentsScrollRef.value
   if (!el) return
+  if (typeof (el as any).scrollTo === 'function') {
+    ;(el as any).scrollTo({ top: el.scrollHeight, behavior: 'auto' })
+    return
+  }
   el.scrollTop = el.scrollHeight
+}
+
+function scrollCommentsToBottomSoon() {
+  // Comments include images that may load after the HTML is inserted, changing scrollHeight.
+  // Do a few attempts so "open edit" reliably lands on the latest message.
+  void nextTick().then(scrollCommentsToBottom)
+  const raf = globalThis.requestAnimationFrame ?? ((cb: FrameRequestCallback) => window.setTimeout(cb, 0))
+  raf(scrollCommentsToBottom)
+  window.setTimeout(scrollCommentsToBottom, 50)
+  window.setTimeout(scrollCommentsToBottom, 250)
+}
+
+function onCommentsMediaLoadCapture(event: Event) {
+  const target = event.target as HTMLElement | null
+  if (!target) return
+  const tag = target.tagName?.toLowerCase()
+  if (tag !== 'img' && tag !== 'video') return
+  scrollCommentsToBottomSoon()
 }
 
 function formatThreadTime(value: any): string {
@@ -189,8 +234,7 @@ async function fetchThreads(taskId: number) {
     const payload = response.data?.data ?? response.data
     const list = Array.isArray(payload?.external) ? payload.external : []
     threadMessages.value = list.map(mapThreadToMessage)
-    await nextTick()
-    scrollCommentsToBottom()
+    scrollCommentsToBottomSoon()
   } catch (e: any) {
     threadError.value = e.response?.data?.error || e.response?.data?.message || e.message || 'Failed to load comments'
   } finally {
@@ -200,16 +244,14 @@ async function fetchThreads(taskId: number) {
 
 watch(editOpen, async (open) => {
   if (!open) return
-  await nextTick()
-  scrollCommentsToBottom()
+  scrollCommentsToBottomSoon()
 })
 
 watch(
   () => threadMessages.value.length,
   async () => {
     if (!editOpen.value) return
-    await nextTick()
-    scrollCommentsToBottom()
+    scrollCommentsToBottomSoon()
   },
 )
 
@@ -285,10 +327,10 @@ const activeFilterCount = computed(() => {
 })
 
 const isOwner = computed(() => {
-  const currentEmail = window.shiftConfig?.email
-  const submitterEmail = editTask.value?.submitter?.email
+  const currentEmail = getShiftUserEmail()
+  const submitterEmail = getTaskCreatorEmail(editTask.value)
   if (!currentEmail || !submitterEmail) return false
-  return currentEmail === submitterEmail
+  return currentEmail.toLowerCase() === submitterEmail.toLowerCase()
 })
 
 const taskAttachments = computed(() => {
@@ -782,7 +824,7 @@ onMounted(() => {
       <form class="flex h-full flex-col" @submit.prevent="saveEdit">
         <SheetHeader class="p-0">
           <div class="px-6 pt-6 pb-3">
-            <SheetTitle>Task Details</SheetTitle>
+            <SheetTitle>Task</SheetTitle>
           </div>
         </SheetHeader>
 
@@ -837,7 +879,7 @@ onMounted(() => {
                   <div class="rounded-lg border border-muted-foreground/30 bg-muted/10 p-4 text-sm text-muted-foreground">
                     <div
                       v-if="editTask.description"
-                      class="tiptap shift-rich [&_img]:max-w-full [&_img]:cursor-zoom-in [&_img]:rounded-lg [&_img]:shadow-sm"
+                      class="tiptap shift-rich [&_img]:max-w-full [&_img]:cursor-zoom-in [&_img]:rounded-lg [&_img]:shadow-sm [&_img.editor-tile]:w-[240px] [&_img.editor-tile]:max-w-[240px] [&_img.editor-tile]:h-auto [&_img.editor-tile]:object-contain sm:[&_img.editor-tile]:w-[300px] sm:[&_img.editor-tile]:max-w-[300px]"
                       v-html="editTask.description"
                     ></div>
                     <div v-else>No description provided.</div>
@@ -889,6 +931,7 @@ onMounted(() => {
               <div
                 ref="commentsScrollRef"
                 class="flex-1 space-y-3 overflow-auto px-4 py-4"
+                @load.capture="onCommentsMediaLoadCapture"
               >
                 <div v-if="threadLoading" class="py-6 text-center text-sm text-muted-foreground">Loading comments...</div>
                 <div v-else-if="threadError" class="py-6 text-center text-sm text-destructive">{{ threadError }}</div>
@@ -914,7 +957,7 @@ onMounted(() => {
                         {{ message.author }}
                       </div>
                       <div
-                        class="shift-rich text-inherit [&_img]:my-2 [&_img]:max-w-full [&_img]:cursor-zoom-in [&_img]:rounded-lg [&_img]:shadow-sm"
+                        class="shift-rich text-inherit [&_img]:my-2 [&_img]:max-w-full [&_img]:cursor-zoom-in [&_img]:rounded-lg [&_img]:shadow-sm [&_img.editor-tile]:w-[240px] [&_img.editor-tile]:max-w-[240px] [&_img.editor-tile]:h-auto [&_img.editor-tile]:object-contain sm:[&_img.editor-tile]:w-[300px] sm:[&_img.editor-tile]:max-w-[300px]"
                         v-html="message.content"
                       ></div>
                       <div v-if="message.attachments?.length" class="mt-2 space-y-1">
