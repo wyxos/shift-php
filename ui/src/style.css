@@ -4,3 +4,16 @@
 @source "../../../../resources/js/components/**/*.vue";
 @source "../../../../resources/js/layouts/**/*.vue";
 @source "./**/*.vue";
+
+/* Tiptap inline image node-view:
+   Keep the "remove image" CTA pinned to the image tile, not the full editor width. */
+.tiptap .ProseMirror span.group.relative {
+  display: inline-flex !important;
+  width: fit-content !important;
+  max-width: 100% !important;
+  vertical-align: middle;
+}
+
+.tiptap .ProseMirror span.group.relative > img.editor-tile {
+  display: block;
+}
