@@ -72,6 +72,7 @@ const editError = ref<string | null>(null)
 const editUploading = ref(false)
 const editTempIdentifier = ref(Date.now().toString())
 const editTask = ref<TaskDetail | null>(null)
+const deletedAttachmentIds = ref<number[]>([])
 const editForm = ref({
   title: '',
   priority: 'medium',
@@ -290,15 +291,11 @@ const isOwner = computed(() => {
   return currentEmail === submitterEmail
 })
 
-const nonImageAttachments = computed(() => {
+const taskAttachments = computed(() => {
   if (!editTask.value?.attachments) return []
-  return editTask.value.attachments.filter((attachment) => !isImageFilename(attachment.original_filename))
+  const removed = new Set(deletedAttachmentIds.value)
+  return editTask.value.attachments.filter((attachment) => !removed.has(attachment.id))
 })
-
-function isImageFilename(name: string) {
-  const ext = name.split('.').pop()?.toLowerCase() ?? ''
-  return ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'svg', 'webp'].includes(ext)
-}
 
 function resetCreateForm() {
   createForm.value = {
@@ -318,6 +315,12 @@ function openCreate() {
 
 function closeCreate() {
   createOpen.value = false
+}
+
+function removeAttachmentFromTask(attachmentId: number) {
+  if (!deletedAttachmentIds.value.includes(attachmentId)) {
+    deletedAttachmentIds.value = [...deletedAttachmentIds.value, attachmentId]
+  }
 }
 
 async function createTask() {
@@ -360,6 +363,7 @@ async function openEdit(taskId: number) {
   threadMessages.value = []
   threadError.value = null
   threadTempIdentifier.value = Date.now().toString()
+  deletedAttachmentIds.value = []
 
   try {
     const response = await axios.get(`/shift/api/tasks/${taskId}`)
@@ -387,6 +391,7 @@ function closeEdit() {
   editUploading.value = false
   threadMessages.value = []
   threadError.value = null
+  deletedAttachmentIds.value = []
 }
 
 async function saveEdit() {
@@ -401,6 +406,7 @@ async function saveEdit() {
       description: editForm.value.description,
       priority: editForm.value.priority,
       temp_identifier: editTempIdentifier.value,
+      deleted_attachment_ids: deletedAttachmentIds.value.length ? deletedAttachmentIds.value : undefined,
     }
 
     await axios.put(`/shift/api/tasks/${editTask.value.id}`, payload)
@@ -727,7 +733,7 @@ onMounted(() => {
 
         <div class="flex-1 space-y-6 overflow-auto px-6 pb-6">
           <div class="space-y-2">
-            <Label>Title</Label>
+            <Label>Task</Label>
             <Input v-model="createForm.title" placeholder="Short, descriptive title" required />
           </div>
 
@@ -777,9 +783,6 @@ onMounted(() => {
         <SheetHeader class="p-0">
           <div class="px-6 pt-6 pb-3">
             <SheetTitle>Task Details</SheetTitle>
-            <SheetDescription class="mt-1 text-sm text-muted-foreground">
-              Review updates and keep the comments moving.
-            </SheetDescription>
           </div>
         </SheetHeader>
 
@@ -789,7 +792,7 @@ onMounted(() => {
           <div v-else-if="editTask" class="grid h-full gap-6 lg:grid-cols-2">
             <div class="space-y-6 overflow-auto pr-1">
               <div class="space-y-2">
-                <Label>Title</Label>
+                <Label>Task</Label>
                 <template v-if="isOwner">
                   <Input v-model="editForm.title" placeholder="Short, descriptive title" required />
                 </template>
@@ -844,21 +847,33 @@ onMounted(() => {
 
               <div class="space-y-2">
                 <Label>Attachments</Label>
-                <div v-if="nonImageAttachments.length" class="space-y-2">
-                  <a
-                    v-for="attachment in nonImageAttachments"
+                <div v-if="taskAttachments.length" class="space-y-2">
+                  <div
+                    v-for="attachment in taskAttachments"
                     :key="attachment.id"
-                    :href="attachment.url"
-                    class="flex items-center justify-between rounded-md border border-muted-foreground/20 bg-muted/10 px-3 py-2 text-sm text-muted-foreground transition hover:bg-muted/20"
-                    target="_blank"
-                    rel="noreferrer"
+                    class="flex items-center gap-2 rounded-md border border-muted-foreground/20 bg-muted/10 px-3 py-2 text-sm text-muted-foreground"
                   >
-                    <span class="truncate">{{ attachment.original_filename }}</span>
-                    <span class="text-xs uppercase">Download</span>
-                  </a>
+                    <a
+                      :href="attachment.url"
+                      class="min-w-0 flex-1 truncate transition hover:text-foreground"
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      {{ attachment.original_filename }}
+                    </a>
+                    <Button
+                      v-if="isOwner"
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      @click="removeAttachmentFromTask(attachment.id)"
+                    >
+                      Remove
+                    </Button>
+                  </div>
                 </div>
                 <div v-else class="rounded-md border border-dashed border-muted-foreground/30 bg-muted/10 p-3 text-sm text-muted-foreground">
-                  No non-image attachments.
+                  No attachments available
                 </div>
               </div>
             </div>

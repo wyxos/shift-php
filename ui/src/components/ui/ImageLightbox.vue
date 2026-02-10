@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { Download, Minus, Plus, RotateCcw } from 'lucide-vue-next'
+import { Download, Minus, Plus, RotateCcw, X } from 'lucide-vue-next'
 import { Dialog, DialogContent } from '@shift/ui/dialog'
 
 const props = defineProps<{
@@ -78,7 +78,7 @@ watch(
 <template>
   <Dialog :open="open" @update:open="emit('update:open', $event)">
     <DialogContent
-      class="max-w-[min(96vw,1100px)] gap-0 p-0 sm:max-w-[min(96vw,1100px)]"
+      class="max-w-[min(96vw,1100px)] gap-0 p-0 sm:max-w-[min(96vw,1100px)] [&>button]:hidden"
       aria-label="Image preview"
     >
       <div class="flex items-center justify-between border-b px-4 py-3">
@@ -124,6 +124,14 @@ watch(
           >
             <Download class="h-4 w-4" />
           </a>
+          <button
+            type="button"
+            class="inline-flex h-9 w-9 items-center justify-center rounded-md border bg-background text-foreground transition hover:bg-muted"
+            title="Close"
+            @click="emit('update:open', false)"
+          >
+            <X class="h-4 w-4" />
+          </button>
         </div>
       </div>
 
