@@ -8,12 +8,22 @@
 /* Tiptap inline image node-view:
    Keep the "remove image" CTA pinned to the image tile, not the full editor width. */
 .tiptap .ProseMirror span.group.relative {
-  display: inline-flex !important;
+  /* Force the wrapper to shrink-wrap the image (NodeViewWrapper can otherwise expand). */
+  display: inline-block !important;
   width: fit-content !important;
   max-width: 100% !important;
+  position: relative !important;
   vertical-align: middle;
 }
 
 .tiptap .ProseMirror span.group.relative > img.editor-tile {
   display: block;
+}
+
+.tiptap .ProseMirror span.group.relative > button[contenteditable='false'] {
+  /* Tailwind utilities for positioning might not be present depending on consumer build scans. */
+  position: absolute !important;
+  top: 0.5rem !important;
+  right: 0.5rem !important;
+  left: auto !important;
 }

@@ -839,10 +839,9 @@ onMounted(() => {
   <Sheet v-model:open="editOpen">
     <SheetContent side="right" class="flex h-full w-full max-w-none flex-col p-0 sm:w-1/2 sm:max-w-none">
       <form class="flex h-full flex-col" @submit.prevent="saveEdit">
-        <SheetHeader class="p-0">
-          <div class="px-6 pt-6 pb-3">
-            <SheetTitle>Task</SheetTitle>
-          </div>
+        <!-- Keep an accessible title for the sheet without a visible header. -->
+        <SheetHeader class="sr-only">
+          <SheetTitle>Task</SheetTitle>
         </SheetHeader>
 
         <div class="flex-1 overflow-hidden px-6 pb-6" @click="onRichContentClick">
@@ -896,7 +895,7 @@ onMounted(() => {
                   <div class="rounded-lg border border-muted-foreground/30 bg-muted/10 p-4 text-sm text-muted-foreground">
                     <div
                       v-if="editTask.description"
-                      class="tiptap shift-rich [&_img]:max-w-full [&_img]:cursor-zoom-in [&_img]:rounded-lg [&_img]:shadow-sm [&_img.editor-tile]:w-[240px] [&_img.editor-tile]:max-w-[240px] [&_img.editor-tile]:aspect-square [&_img.editor-tile]:object-cover sm:[&_img.editor-tile]:w-[300px] sm:[&_img.editor-tile]:max-w-[300px]"
+                      class="tiptap shift-rich [&_img]:max-w-full [&_img]:cursor-zoom-in [&_img]:rounded-lg [&_img]:shadow-sm [&_img.editor-tile]:w-[200px] [&_img.editor-tile]:max-w-[200px] [&_img.editor-tile]:aspect-square [&_img.editor-tile]:object-cover"
                       v-html="editTask.description"
                     ></div>
                     <div v-else>No description provided.</div>
@@ -974,7 +973,7 @@ onMounted(() => {
                         {{ message.author }}
                       </div>
                       <div
-                        class="shift-rich text-inherit [&_img]:my-2 [&_img]:max-w-full [&_img]:cursor-zoom-in [&_img]:rounded-lg [&_img]:shadow-sm [&_img.editor-tile]:w-[240px] [&_img.editor-tile]:max-w-[240px] [&_img.editor-tile]:aspect-square [&_img.editor-tile]:object-cover sm:[&_img.editor-tile]:w-[300px] sm:[&_img.editor-tile]:max-w-[300px]"
+                        class="shift-rich text-inherit [&_img]:my-2 [&_img]:max-w-full [&_img]:cursor-zoom-in [&_img]:rounded-lg [&_img]:shadow-sm [&_img.editor-tile]:w-[200px] [&_img.editor-tile]:max-w-[200px] [&_img.editor-tile]:aspect-square [&_img.editor-tile]:object-cover"
                         v-html="message.content"
                       ></div>
                       <div v-if="message.attachments?.length" class="mt-2 space-y-1">
