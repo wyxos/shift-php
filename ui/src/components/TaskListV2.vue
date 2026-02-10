@@ -200,12 +200,29 @@ function formatThreadTime(value: any): string {
   if (!value) return ''
   const date = value instanceof Date ? value : new Date(String(value))
   if (Number.isNaN(date.getTime())) return String(value)
-  return date.toLocaleString(undefined, {
-    month: 'short',
-    day: '2-digit',
+
+  const now = new Date()
+  const startToday = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  const startYesterday = new Date(startToday)
+  startYesterday.setDate(startToday.getDate() - 1)
+
+  const time = new Intl.DateTimeFormat('en-GB', {
     hour: '2-digit',
     minute: '2-digit',
-  })
+    hour12: false,
+  }).format(date)
+
+  if (date >= startToday) {
+    return time
+  }
+
+  if (date >= startYesterday && date < startToday) {
+    return `Yesterday - ${time}`
+  }
+
+  const day = new Intl.DateTimeFormat('en-GB', { day: '2-digit' }).format(date)
+  const month = new Intl.DateTimeFormat('en-GB', { month: 'short' }).format(date)
+  return `${day} ${month} ${time}`
 }
 
 function mapThreadToMessage(thread: any): ThreadMessage {
@@ -879,7 +896,7 @@ onMounted(() => {
                   <div class="rounded-lg border border-muted-foreground/30 bg-muted/10 p-4 text-sm text-muted-foreground">
                     <div
                       v-if="editTask.description"
-                      class="tiptap shift-rich [&_img]:max-w-full [&_img]:cursor-zoom-in [&_img]:rounded-lg [&_img]:shadow-sm [&_img.editor-tile]:w-[240px] [&_img.editor-tile]:max-w-[240px] [&_img.editor-tile]:h-auto [&_img.editor-tile]:object-contain sm:[&_img.editor-tile]:w-[300px] sm:[&_img.editor-tile]:max-w-[300px]"
+                      class="tiptap shift-rich [&_img]:max-w-full [&_img]:cursor-zoom-in [&_img]:rounded-lg [&_img]:shadow-sm [&_img.editor-tile]:w-[240px] [&_img.editor-tile]:max-w-[240px] [&_img.editor-tile]:aspect-square [&_img.editor-tile]:object-cover sm:[&_img.editor-tile]:w-[300px] sm:[&_img.editor-tile]:max-w-[300px]"
                       v-html="editTask.description"
                     ></div>
                     <div v-else>No description provided.</div>
@@ -957,7 +974,7 @@ onMounted(() => {
                         {{ message.author }}
                       </div>
                       <div
-                        class="shift-rich text-inherit [&_img]:my-2 [&_img]:max-w-full [&_img]:cursor-zoom-in [&_img]:rounded-lg [&_img]:shadow-sm [&_img.editor-tile]:w-[240px] [&_img.editor-tile]:max-w-[240px] [&_img.editor-tile]:h-auto [&_img.editor-tile]:object-contain sm:[&_img.editor-tile]:w-[300px] sm:[&_img.editor-tile]:max-w-[300px]"
+                        class="shift-rich text-inherit [&_img]:my-2 [&_img]:max-w-full [&_img]:cursor-zoom-in [&_img]:rounded-lg [&_img]:shadow-sm [&_img.editor-tile]:w-[240px] [&_img.editor-tile]:max-w-[240px] [&_img.editor-tile]:aspect-square [&_img.editor-tile]:object-cover sm:[&_img.editor-tile]:w-[300px] sm:[&_img.editor-tile]:max-w-[300px]"
                         v-html="message.content"
                       ></div>
                       <div v-if="message.attachments?.length" class="mt-2 space-y-1">
