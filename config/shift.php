@@ -25,6 +25,6 @@ return [
 
     'routes' => [
         'prefix' => 'shift',
-        'middleware' => ['web', 'auth']
-    ]
+        'middleware' => ['web', 'auth'],
+    ],
 ];

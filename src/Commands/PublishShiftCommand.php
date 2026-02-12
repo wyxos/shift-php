@@ -20,8 +20,9 @@ class PublishShiftCommand extends Command
             'all' => 'shift',
         ];
 
-        if (!array_key_exists($group, $validGroups)) {
+        if (! array_key_exists($group, $validGroups)) {
             $this->error("Invalid group: $group. Choose from config, assets, or all.");
+
             return Command::INVALID;
         }
 
@@ -31,6 +32,7 @@ class PublishShiftCommand extends Command
         ]);
 
         $this->info("SHIFT {$group} assets published successfully.");
+
         return Command::SUCCESS;
     }
 }

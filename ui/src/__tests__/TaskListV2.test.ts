@@ -6,12 +6,14 @@ import TaskListV2 from '../components/TaskListV2.vue'
 const getMock = vi.fn()
 const deleteMock = vi.fn()
 const postMock = vi.fn()
+const putMock = vi.fn()
 
 vi.mock('@/axios-config', () => ({
   default: {
     get: (...args: any[]) => getMock(...args),
     delete: (...args: any[]) => deleteMock(...args),
     post: (...args: any[]) => postMock(...args),
+    put: (...args: any[]) => putMock(...args),
   },
 }))
 
@@ -79,6 +81,7 @@ describe('TaskListV2', () => {
     getMock.mockReset()
     deleteMock.mockReset()
     postMock.mockReset()
+    putMock.mockReset()
   })
 
   it('defaults to excluding completed and closed statuses', async () => {
@@ -224,5 +227,84 @@ describe('TaskListV2', () => {
 
     expect(postMock).toHaveBeenCalledWith('/shift/api/tasks/1/threads', expect.objectContaining({ content: '<p>hello</p>' }))
     expect(wrapper.text()).toContain('hello')
+  })
+
+  it('allows the comment owner to edit their comment', async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-02-10T18:00:00Z'))
+
+    getMock
+      .mockResolvedValueOnce({ data: { data: seedTasks } }) // initial fetchTasks on mount
+      .mockResolvedValueOnce({
+        data: {
+          id: 1,
+          title: 'Auth issue',
+          priority: 'high',
+          created_at: '2026-02-10T17:40:00Z',
+          description: '',
+          submitter: { email: 'someone@example.com' },
+          attachments: [],
+        },
+      }) // openEdit task fetch
+      .mockResolvedValueOnce({
+        data: {
+          external: [
+            {
+              id: 10,
+              sender_name: 'Alice',
+              is_current_user: false,
+              content: '<p>First</p>',
+              created_at: '2026-02-09T12:00:00Z',
+              attachments: [],
+            },
+            {
+              id: 11,
+              sender_name: 'You',
+              is_current_user: true,
+              content: '<p>Second</p>',
+              created_at: '2026-02-09T12:01:00Z',
+              attachments: [],
+            },
+          ],
+        },
+      }) // openEdit thread fetch
+
+    putMock.mockResolvedValueOnce({
+      data: {
+        thread: {
+          id: 11,
+          sender_name: 'You',
+          is_current_user: true,
+          content: '<p>Edited</p>',
+          created_at: '2026-02-09T12:01:00Z',
+          attachments: [],
+        },
+      },
+    })
+
+    const wrapper = mount(TaskListV2, { global: { stubs } })
+    await flushPromises()
+    await nextTick()
+
+    const firstRow = wrapper.findAll('[data-testid="task-row"]')[0]
+    await firstRow.find('button[title="Edit"]').trigger('click')
+    await flushPromises()
+    await nextTick()
+
+    expect(wrapper.find('[data-testid="comment-edit-10"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="comment-edit-11"]').exists()).toBe(true)
+
+    await wrapper.get('[data-testid="comment-edit-11"]').trigger('click')
+    await nextTick()
+
+    await wrapper.get('[data-testid="comment-save-11"]').trigger('click')
+    await flushPromises()
+    await nextTick()
+
+    expect(putMock).toHaveBeenCalledWith(
+      '/shift/api/tasks/1/threads/11',
+      expect.objectContaining({ content: '<p>Second</p>', temp_identifier: expect.any(String) }),
+    )
+    expect(wrapper.text()).toContain('Edited')
   })
 })

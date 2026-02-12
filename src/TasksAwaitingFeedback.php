@@ -3,7 +3,6 @@
 namespace Wyxos\Shift;
 
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
@@ -36,11 +35,11 @@ class TasksAwaitingFeedback extends Notification
     public function toMail(object $notifiable): MailMessage
     {
         $taskCount = $this->data['task_count'] ?? count($this->data['task_ids'] ?? []);
-        $url = route('shift.dashboard') . '/tasks?status=awaiting-feedback';
+        $url = route('shift.dashboard').'/tasks?status=awaiting-feedback';
 
         $message = (new MailMessage)
-            ->subject("Tasks Awaiting Your Feedback")
-            ->line("You have {$taskCount} " . ($taskCount == 1 ? "task" : "tasks") . " awaiting your feedback.")
+            ->subject('Tasks Awaiting Your Feedback')
+            ->line("You have {$taskCount} ".($taskCount == 1 ? 'task' : 'tasks').' awaiting your feedback.')
             ->action('View Tasks', $url)
             ->line('Please do not reply to this email directly.');
 

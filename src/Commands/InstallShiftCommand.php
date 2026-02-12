@@ -3,7 +3,6 @@
 namespace Wyxos\Shift\Commands;
 
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Http;
 
 class InstallShiftCommand extends Command
 {
@@ -17,25 +16,25 @@ class InstallShiftCommand extends Command
 
         $token = config('shift.token');
 
-        if (!$token) {
+        if (! $token) {
             // Prompt for project API token
             $token = $this->ask('Enter your SHIFT API token');
 
             // Save project API token immediately
             $this->writeEnv([
-                'SHIFT_TOKEN' => $token
+                'SHIFT_TOKEN' => $token,
             ]);
         }
 
         // Ask for PROJECT
         $project = config('shift.project');
 
-        if (!$project) {
+        if (! $project) {
             $project = $this->ask('Enter your SHIFT project token');
 
             // Save project token
             $this->writeEnv([
-                'SHIFT_PROJECT' => $project
+                'SHIFT_PROJECT' => $project,
             ]);
         }
 
@@ -67,7 +66,7 @@ class InstallShiftCommand extends Command
             if (preg_match($pattern, $envContents)) {
                 $envContents = preg_replace($pattern, "{$key}=\"{$value}\"", $envContents);
             } else {
-                $envContents .= PHP_EOL . "{$key}=\"{$value}\"";
+                $envContents .= PHP_EOL."{$key}=\"{$value}\"";
             }
         }
 
