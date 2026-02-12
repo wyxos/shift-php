@@ -1003,18 +1003,11 @@ onMounted(() => {
                                     class="flex"
                                 >
                                     <div class="max-w-[86%]">
-                                        <div
-                                            :class="
-                                                message.isYou
-                                                    ? 'rounded-br-md bg-sky-600 text-white'
-                                                    : 'border-muted-foreground/10 bg-background/70 text-foreground rounded-bl-md border'
-                                            "
-                                            class="relative rounded-2xl px-3 py-2 text-sm shadow-sm"
-                                        >
+                                        <div class="relative">
                                             <Button
                                                 v-if="message.isYou && message.id && !message.pending && threadEditingId !== message.id"
                                                 :data-testid="`comment-edit-${message.id}`"
-                                                class="absolute top-1 right-1 h-7 w-7 text-white/80 hover:text-white"
+                                                class="absolute top-0 right-0 z-10 h-7 w-7 translate-x-1/2 -translate-y-1/2 text-white/80 hover:text-white"
                                                 size="icon"
                                                 title="Edit comment"
                                                 type="button"
@@ -1023,65 +1016,74 @@ onMounted(() => {
                                             >
                                                 <Pencil class="h-3.5 w-3.5" />
                                             </Button>
-                                            <div v-if="!message.isYou" class="text-foreground/80 mb-1 text-[11px] font-semibold">
-                                                {{ message.author }}
+                                            <div
+                                                :class="
+                                                    message.isYou
+                                                        ? 'rounded-br-md bg-sky-600 text-white'
+                                                        : 'border-muted-foreground/10 bg-background/70 text-foreground rounded-bl-md border'
+                                                "
+                                                class="rounded-2xl px-3 py-2 text-sm shadow-sm"
+                                            >
+                                                <div v-if="!message.isYou" class="text-foreground/80 mb-1 text-[11px] font-semibold">
+                                                    {{ message.author }}
+                                                </div>
+                                                <template v-if="threadEditingId === message.id">
+                                                    <ShiftEditor
+                                                        v-model="threadEditHtml"
+                                                        :axios-instance="axios"
+                                                        :clear-on-send="false"
+                                                        :remove-temp-url="removeTempUrl"
+                                                        :resolve-temp-url="resolveTempUrl"
+                                                        :temp-identifier="threadEditTempIdentifier"
+                                                        :upload-endpoints="uploadEndpoints"
+                                                        class="mt-2"
+                                                        data-testid="comment-edit-editor"
+                                                        placeholder="Edit comment..."
+                                                        @send="saveThreadEdit($event?.html)"
+                                                        @uploading="threadEditUploading = $event"
+                                                    />
+                                                    <div class="mt-2 flex items-center justify-end gap-2">
+                                                        <Button
+                                                            :data-testid="`comment-cancel-${message.id}`"
+                                                            size="sm"
+                                                            type="button"
+                                                            variant="ghost"
+                                                            @click="cancelThreadEdit"
+                                                        >
+                                                            Cancel
+                                                        </Button>
+                                                        <Button
+                                                            :data-testid="`comment-save-${message.id}`"
+                                                            :disabled="threadEditSaving || threadEditUploading"
+                                                            size="sm"
+                                                            type="button"
+                                                            variant="default"
+                                                            @click="saveThreadEdit()"
+                                                        >
+                                                            Save
+                                                        </Button>
+                                                    </div>
+                                                    <div v-if="threadEditError" class="text-destructive mt-2 text-xs">{{ threadEditError }}</div>
+                                                </template>
+                                                <template v-else>
+                                                    <div
+                                                        class="shift-rich text-inherit [&_img]:my-2 [&_img]:max-w-full [&_img]:cursor-zoom-in [&_img]:rounded-lg [&_img]:shadow-sm [&_img.editor-tile]:aspect-square [&_img.editor-tile]:w-[200px] [&_img.editor-tile]:max-w-[200px] [&_img.editor-tile]:object-cover"
+                                                        v-html="message.content"
+                                                    ></div>
+                                                    <div v-if="message.attachments?.length" class="mt-2 space-y-1">
+                                                        <a
+                                                            v-for="attachment in message.attachments"
+                                                            :key="attachment.id"
+                                                            :href="attachment.url"
+                                                            class="block truncate text-xs underline decoration-white/40 underline-offset-2 hover:decoration-white/70"
+                                                            rel="noreferrer"
+                                                            target="_blank"
+                                                        >
+                                                            {{ attachment.original_filename }}
+                                                        </a>
+                                                    </div>
+                                                </template>
                                             </div>
-                                            <template v-if="threadEditingId === message.id">
-                                                <ShiftEditor
-                                                    v-model="threadEditHtml"
-                                                    :axios-instance="axios"
-                                                    :clear-on-send="false"
-                                                    :remove-temp-url="removeTempUrl"
-                                                    :resolve-temp-url="resolveTempUrl"
-                                                    :temp-identifier="threadEditTempIdentifier"
-                                                    :upload-endpoints="uploadEndpoints"
-                                                    class="mt-2"
-                                                    data-testid="comment-edit-editor"
-                                                    placeholder="Edit comment..."
-                                                    @send="saveThreadEdit($event?.html)"
-                                                    @uploading="threadEditUploading = $event"
-                                                />
-                                                <div class="mt-2 flex items-center justify-end gap-2">
-                                                    <Button
-                                                        :data-testid="`comment-cancel-${message.id}`"
-                                                        size="sm"
-                                                        type="button"
-                                                        variant="ghost"
-                                                        @click="cancelThreadEdit"
-                                                    >
-                                                        Cancel
-                                                    </Button>
-                                                    <Button
-                                                        :data-testid="`comment-save-${message.id}`"
-                                                        :disabled="threadEditSaving || threadEditUploading"
-                                                        size="sm"
-                                                        type="button"
-                                                        variant="default"
-                                                        @click="saveThreadEdit()"
-                                                    >
-                                                        Save
-                                                    </Button>
-                                                </div>
-                                                <div v-if="threadEditError" class="text-destructive mt-2 text-xs">{{ threadEditError }}</div>
-                                            </template>
-                                            <template v-else>
-                                                <div
-                                                    class="shift-rich text-inherit [&_img]:my-2 [&_img]:max-w-full [&_img]:cursor-zoom-in [&_img]:rounded-lg [&_img]:shadow-sm [&_img.editor-tile]:aspect-square [&_img.editor-tile]:w-[200px] [&_img.editor-tile]:max-w-[200px] [&_img.editor-tile]:object-cover"
-                                                    v-html="message.content"
-                                                ></div>
-                                                <div v-if="message.attachments?.length" class="mt-2 space-y-1">
-                                                    <a
-                                                        v-for="attachment in message.attachments"
-                                                        :key="attachment.id"
-                                                        :href="attachment.url"
-                                                        class="block truncate text-xs underline decoration-white/40 underline-offset-2 hover:decoration-white/70"
-                                                        rel="noreferrer"
-                                                        target="_blank"
-                                                    >
-                                                        {{ attachment.original_filename }}
-                                                    </a>
-                                                </div>
-                                            </template>
                                         </div>
                                         <div :class="message.isYou ? 'text-right' : 'text-left'" class="text-muted-foreground mt-1 text-[11px]">
                                             {{ message.time }}
