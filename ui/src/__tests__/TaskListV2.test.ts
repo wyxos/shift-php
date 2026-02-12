@@ -75,6 +75,7 @@ async function mountWithTasks() {
 
 describe('TaskListV2', () => {
   beforeEach(() => {
+    vi.useRealTimers()
     getMock.mockReset()
     deleteMock.mockReset()
     postMock.mockReset()
@@ -118,6 +119,9 @@ describe('TaskListV2', () => {
   })
 
   it('loads comments when opening the edit sheet', async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-02-10T18:00:00Z'))
+
     getMock
       .mockResolvedValueOnce({ data: { data: seedTasks } }) // initial fetchTasks on mount
       .mockResolvedValueOnce({
@@ -125,6 +129,7 @@ describe('TaskListV2', () => {
           id: 1,
           title: 'Auth issue',
           priority: 'high',
+          created_at: '2026-02-10T17:40:00Z',
           description: '',
           submitter: { email: 'someone@example.com' },
           attachments: [],
@@ -164,12 +169,16 @@ describe('TaskListV2', () => {
 
     expect(getMock).toHaveBeenCalledWith('/shift/api/tasks/1')
     expect(getMock).toHaveBeenCalledWith('/shift/api/tasks/1/threads')
+    expect(wrapper.text()).toContain('Created')
     expect(wrapper.text()).toContain('Comments')
     expect(wrapper.text()).toContain('First')
     expect(wrapper.text()).toContain('Second')
   })
 
   it('posts a new comment and renders it in the list', async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-02-10T18:00:00Z'))
+
     getMock
       .mockResolvedValueOnce({ data: { data: seedTasks } }) // initial fetchTasks on mount
       .mockResolvedValueOnce({
@@ -177,6 +186,7 @@ describe('TaskListV2', () => {
           id: 1,
           title: 'Auth issue',
           priority: 'high',
+          created_at: '2026-02-10T17:40:00Z',
           description: '',
           submitter: { email: 'someone@example.com' },
           attachments: [],
