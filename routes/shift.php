@@ -22,6 +22,7 @@ Route::middleware(config('shift.routes.middleware'))->group(function () {
     Route::post('/shift/api/tasks/{taskId}/threads', [ShiftTaskThreadController::class, 'store'])->name('task-threads.store');
     Route::get('/shift/api/tasks/{taskId}/threads/{threadId}', [ShiftTaskThreadController::class, 'show'])->name('task-threads.show');
     Route::put('/shift/api/tasks/{taskId}/threads/{threadId}', [ShiftTaskThreadController::class, 'update'])->name('task-threads.update');
+    Route::delete('/shift/api/tasks/{taskId}/threads/{threadId}', [ShiftTaskThreadController::class, 'destroy'])->name('task-threads.destroy');
 
     // Attachment routes
     Route::post('/shift/api/attachments/upload', [ShiftAttachmentController::class, 'upload'])->name('attachments.upload');
