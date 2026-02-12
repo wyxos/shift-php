@@ -30,6 +30,7 @@ type TaskAttachment = {
 
 type TaskDetail = Task & {
     description?: string;
+    created_at?: string;
     submitter?: { name?: string; email?: string };
     attachments?: TaskAttachment[];
 };
@@ -822,6 +823,10 @@ onMounted(() => {
                     <div v-else-if="editError" class="text-destructive py-8 text-center">{{ editError }}</div>
                     <div v-else-if="editTask" class="grid h-full gap-6 lg:grid-cols-2">
                         <div class="space-y-6 overflow-auto pr-1">
+                            <div v-if="editTask.created_at" class="text-muted-foreground text-xs">
+                                Created {{ formatThreadTime(editTask.created_at) }}
+                            </div>
+
                             <div class="space-y-2">
                                 <Label>Task</Label>
                                 <template v-if="isOwner">
