@@ -53,7 +53,6 @@ class ShiftNotificationController extends Controller
     /**
      * Handle thread update notifications.
      *
-     * @param array $payload
      * @return JsonResponse
      */
     protected function handleThreadUpdate(array $payload)
@@ -71,7 +70,6 @@ class ShiftNotificationController extends Controller
     /**
      * Handle task created notifications.
      *
-     * @param array $payload
      * @return JsonResponse
      */
     protected function handleTaskCreated(array $payload)
@@ -89,7 +87,6 @@ class ShiftNotificationController extends Controller
     /**
      * Handle tasks awaiting feedback notifications.
      *
-     * @param array $payload
      * @return JsonResponse
      */
     protected function handleTasksAwaitingFeedback(array $payload)

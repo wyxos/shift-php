@@ -7,7 +7,6 @@ use Shift\Core\Notifications\TaskThreadUpdated as CoreTaskThreadUpdated;
 
 class TaskThreadUpdated extends CoreTaskThreadUpdated
 {
-
     /**
      * Create a new notification instance.
      */
@@ -22,12 +21,12 @@ class TaskThreadUpdated extends CoreTaskThreadUpdated
 
     protected function resolveUrl(): ?string
     {
-        if (!empty($this->data['url'])) {
+        if (! empty($this->data['url'])) {
             return $this->data['url'];
         }
 
         if (Route::has('shift.dashboard')) {
-            return route('shift.dashboard') . '/tasks/' . $this->data['task_id'] . '/edit';
+            return route('shift.dashboard').'/tasks/'.$this->data['task_id'].'/edit';
         }
 
         return null;

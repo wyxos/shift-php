@@ -1,11 +1,11 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Wyxos\Shift\Http\Controllers\ShiftAttachmentController;
 use Wyxos\Shift\Http\Controllers\ShiftController;
+use Wyxos\Shift\Http\Controllers\ShiftNotificationController;
 use Wyxos\Shift\Http\Controllers\ShiftTaskController;
 use Wyxos\Shift\Http\Controllers\ShiftTaskThreadController;
-use Wyxos\Shift\Http\Controllers\ShiftAttachmentController;
-use Wyxos\Shift\Http\Controllers\ShiftNotificationController;
 
 Route::post('/shift/api/notifications', [ShiftNotificationController::class, 'store']);
 
@@ -21,6 +21,7 @@ Route::middleware(config('shift.routes.middleware'))->group(function () {
     Route::get('/shift/api/tasks/{taskId}/threads', [ShiftTaskThreadController::class, 'index'])->name('task-threads.index');
     Route::post('/shift/api/tasks/{taskId}/threads', [ShiftTaskThreadController::class, 'store'])->name('task-threads.store');
     Route::get('/shift/api/tasks/{taskId}/threads/{threadId}', [ShiftTaskThreadController::class, 'show'])->name('task-threads.show');
+    Route::put('/shift/api/tasks/{taskId}/threads/{threadId}', [ShiftTaskThreadController::class, 'update'])->name('task-threads.update');
 
     // Attachment routes
     Route::post('/shift/api/attachments/upload', [ShiftAttachmentController::class, 'upload'])->name('attachments.upload');

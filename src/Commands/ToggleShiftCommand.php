@@ -16,15 +16,17 @@ class ToggleShiftCommand extends Command
     {
         $composerPath = base_path('composer.json');
 
-        if (!File::exists($composerPath)) {
+        if (! File::exists($composerPath)) {
             $this->error('composer.json not found in the project root.');
+
             return Command::FAILURE;
         }
 
         $composer = json_decode(File::get($composerPath), true);
 
-        if (!$composer) {
+        if (! $composer) {
             $this->error('Failed to parse composer.json.');
+
             return Command::FAILURE;
         }
 
@@ -35,15 +37,16 @@ class ToggleShiftCommand extends Command
 
         if ($forceLocal && $forceOnline) {
             $this->error('Cannot use both --local and --online options.');
+
             return Command::FAILURE;
         }
 
         // Determine target state
-        $targetLocal = $forceLocal ? true : ($forceOnline ? false : !$isLocal);
+        $targetLocal = $forceLocal ? true : ($forceOnline ? false : ! $isLocal);
         $skipUpdate = $this->option('no-update');
 
         if ($isLocal === $targetLocal) {
-            $this->info('Already using ' . ($targetLocal ? 'local' : 'online') . ' version.');
+            $this->info('Already using '.($targetLocal ? 'local' : 'online').' version.');
             if ($skipUpdate) {
                 return Command::SUCCESS;
             }
@@ -57,14 +60,15 @@ class ToggleShiftCommand extends Command
             if ($targetLocal) {
                 $sdkPath = $this->getLocalSdkPath();
                 $fullPath = base_path($sdkPath);
-                
-                if (!File::exists($fullPath . '/composer.json')) {
+
+                if (! File::exists($fullPath.'/composer.json')) {
                     $this->error("Local SDK package not found at: {$fullPath}");
                     $this->line('');
-                    $this->line("You can specify a custom path using: --path=/path/to/shift-php");
+                    $this->line('You can specify a custom path using: --path=/path/to/shift-php');
+
                     return Command::FAILURE;
                 }
-                
+
                 $this->switchToLocal($composer, $sdkPath);
                 $this->info("✓ Switched to local version (path: {$sdkPath})");
             } else {
@@ -73,7 +77,7 @@ class ToggleShiftCommand extends Command
             }
 
             // Write updated composer.json
-            File::put($composerPath, json_encode($composer, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n");
+            File::put($composerPath, json_encode($composer, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)."\n");
         }
 
         // Skip composer update if --no-update flag is set
@@ -100,11 +104,13 @@ class ToggleShiftCommand extends Command
 
         if ($process->isSuccessful()) {
             $this->line('');
-            $this->info('✓ Successfully switched to ' . ($targetLocal ? 'local' : 'online') . ' version!');
+            $this->info('✓ Successfully switched to '.($targetLocal ? 'local' : 'online').' version!');
+
             return Command::SUCCESS;
         } else {
             $this->line('');
             $this->error('Composer update failed. Please review the output above.');
+
             return Command::FAILURE;
         }
     }
@@ -114,7 +120,7 @@ class ToggleShiftCommand extends Command
      */
     private function isUsingLocal(array $composer): bool
     {
-        if (!isset($composer['repositories'])) {
+        if (! isset($composer['repositories'])) {
             return false;
         }
 
@@ -140,7 +146,7 @@ class ToggleShiftCommand extends Command
         }
 
         // Ensure repositories array exists
-        if (!isset($composer['repositories'])) {
+        if (! isset($composer['repositories'])) {
             $composer['repositories'] = [];
         }
 
@@ -156,7 +162,7 @@ class ToggleShiftCommand extends Command
         }
 
         // Add path repository if it doesn't exist
-        if (!$pathRepoExists) {
+        if (! $pathRepoExists) {
             $composer['repositories'][] = [
                 'type' => 'path',
                 'url' => $sdkPath,
@@ -183,8 +189,9 @@ class ToggleShiftCommand extends Command
                 $composer['repositories'],
                 function ($repo) {
                     if (isset($repo['type']) && $repo['type'] === 'path' && isset($repo['url'])) {
-                        return !str_contains($repo['url'], 'shift-php');
+                        return ! str_contains($repo['url'], 'shift-php');
                     }
+
                     return true;
                 }
             );
@@ -219,8 +226,8 @@ class ToggleShiftCommand extends Command
 
         $basePath = base_path();
         foreach ($possiblePaths as $relativePath) {
-            $fullPath = $basePath . '/' . $relativePath;
-            if (File::exists($fullPath . '/composer.json')) {
+            $fullPath = $basePath.'/'.$relativePath;
+            if (File::exists($fullPath.'/composer.json')) {
                 return $relativePath;
             }
         }
@@ -229,4 +236,3 @@ class ToggleShiftCommand extends Command
         return '../../../wyxos/php/shift-sdk-package/packages/shift-php';
     }
 }
-
