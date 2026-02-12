@@ -238,4 +238,61 @@ class ShiftTaskThreadController extends Controller
             return response()->json(['error' => 'Failed to update thread: '.$e->getMessage()], 500);
         }
     }
+
+    /**
+     * Delete the specified thread.
+     *
+     * @param  int  $taskId
+     * @param  int  $threadId
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function destroy($taskId, $threadId)
+    {
+        $apiToken = config('shift.token');
+        $project = config('shift.project');
+
+        if (empty($apiToken) || empty($project)) {
+            return response()->json(['error' => 'SHIFT configuration missing. Please install Shift package and configure SHIFT_TOKEN and SHIFT_PROJECT in .env'], 500);
+        }
+
+        $baseUrl = config('shift.url');
+        $user = auth()->user();
+        if (! $user) {
+            return response()->json(['error' => 'Unauthenticated'], 401);
+        }
+
+        try {
+            $payload = [
+                'project' => $project,
+                'user' => [
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'id' => $user->id,
+                    'environment' => config('app.env'),
+                    'url' => config('app.url'),
+                ],
+                'metadata' => [
+                    'url' => config('app.url'),
+                    'environment' => config('app.env'),
+                ],
+            ];
+
+            $response = Http::withToken($apiToken)
+                ->acceptJson()
+                ->delete($baseUrl.'/api/tasks/'.$taskId.'/threads/'.$threadId, $payload);
+
+            if ($response->successful()) {
+                return response()->json($response->json(), $response->status() ?: 200);
+            }
+
+            $status = $response->status();
+            if ($status < 400) {
+                $status = 500;
+            }
+
+            return response()->json(['error' => $response->json()['message'] ?? 'Failed to delete thread'], $status);
+        } catch (\Throwable $e) {
+            return response()->json(['error' => 'Failed to delete thread: '.$e->getMessage()], 500);
+        }
+    }
 }

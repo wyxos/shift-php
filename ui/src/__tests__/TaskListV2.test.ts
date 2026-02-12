@@ -38,10 +38,10 @@ const stubs = {
   },
   ShiftEditor: {
     props: ['modelValue'],
-    template: `<div>
+    template: `<div v-bind="$attrs">
       <button
         data-testid="stub-send"
-        @click="$emit('send', { html: '<p>hello</p>', attachments: [] })"
+        @click="$emit('send', { html: modelValue || '<p>hello</p>', attachments: [] })"
       >
         send
       </button>
@@ -291,13 +291,11 @@ describe('TaskListV2', () => {
     await flushPromises()
     await nextTick()
 
-    expect(wrapper.find('[data-testid="comment-edit-10"]').exists()).toBe(false)
-    expect(wrapper.find('[data-testid="comment-edit-11"]').exists()).toBe(true)
-
-    await wrapper.get('[data-testid="comment-edit-11"]').trigger('click')
+    await wrapper.get('[data-testid="comment-bubble-11"]').trigger('dblclick')
     await nextTick()
 
-    await wrapper.get('[data-testid="comment-save-11"]').trigger('click')
+    const commentsEditor = wrapper.get('[data-testid="comments-editor"]')
+    await commentsEditor.get('[data-testid="stub-send"]').trigger('click')
     await flushPromises()
     await nextTick()
 
