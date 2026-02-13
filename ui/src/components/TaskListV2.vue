@@ -80,6 +80,9 @@ const editForm = ref({
     priority: 'medium',
     description: '',
 });
+const editStatus = ref<string>('pending');
+const statusSaving = ref(false);
+const statusError = ref<string | null>(null);
 
 const threadTempIdentifier = ref(Date.now().toString());
 const threadLoading = ref(false);
@@ -446,11 +449,14 @@ async function openEdit(taskId: number) {
     threadError.value = null;
     threadTempIdentifier.value = Date.now().toString();
     deletedAttachmentIds.value = [];
+    statusError.value = null;
+    statusSaving.value = false;
 
     try {
         const response = await axios.get(`/shift/api/tasks/${taskId}`);
         const data = response.data?.data ?? response.data;
         editTask.value = data;
+        editStatus.value = data?.status ?? 'pending';
         editForm.value = {
             title: data?.title ?? '',
             priority: data?.priority ?? 'medium',
@@ -474,6 +480,43 @@ function closeEdit() {
     threadMessages.value = [];
     threadError.value = null;
     deletedAttachmentIds.value = [];
+    editStatus.value = 'pending';
+    statusError.value = null;
+    statusSaving.value = false;
+}
+
+async function saveStatus(nextStatus: string) {
+    if (!editTask.value) return;
+    if (!nextStatus) return;
+    if (statusSaving.value) return;
+
+    const prevStatus = editTask.value.status;
+    if (nextStatus === prevStatus) return;
+
+    statusSaving.value = true;
+    statusError.value = null;
+
+    try {
+        await axios.patch(`/shift/api/tasks/${editTask.value.id}/toggle-status`, { status: nextStatus });
+        editTask.value.status = nextStatus;
+        const idx = tasks.value.findIndex((t) => t.id === editTask.value?.id);
+        if (idx !== -1) {
+            tasks.value[idx] = {
+                ...tasks.value[idx],
+                status: nextStatus,
+            };
+        }
+    } catch (e: any) {
+        statusError.value = e.response?.data?.error || e.response?.data?.message || e.message || 'Failed to update status';
+        editStatus.value = prevStatus;
+    } finally {
+        statusSaving.value = false;
+    }
+}
+
+function onEditStatusSelected(nextStatus: string) {
+    editStatus.value = nextStatus;
+    void saveStatus(nextStatus);
 }
 
 async function saveEdit() {
@@ -971,6 +1014,22 @@ onMounted(() => {
                                         {{ editTask.title }}
                                     </div>
                                 </template>
+                            </div>
+
+                            <div class="space-y-2">
+                                <Label>Status</Label>
+                                <Select
+                                    data-testid="task-status-select"
+                                    :disabled="statusSaving"
+                                    :model-value="editStatus"
+                                    @update:modelValue="onEditStatusSelected"
+                                >
+                                    <option value="pending">Pending</option>
+                                    <option value="in-progress">In Progress</option>
+                                    <option value="awaiting-feedback">Awaiting Feedback</option>
+                                    <option value="completed">Completed</option>
+                                </Select>
+                                <div v-if="statusError" class="text-destructive text-xs">{{ statusError }}</div>
                             </div>
 
                             <div class="space-y-2">
