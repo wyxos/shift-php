@@ -29,6 +29,8 @@ const stubs = {
   CardContent: { template: '<div><slot /></div>' },
   CardHeader: { template: '<div><slot /></div>' },
   CardTitle: { template: '<div><slot /></div>' },
+  Dialog: { template: '<div><slot /></div>' },
+  DialogContent: { template: '<div><slot /></div>' },
   Input: {
     props: ['modelValue'],
     template: '<input :value="modelValue" v-bind="$attrs" @input="$emit(\'update:modelValue\', $event.target.value)" />',
@@ -67,8 +69,25 @@ const seedTasks = [
   { id: 5, title: 'Close out', status: 'closed', priority: 'medium' },
 ]
 
+const defaultStatuses = ['pending', 'in-progress', 'awaiting-feedback']
+const defaultTasks = seedTasks.filter((t) => defaultStatuses.includes(t.status))
+
+function makeIndexResponse(tasks: any[]) {
+  const total = tasks.length
+  return {
+    data: {
+      data: tasks,
+      total,
+      current_page: 1,
+      last_page: 1,
+      from: total ? 1 : 0,
+      to: total,
+    },
+  }
+}
+
 async function mountWithTasks() {
-  getMock.mockResolvedValue({ data: { data: seedTasks } })
+  getMock.mockResolvedValueOnce(makeIndexResponse(defaultTasks))
   const wrapper = mount(TaskListV2, {
     global: { stubs },
   })
@@ -91,7 +110,7 @@ describe('TaskListV2', () => {
     const wrapper = await mountWithTasks()
 
     expect(getMock).toHaveBeenCalledWith('/shift/api/tasks', {
-      params: { status: ['pending', 'in-progress', 'awaiting-feedback'] },
+      params: { page: 1, status: defaultStatuses },
     })
 
     const rows = wrapper.findAll('[data-testid="task-row"]')
@@ -104,24 +123,51 @@ describe('TaskListV2', () => {
   })
 
   it('filters by priority', async () => {
-    const wrapper = await mountWithTasks()
+    getMock.mockResolvedValueOnce(makeIndexResponse(defaultTasks)).mockResolvedValueOnce(makeIndexResponse([seedTasks[0]]))
+
+    const wrapper = mount(TaskListV2, { global: { stubs } })
+    await flushPromises()
+    await nextTick()
 
     await wrapper.get('[data-testid="priority-low"]').setValue(false)
     await wrapper.get('[data-testid="priority-medium"]').setValue(false)
     await nextTick()
 
+    // Draft changes should not apply until the user clicks Apply.
+    expect(wrapper.findAll('[data-testid="task-row"]').length).toBe(3)
+
+    await wrapper.get('[data-testid="filters-apply"]').trigger('click')
+    await flushPromises()
+    await nextTick()
+
+    expect(getMock).toHaveBeenLastCalledWith('/shift/api/tasks', {
+      params: { page: 1, status: defaultStatuses, priority: ['high'] },
+    })
+
     const rows = wrapper.findAll('[data-testid="task-row"]')
     expect(rows.length).toBe(1)
-    expect(rows[0].text()).toContain('high')
+    expect(rows[0].text()).toContain('Auth issue')
 
     wrapper.unmount()
   })
 
   it('filters by search term', async () => {
-    const wrapper = await mountWithTasks()
+    getMock.mockResolvedValueOnce(makeIndexResponse(defaultTasks)).mockResolvedValueOnce(makeIndexResponse([seedTasks[0]]))
+
+    const wrapper = mount(TaskListV2, { global: { stubs } })
+    await flushPromises()
+    await nextTick()
 
     await wrapper.get('[data-testid="filter-search"]').setValue('auth')
     await nextTick()
+
+    await wrapper.get('[data-testid="filters-apply"]').trigger('click')
+    await flushPromises()
+    await nextTick()
+
+    expect(getMock).toHaveBeenLastCalledWith('/shift/api/tasks', {
+      params: { page: 1, status: defaultStatuses, search: 'auth' },
+    })
 
     const rows = wrapper.findAll('[data-testid="task-row"]')
     expect(rows.length).toBe(1)
@@ -135,7 +181,7 @@ describe('TaskListV2', () => {
     vi.setSystemTime(new Date('2026-02-10T18:00:00Z'))
 
     getMock
-      .mockResolvedValueOnce({ data: { data: seedTasks } }) // initial fetchTasks on mount
+      .mockResolvedValueOnce(makeIndexResponse(defaultTasks)) // initial fetchTasks on mount
       .mockResolvedValueOnce({
         data: {
           id: 1,
@@ -195,7 +241,7 @@ describe('TaskListV2', () => {
     vi.setSystemTime(new Date('2026-02-10T18:00:00Z'))
 
     getMock
-      .mockResolvedValueOnce({ data: { data: seedTasks } }) // initial fetchTasks on mount
+      .mockResolvedValueOnce(makeIndexResponse(defaultTasks)) // initial fetchTasks on mount
       .mockResolvedValueOnce({
         data: {
           id: 1,
@@ -209,8 +255,9 @@ describe('TaskListV2', () => {
         },
       }) // openEdit task fetch
       .mockResolvedValueOnce({ data: { external: [] } }) // openEdit thread fetch
+      .mockResolvedValueOnce(makeIndexResponse(defaultTasks)) // refresh after save
 
-    patchMock.mockResolvedValueOnce({ data: { status: 'in-progress' } })
+    putMock.mockResolvedValueOnce({ data: { message: 'Task updated successfully' } })
 
     const wrapper = mount(TaskListV2, { global: { stubs } })
     await flushPromises()
@@ -225,7 +272,13 @@ describe('TaskListV2', () => {
     await flushPromises()
     await nextTick()
 
-    expect(patchMock).toHaveBeenCalledWith('/shift/api/tasks/1/toggle-status', expect.objectContaining({ status: 'in-progress' }))
+    expect(patchMock).not.toHaveBeenCalled()
+
+    await wrapper.get('[data-testid="edit-form"]').trigger('submit')
+    await flushPromises()
+    await nextTick()
+
+    expect(putMock).toHaveBeenCalledWith('/shift/api/tasks/1', expect.objectContaining({ status: 'in-progress' }))
 
     wrapper.unmount()
     vi.useRealTimers()
@@ -236,7 +289,7 @@ describe('TaskListV2', () => {
     vi.setSystemTime(new Date('2026-02-10T18:00:00Z'))
 
     getMock
-      .mockResolvedValueOnce({ data: { data: seedTasks } }) // initial fetchTasks on mount
+      .mockResolvedValueOnce(makeIndexResponse(defaultTasks)) // initial fetchTasks on mount
       .mockResolvedValueOnce({
         data: {
           id: 1,
@@ -290,7 +343,7 @@ describe('TaskListV2', () => {
     vi.setSystemTime(new Date('2026-02-10T18:00:00Z'))
 
     getMock
-      .mockResolvedValueOnce({ data: { data: seedTasks } }) // initial fetchTasks on mount
+      .mockResolvedValueOnce(makeIndexResponse(defaultTasks)) // initial fetchTasks on mount
       .mockResolvedValueOnce({
         data: {
           id: 1,
@@ -370,7 +423,7 @@ describe('TaskListV2', () => {
     vi.setSystemTime(new Date('2026-02-10T18:00:00Z'))
 
     getMock
-      .mockResolvedValueOnce({ data: { data: seedTasks } }) // initial fetchTasks on mount
+      .mockResolvedValueOnce(makeIndexResponse(defaultTasks)) // initial fetchTasks on mount
       .mockResolvedValueOnce({
         data: {
           id: 1,
