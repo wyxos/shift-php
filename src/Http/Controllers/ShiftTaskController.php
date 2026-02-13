@@ -53,6 +53,18 @@ class ShiftTaskController extends Controller
                 $params['status'] = $request->status;
             }
 
+            if ($request->has('priority')) {
+                $params['priority'] = $request->priority;
+            }
+
+            if ($request->filled('search')) {
+                $params['search'] = $request->search;
+            }
+
+            if ($request->filled('page')) {
+                $params['page'] = (int) $request->page;
+            }
+
             $response = Http::withToken($apiToken)
                 ->acceptJson()
                 ->get($url, $params);
