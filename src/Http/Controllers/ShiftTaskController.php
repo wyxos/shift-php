@@ -258,4 +258,60 @@ class ShiftTaskController extends Controller
             return response()->json(['error' => 'Failed to delete task: '.$e->getMessage()], 500);
         }
     }
+
+    /**
+     * Toggle task status for the authenticated user.
+     *
+     * This is intentionally separate from update() so non-owners can still change status
+     * without having to provide title/description payloads required by SHIFT.
+     */
+    public function toggleStatus(Request $request, int $id)
+    {
+        $token = config('shift.token');
+        $project = config('shift.project');
+
+        if (empty($token) || empty($project)) {
+            return response()->json(['error' => 'SHIFT configuration missing. Please install Shift package and configure SHIFT_TOKEN and SHIFT_PROJECT in .env'], 500);
+        }
+
+        $baseUrl = config('shift.url');
+        $user = auth()->user();
+        if (! $user) {
+            return response()->json(['error' => 'Unauthenticated'], 401);
+        }
+
+        $attributes = $request->validate([
+            'status' => 'required|string',
+        ]);
+
+        try {
+            $payload = [
+                'status' => $attributes['status'],
+                'project' => $project,
+                'user' => [
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'id' => $user->id,
+                    'environment' => config('app.env'),
+                    'url' => config('app.url'),
+                ],
+                'metadata' => [
+                    'url' => config('app.url'),
+                    'environment' => config('app.env'),
+                ],
+            ];
+
+            $response = Http::withToken($token)
+                ->acceptJson()
+                ->patch($baseUrl.'/api/tasks/'.$id.'/toggle-status', $payload);
+
+            if ($response->successful()) {
+                return response()->json($response->json());
+            }
+
+            return response()->json(['error' => $response->json()['message'] ?? 'Failed to update task status'], 422);
+        } catch (\Throwable $e) {
+            return response()->json(['error' => 'Failed to update task status: '.$e->getMessage()], 500);
+        }
+    }
 }
