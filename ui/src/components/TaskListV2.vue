@@ -13,7 +13,7 @@ import { ContextMenuContent, ContextMenuItem, ContextMenuPortal, ContextMenuRoot
 import { toast } from 'vue-sonner';
 import Badge from './ui/badge.vue';
 import ImageLightbox from './ui/ImageLightbox.vue';
-import Select from './ui/select.vue';
+import ButtonGroup from './ui/ButtonGroup.vue';
 
 type Task = {
     id: number;
@@ -947,11 +947,7 @@ onMounted(() => {
 
                     <div class="space-y-2">
                         <Label>Priority</Label>
-                        <Select v-model="createForm.priority">
-                            <option value="low">Low</option>
-                            <option value="medium">Medium</option>
-                            <option value="high">High</option>
-                        </Select>
+                        <ButtonGroup v-model="createForm.priority" aria-label="Task priority" :options="priorityOptions" :columns="3" />
                     </div>
 
                     <div class="space-y-2">
@@ -1018,28 +1014,22 @@ onMounted(() => {
 
                             <div class="space-y-2">
                                 <Label>Status</Label>
-                                <Select
-                                    data-testid="task-status-select"
+                                <ButtonGroup
+                                    aria-label="Task status"
+                                    test-id-prefix="task-status"
                                     :disabled="statusSaving"
                                     :model-value="editStatus"
+                                    :options="statusOptions.filter((option) => option.value !== 'closed')"
+                                    :columns="2"
                                     @update:modelValue="onEditStatusSelected"
-                                >
-                                    <option value="pending">Pending</option>
-                                    <option value="in-progress">In Progress</option>
-                                    <option value="awaiting-feedback">Awaiting Feedback</option>
-                                    <option value="completed">Completed</option>
-                                </Select>
+                                />
                                 <div v-if="statusError" class="text-destructive text-xs">{{ statusError }}</div>
                             </div>
 
                             <div class="space-y-2">
                                 <Label>Priority</Label>
                                 <template v-if="isOwner">
-                                    <Select v-model="editForm.priority">
-                                        <option value="low">Low</option>
-                                        <option value="medium">Medium</option>
-                                        <option value="high">High</option>
-                                    </Select>
+                                    <ButtonGroup v-model="editForm.priority" aria-label="Task priority" :options="priorityOptions" :columns="3" />
                                 </template>
                                 <template v-else>
                                     <div

@@ -221,8 +221,7 @@ describe('TaskListV2', () => {
     await flushPromises()
     await nextTick()
 
-    const statusSelect = wrapper.get('[data-testid="task-status-select"]')
-    await statusSelect.setValue('in-progress')
+    await wrapper.get('[data-testid="task-status-in-progress"]').trigger('click')
     await flushPromises()
     await nextTick()
 
