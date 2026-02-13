@@ -4,16 +4,17 @@ import axios from '@/axios-config';
 import ShiftEditor from '@shared/components/ShiftEditor.vue';
 import { Button } from '@shift/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@shift/ui/card';
+import { Dialog, DialogContent } from '@shift/ui/dialog';
 import { Input } from '@shift/ui/input';
 import { Label } from '@shift/ui/label';
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from '@shift/ui/sheet';
-import { Filter, Pencil, Plus, Trash2 } from 'lucide-vue-next';
+import { Filter, Paperclip, Pencil, Plus, Trash2 } from 'lucide-vue-next';
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { ContextMenuContent, ContextMenuItem, ContextMenuPortal, ContextMenuRoot, ContextMenuSeparator, ContextMenuTrigger } from 'reka-ui';
 import { toast } from 'vue-sonner';
 import Badge from './ui/badge.vue';
 import ImageLightbox from './ui/ImageLightbox.vue';
-import Select from './ui/select.vue';
+import ButtonGroup from './ui/ButtonGroup.vue';
 
 type Task = {
     id: number;
@@ -54,6 +55,10 @@ const loading = ref(true);
 const error = ref<string | null>(null);
 const deleteLoading = ref<number | null>(null);
 const filtersOpen = ref(false);
+const currentPage = ref(1);
+const lastPage = ref(1);
+const from = ref(0);
+const to = ref(0);
 const highlightedTaskId = ref<number | null>(null);
 let highlightTimer: number | null = null;
 
@@ -78,11 +83,12 @@ const deletedAttachmentIds = ref<number[]>([]);
 const editForm = ref({
     title: '',
     priority: 'medium',
+    status: 'pending',
     description: '',
 });
-const editStatus = ref<string>('pending');
-const statusSaving = ref(false);
-const statusError = ref<string | null>(null);
+
+const confirmCloseOpen = ref(false);
+const initialEditSnapshot = ref<{ title: string; priority: string; status: string; description: string } | null>(null);
 
 const threadTempIdentifier = ref(Date.now().toString());
 const threadLoading = ref(false);
@@ -357,15 +363,26 @@ function resolveTempUrl(data: any): string {
 
 const defaultStatuses = statusOptions.filter((option) => !['completed', 'closed'].includes(option.value)).map((option) => option.value);
 
-const selectedStatuses = ref<string[]>([...defaultStatuses]);
-const selectedPriorities = ref<string[]>(priorityOptions.map((option) => option.value));
-const searchTerm = ref('');
+const appliedStatuses = ref<string[]>([...defaultStatuses]);
+const appliedPriorities = ref<string[]>(priorityOptions.map((option) => option.value));
+const appliedSearchTerm = ref('');
+
+const draftStatuses = ref<string[]>([...appliedStatuses.value]);
+const draftPriorities = ref<string[]>([...appliedPriorities.value]);
+const draftSearchTerm = ref(appliedSearchTerm.value);
+
+watch(filtersOpen, (open) => {
+    if (!open) return;
+    draftStatuses.value = [...appliedStatuses.value];
+    draftPriorities.value = [...appliedPriorities.value];
+    draftSearchTerm.value = appliedSearchTerm.value;
+});
 
 const activeFilterCount = computed(() => {
     let count = 0;
-    if (selectedStatuses.value.length && selectedStatuses.value.length < statusOptions.length) count += 1;
-    if (selectedPriorities.value.length && selectedPriorities.value.length < priorityOptions.length) count += 1;
-    if (searchTerm.value.trim()) count += 1;
+    if (appliedStatuses.value.length && appliedStatuses.value.length < statusOptions.length) count += 1;
+    if (appliedPriorities.value.length && appliedPriorities.value.length < priorityOptions.length) count += 1;
+    if (appliedSearchTerm.value.trim()) count += 1;
     return count;
 });
 
@@ -381,6 +398,50 @@ const taskAttachments = computed(() => {
     const removed = new Set(deletedAttachmentIds.value);
     return editTask.value.attachments.filter((attachment) => !removed.has(attachment.id));
 });
+
+const hasUnsavedTaskChanges = computed(() => {
+    if (!editOpen.value) return false;
+    const snap = initialEditSnapshot.value;
+    if (!snap) return false;
+
+    if (editForm.value.title !== snap.title) return true;
+    if (editForm.value.priority !== snap.priority) return true;
+    if (editForm.value.status !== snap.status) return true;
+    if ((editForm.value.description ?? '') !== (snap.description ?? '')) return true;
+    if (deletedAttachmentIds.value.length > 0) return true;
+
+    return false;
+});
+
+const hasUnsavedCommentDraft = computed(() => {
+    if (!editOpen.value) return false;
+    if (threadEditingId.value) return true;
+    if (threadComposerHtml.value.trim()) return true;
+    return false;
+});
+
+const hasUnsavedChanges = computed(() => hasUnsavedTaskChanges.value || hasUnsavedCommentDraft.value);
+
+function attemptCloseEdit() {
+    if (!hasUnsavedChanges.value) {
+        closeEditNow();
+        return;
+    }
+    confirmCloseOpen.value = true;
+}
+
+function discardChangesAndClose() {
+    confirmCloseOpen.value = false;
+    closeEditNow();
+}
+
+function onEditOpenChange(open: boolean) {
+    if (open) {
+        editOpen.value = true;
+        return;
+    }
+    attemptCloseEdit();
+}
 
 function resetCreateForm() {
     createForm.value = {
@@ -449,20 +510,28 @@ async function openEdit(taskId: number) {
     threadError.value = null;
     threadTempIdentifier.value = Date.now().toString();
     deletedAttachmentIds.value = [];
-    statusError.value = null;
-    statusSaving.value = false;
+    threadComposerHtml.value = '';
+    threadEditingId.value = null;
+    threadEditError.value = null;
+    threadEditSaving.value = false;
 
     try {
         const response = await axios.get(`/shift/api/tasks/${taskId}`);
         const data = response.data?.data ?? response.data;
         editTask.value = data;
-        editStatus.value = data?.status ?? 'pending';
         editForm.value = {
             title: data?.title ?? '',
             priority: data?.priority ?? 'medium',
+            status: data?.status ?? 'pending',
             description: data?.description ?? '',
         };
         editTempIdentifier.value = Date.now().toString();
+        initialEditSnapshot.value = {
+            title: editForm.value.title,
+            priority: editForm.value.priority,
+            status: editForm.value.status,
+            description: editForm.value.description,
+        };
         // Load comments in parallel so task details render immediately.
         void fetchThreads(taskId);
     } catch (e: any) {
@@ -472,7 +541,7 @@ async function openEdit(taskId: number) {
     }
 }
 
-function closeEdit() {
+function closeEditNow() {
     editOpen.value = false;
     editTask.value = null;
     editError.value = null;
@@ -480,47 +549,22 @@ function closeEdit() {
     threadMessages.value = [];
     threadError.value = null;
     deletedAttachmentIds.value = [];
-    editStatus.value = 'pending';
-    statusError.value = null;
-    statusSaving.value = false;
-}
-
-async function saveStatus(nextStatus: string) {
-    if (!editTask.value) return;
-    if (!nextStatus) return;
-    if (statusSaving.value) return;
-
-    const prevStatus = editTask.value.status;
-    if (nextStatus === prevStatus) return;
-
-    statusSaving.value = true;
-    statusError.value = null;
-
-    try {
-        await axios.patch(`/shift/api/tasks/${editTask.value.id}/toggle-status`, { status: nextStatus });
-        editTask.value.status = nextStatus;
-        const idx = tasks.value.findIndex((t) => t.id === editTask.value?.id);
-        if (idx !== -1) {
-            tasks.value[idx] = {
-                ...tasks.value[idx],
-                status: nextStatus,
-            };
-        }
-    } catch (e: any) {
-        statusError.value = e.response?.data?.error || e.response?.data?.message || e.message || 'Failed to update status';
-        editStatus.value = prevStatus;
-    } finally {
-        statusSaving.value = false;
-    }
-}
-
-function onEditStatusSelected(nextStatus: string) {
-    editStatus.value = nextStatus;
-    void saveStatus(nextStatus);
+    editForm.value = {
+        title: '',
+        priority: 'medium',
+        status: 'pending',
+        description: '',
+    };
+    initialEditSnapshot.value = null;
+    threadComposerHtml.value = '';
+    threadEditingId.value = null;
+    threadEditError.value = null;
+    threadEditSaving.value = false;
 }
 
 async function saveEdit() {
-    if (!editTask.value || !isOwner.value) return;
+    if (!editTask.value) return;
+    if (!hasUnsavedTaskChanges.value) return;
 
     editError.value = null;
     editLoading.value = true;
@@ -530,12 +574,13 @@ async function saveEdit() {
             title: editForm.value.title,
             description: editForm.value.description,
             priority: editForm.value.priority,
+            status: editForm.value.status,
             temp_identifier: editTempIdentifier.value,
             deleted_attachment_ids: deletedAttachmentIds.value.length ? deletedAttachmentIds.value : undefined,
         };
 
         await axios.put(`/shift/api/tasks/${editTask.value.id}`, payload);
-        closeEdit();
+        closeEditNow();
         await fetchTasks();
     } catch (e: any) {
         editError.value = e.response?.data?.error || e.response?.data?.message || e.message || 'Failed to update task';
@@ -693,37 +738,80 @@ async function deleteThreadMessage(message: ThreadMessage) {
 }
 
 function resetFilters() {
-    selectedStatuses.value = [...defaultStatuses];
-    selectedPriorities.value = priorityOptions.map((option) => option.value);
-    searchTerm.value = '';
+    draftStatuses.value = [...defaultStatuses];
+    draftPriorities.value = priorityOptions.map((option) => option.value);
+    draftSearchTerm.value = '';
+
+    appliedStatuses.value = [...draftStatuses.value];
+    appliedPriorities.value = [...draftPriorities.value];
+    appliedSearchTerm.value = draftSearchTerm.value;
+
+    currentPage.value = 1;
+    fetchTasks();
+}
+
+function applyFilters() {
+    appliedStatuses.value = [...draftStatuses.value];
+    appliedPriorities.value = [...draftPriorities.value];
+    appliedSearchTerm.value = draftSearchTerm.value;
+
+    currentPage.value = 1;
+    fetchTasks();
+    filtersOpen.value = false;
 }
 
 function selectAllStatuses() {
-    selectedStatuses.value = statusOptions.map((option) => option.value);
+    draftStatuses.value = statusOptions.map((option) => option.value);
 }
 
 function selectAllPriorities() {
-    selectedPriorities.value = priorityOptions.map((option) => option.value);
+    draftPriorities.value = priorityOptions.map((option) => option.value);
 }
 
 async function fetchTasks() {
     loading.value = true;
     error.value = null;
     try {
-        const params: Record<string, any> = {};
-        if (selectedStatuses.value.length && selectedStatuses.value.length < statusOptions.length) {
-            params.status = selectedStatuses.value;
+        const params: Record<string, any> = {
+            page: currentPage.value,
+        };
+
+        const query = appliedSearchTerm.value.trim();
+        if (query) {
+            params.search = query;
         }
+
+        if (appliedStatuses.value.length && appliedStatuses.value.length < statusOptions.length) {
+            params.status = appliedStatuses.value;
+        }
+
+        if (appliedPriorities.value.length && appliedPriorities.value.length < priorityOptions.length) {
+            params.priority = appliedPriorities.value;
+        }
+
         const response = await axios.get('/shift/api/tasks', { params });
+
         if (Array.isArray(response.data?.data)) {
             tasks.value = response.data.data;
             totalTasks.value = response.data.total ?? response.data.data.length;
+            currentPage.value = response.data.current_page ?? currentPage.value;
+            lastPage.value = response.data.last_page ?? lastPage.value;
+            from.value = response.data.from ?? 0;
+            to.value = response.data.to ?? tasks.value.length;
         } else if (Array.isArray(response.data)) {
             tasks.value = response.data;
             totalTasks.value = response.data.length;
+            currentPage.value = 1;
+            lastPage.value = 1;
+            from.value = tasks.value.length ? 1 : 0;
+            to.value = tasks.value.length;
         } else {
             tasks.value = [];
             totalTasks.value = 0;
+            currentPage.value = 1;
+            lastPage.value = 1;
+            from.value = 0;
+            to.value = 0;
         }
     } catch (e: any) {
         error.value = e.response?.data?.error || e.message || 'Unknown error';
@@ -732,34 +820,12 @@ async function fetchTasks() {
     }
 }
 
-const filteredTasks = computed(() => {
-    let list = [...tasks.value];
-
-    if (selectedStatuses.value.length === 0) return [];
-    if (selectedStatuses.value.length < statusOptions.length) {
-        list = list.filter((task) => selectedStatuses.value.includes(task.status));
-    }
-
-    if (selectedPriorities.value.length === 0) return [];
-    if (selectedPriorities.value.length < priorityOptions.length) {
-        list = list.filter((task) => selectedPriorities.value.includes(task.priority));
-    }
-
-    const query = searchTerm.value.trim().toLowerCase();
-    if (query) {
-        list = list.filter((task) => task.title.toLowerCase().includes(query));
-    }
-
-    return list;
-});
-
-watch(
-    selectedStatuses,
-    () => {
-        fetchTasks();
-    },
-    { deep: true },
-);
+function goToPage(page: number) {
+    const next = Math.max(1, Math.min(lastPage.value, page));
+    if (next === currentPage.value) return;
+    currentPage.value = next;
+    fetchTasks();
+}
 
 async function deleteTask(taskId: number) {
     if (!confirm('Are you sure you want to delete this task?')) return;
@@ -834,7 +900,7 @@ onMounted(() => {
                         <div class="flex-1 space-y-6 overflow-auto px-6 pb-6">
                             <div class="space-y-2">
                                 <Label>Search</Label>
-                                <Input v-model="searchTerm" data-testid="filter-search" placeholder="Search by title" />
+                                <Input v-model="draftSearchTerm" data-testid="filter-search" placeholder="Search by title" />
                             </div>
 
                             <div class="space-y-2">
@@ -845,7 +911,7 @@ onMounted(() => {
                                 <div class="grid gap-2">
                                     <label v-for="option in statusOptions" :key="option.value" class="flex items-center gap-2 text-sm">
                                         <input
-                                            v-model="selectedStatuses"
+                                            v-model="draftStatuses"
                                             :data-testid="`status-${option.value}`"
                                             :value="option.value"
                                             type="checkbox"
@@ -863,7 +929,7 @@ onMounted(() => {
                                 <div class="grid gap-2">
                                     <label v-for="option in priorityOptions" :key="option.value" class="flex items-center gap-2 text-sm">
                                         <input
-                                            v-model="selectedPriorities"
+                                            v-model="draftPriorities"
                                             :data-testid="`priority-${option.value}`"
                                             :value="option.value"
                                             type="checkbox"
@@ -875,8 +941,8 @@ onMounted(() => {
                         </div>
 
                         <SheetFooter class="flex flex-row items-center justify-between border-t px-6 py-4">
-                            <Button variant="ghost" @click="resetFilters">Reset</Button>
-                            <Button variant="default" @click="filtersOpen = false">Apply</Button>
+                            <Button data-testid="filters-reset" variant="ghost" @click="resetFilters">Reset</Button>
+                            <Button data-testid="filters-apply" variant="default" @click="applyFilters">Apply</Button>
                         </SheetFooter>
                     </SheetContent>
                 </Sheet>
@@ -890,17 +956,17 @@ onMounted(() => {
 
         <CardContent>
             <div class="text-muted-foreground mb-4 flex flex-wrap items-center justify-between gap-2 text-xs">
-                <span>Showing {{ filteredTasks.length }} of {{ totalTasks }} tasks</span>
+                <span>Showing {{ from }} to {{ to }} of {{ totalTasks }} tasks</span>
                 <span v-if="activeFilterCount">{{ activeFilterCount }} filter{{ activeFilterCount === 1 ? '' : 's' }} active</span>
             </div>
 
             <div v-if="loading" class="text-muted-foreground py-8 text-center">Loading...</div>
             <div v-else-if="error" class="text-destructive py-8 text-center">{{ error }}</div>
-            <div v-else-if="filteredTasks.length === 0" class="text-muted-foreground py-8 text-center">No tasks found</div>
+            <div v-else-if="tasks.length === 0" class="text-muted-foreground py-8 text-center">No tasks found</div>
 
             <ul v-else class="divide-border divide-y">
                 <li
-                    v-for="task in filteredTasks"
+                    v-for="task in tasks"
                     :key="task.id"
                     :class="
                         highlightedTaskId === task.id ? 'ring-offset-background rounded-lg bg-sky-500/10 ring-2 ring-sky-500/40 ring-offset-2' : ''
@@ -926,6 +992,14 @@ onMounted(() => {
                     </div>
                 </li>
             </ul>
+
+            <div v-if="lastPage > 1" class="mt-4 flex items-center justify-between border-t pt-4">
+                <div class="text-muted-foreground text-xs">Page {{ currentPage }} of {{ lastPage }}</div>
+                <div class="flex items-center gap-2">
+                    <Button :disabled="loading || currentPage <= 1" size="sm" variant="outline" @click="goToPage(currentPage - 1)">Previous</Button>
+                    <Button :disabled="loading || currentPage >= lastPage" size="sm" variant="outline" @click="goToPage(currentPage + 1)">Next</Button>
+                </div>
+            </div>
         </CardContent>
     </Card>
 
@@ -947,11 +1021,7 @@ onMounted(() => {
 
                     <div class="space-y-2">
                         <Label>Priority</Label>
-                        <Select v-model="createForm.priority">
-                            <option value="low">Low</option>
-                            <option value="medium">Medium</option>
-                            <option value="high">High</option>
-                        </Select>
+                        <ButtonGroup v-model="createForm.priority" aria-label="Task priority" :options="priorityOptions" :columns="3" />
                     </div>
 
                     <div class="space-y-2">
@@ -985,9 +1055,9 @@ onMounted(() => {
         </SheetContent>
     </Sheet>
 
-    <Sheet v-model:open="editOpen">
+    <Sheet :open="editOpen" @update:open="onEditOpenChange">
         <SheetContent class="flex h-full w-full max-w-none flex-col p-0 sm:w-1/2 sm:max-w-none" side="right">
-            <form class="flex h-full flex-col" @submit.prevent="saveEdit">
+            <form class="flex h-full flex-col" data-testid="edit-form" @submit.prevent="saveEdit">
                 <!-- Keep an accessible title for the sheet without a visible header. -->
                 <SheetHeader class="sr-only">
                     <SheetTitle>Task</SheetTitle>
@@ -1018,28 +1088,20 @@ onMounted(() => {
 
                             <div class="space-y-2">
                                 <Label>Status</Label>
-                                <Select
-                                    data-testid="task-status-select"
-                                    :disabled="statusSaving"
-                                    :model-value="editStatus"
-                                    @update:modelValue="onEditStatusSelected"
-                                >
-                                    <option value="pending">Pending</option>
-                                    <option value="in-progress">In Progress</option>
-                                    <option value="awaiting-feedback">Awaiting Feedback</option>
-                                    <option value="completed">Completed</option>
-                                </Select>
-                                <div v-if="statusError" class="text-destructive text-xs">{{ statusError }}</div>
+                                <ButtonGroup
+                                    v-model="editForm.status"
+                                    aria-label="Task status"
+                                    test-id-prefix="task-status"
+                                    :disabled="editLoading || editUploading"
+                                    :options="statusOptions.filter((option) => option.value !== 'closed')"
+                                    :columns="4"
+                                />
                             </div>
 
                             <div class="space-y-2">
                                 <Label>Priority</Label>
                                 <template v-if="isOwner">
-                                    <Select v-model="editForm.priority">
-                                        <option value="low">Low</option>
-                                        <option value="medium">Medium</option>
-                                        <option value="high">High</option>
-                                    </Select>
+                                    <ButtonGroup v-model="editForm.priority" aria-label="Task priority" :options="priorityOptions" :columns="3" />
                                 </template>
                                 <template v-else>
                                     <div
@@ -1157,16 +1219,22 @@ onMounted(() => {
                                                         class="shift-rich text-inherit [&_img]:my-2 [&_img]:max-w-full [&_img]:cursor-zoom-in [&_img]:rounded-lg [&_img]:shadow-sm [&_img.editor-tile]:aspect-square [&_img.editor-tile]:w-[200px] [&_img.editor-tile]:max-w-[200px] [&_img.editor-tile]:object-cover"
                                                         v-html="message.content"
                                                     ></div>
-                                                    <div v-if="message.attachments?.length" class="mt-2 space-y-1">
+                                                    <div v-if="message.attachments?.length" class="mt-3 flex flex-wrap gap-2">
                                                         <a
                                                             v-for="attachment in message.attachments"
                                                             :key="attachment.id"
                                                             :href="attachment.url"
-                                                            class="block truncate text-xs underline decoration-white/40 underline-offset-2 hover:decoration-white/70"
+                                                            :class="
+                                                                message.isYou
+                                                                    ? 'border-white/20 bg-white/10 text-white hover:bg-white/15'
+                                                                    : 'border-muted-foreground/20 bg-muted/20 text-foreground hover:bg-muted/30'
+                                                            "
+                                                            class="inline-flex max-w-[260px] items-center gap-1.5 truncate rounded-md border px-2 py-1 text-xs transition"
                                                             rel="noreferrer"
                                                             target="_blank"
                                                         >
-                                                            {{ attachment.original_filename }}
+                                                            <Paperclip class="h-3 w-3 shrink-0 opacity-80" />
+                                                            <span class="min-w-0 truncate">{{ attachment.original_filename }}</span>
                                                         </a>
                                                     </div>
                                                 </div>
@@ -1202,7 +1270,6 @@ onMounted(() => {
 
                             <div class="border-muted-foreground/10 bg-background/80 border-t px-4 py-3 backdrop-blur">
                                 <div v-if="threadEditError" class="text-destructive mb-2 text-xs">{{ threadEditError }}</div>
-                                <Label class="text-muted-foreground mb-2 block text-xs">{{ threadEditingId ? 'Edit' : 'Reply' }}</Label>
                                 <ShiftEditor
                                     ref="threadComposerRef"
                                     v-model="threadComposerHtml"
@@ -1225,12 +1292,28 @@ onMounted(() => {
                 </div>
 
                 <SheetFooter class="flex flex-row items-center justify-between border-t px-6 py-4">
-                    <Button type="button" variant="outline" @click="closeEdit">Close</Button>
-                    <Button v-if="isOwner" :disabled="editLoading || editUploading" type="submit" variant="default"> Save </Button>
+                    <Button type="button" variant="outline" @click="attemptCloseEdit">Close</Button>
+                    <Button :disabled="editLoading || editUploading || !hasUnsavedTaskChanges" type="submit" variant="default"> Save </Button>
                 </SheetFooter>
             </form>
         </SheetContent>
     </Sheet>
+
+    <Dialog :open="confirmCloseOpen" @update:open="confirmCloseOpen = $event">
+        <DialogContent class="sm:max-w-md">
+            <div class="space-y-2">
+                <div class="text-base font-semibold">Discard changes?</div>
+                <div class="text-muted-foreground text-sm">
+                    You have unsaved changes. If you close now, they will be lost.
+                </div>
+            </div>
+
+            <div class="mt-6 flex items-center justify-end gap-2">
+                <Button type="button" variant="outline" @click="confirmCloseOpen = false">Cancel</Button>
+                <Button type="button" variant="destructive" @click="discardChangesAndClose">Discard</Button>
+            </div>
+        </DialogContent>
+    </Dialog>
 
     <ImageLightbox v-model:open="lightboxOpen" :alt="lightboxAlt" :src="lightboxSrc" />
 </template>
