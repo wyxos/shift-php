@@ -96,6 +96,8 @@ describe('TaskListV2', () => {
     const text = rows.map((row) => row.text()).join(' ')
     expect(text).not.toContain('completed')
     expect(text).not.toContain('closed')
+
+    wrapper.unmount()
   })
 
   it('filters by priority', async () => {
@@ -108,6 +110,8 @@ describe('TaskListV2', () => {
     const rows = wrapper.findAll('[data-testid="task-row"]')
     expect(rows.length).toBe(1)
     expect(rows[0].text()).toContain('high')
+
+    wrapper.unmount()
   })
 
   it('filters by search term', async () => {
@@ -119,6 +123,8 @@ describe('TaskListV2', () => {
     const rows = wrapper.findAll('[data-testid="task-row"]')
     expect(rows.length).toBe(1)
     expect(rows[0].text()).toContain('Auth issue')
+
+    wrapper.unmount()
   })
 
   it('loads comments when opening the edit sheet', async () => {
@@ -176,6 +182,9 @@ describe('TaskListV2', () => {
     expect(wrapper.text()).toContain('Comments')
     expect(wrapper.text()).toContain('First')
     expect(wrapper.text()).toContain('Second')
+
+    wrapper.unmount()
+    vi.useRealTimers()
   })
 
   it('posts a new comment and renders it in the list', async () => {
@@ -227,6 +236,9 @@ describe('TaskListV2', () => {
 
     expect(postMock).toHaveBeenCalledWith('/shift/api/tasks/1/threads', expect.objectContaining({ content: '<p>hello</p>' }))
     expect(wrapper.text()).toContain('hello')
+
+    wrapper.unmount()
+    vi.useRealTimers()
   })
 
   it('allows the comment owner to edit their comment', async () => {
@@ -304,5 +316,64 @@ describe('TaskListV2', () => {
       expect.objectContaining({ content: '<p>Second</p>', temp_identifier: expect.any(String) }),
     )
     expect(wrapper.text()).toContain('Edited')
+
+    wrapper.unmount()
+    vi.useRealTimers()
+  })
+
+  it('cancels comment edit on Escape', async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-02-10T18:00:00Z'))
+
+    getMock
+      .mockResolvedValueOnce({ data: { data: seedTasks } }) // initial fetchTasks on mount
+      .mockResolvedValueOnce({
+        data: {
+          id: 1,
+          title: 'Auth issue',
+          priority: 'high',
+          created_at: '2026-02-10T17:40:00Z',
+          description: '',
+          submitter: { email: 'someone@example.com' },
+          attachments: [],
+        },
+      }) // openEdit task fetch
+      .mockResolvedValueOnce({
+        data: {
+          external: [
+            {
+              id: 11,
+              sender_name: 'You',
+              is_current_user: true,
+              content: '<p>Second</p>',
+              created_at: '2026-02-09T12:01:00Z',
+              attachments: [],
+            },
+          ],
+        },
+      }) // openEdit thread fetch
+
+    const wrapper = mount(TaskListV2, { global: { stubs } })
+    await flushPromises()
+    await nextTick()
+
+    const firstRow = wrapper.findAll('[data-testid="task-row"]')[0]
+    await firstRow.find('button[title="Edit"]').trigger('click')
+    await flushPromises()
+    await nextTick()
+
+    await wrapper.get('[data-testid="comment-bubble-11"]').trigger('dblclick')
+    await nextTick()
+
+    const editor = wrapper.get('[data-testid="comments-editor"]')
+    expect(editor.attributes('placeholder')).toBe('Edit your comment...')
+
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
+    await nextTick()
+
+    expect(editor.attributes('placeholder')).toBe('Write a comment...')
+
+    wrapper.unmount()
+    vi.useRealTimers()
   })
 })

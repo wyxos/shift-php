@@ -179,6 +179,18 @@ function onGlobalDblClickCapture(event: MouseEvent) {
     openLightboxForImage(img);
 }
 
+function onGlobalKeyDownCapture(event: KeyboardEvent) {
+    if (!editOpen.value) return;
+    if (!threadEditingId.value) return;
+    if (event.key !== 'Escape') return;
+
+    // Escape should cancel edit mode (and not close the sheet).
+    event.preventDefault();
+    event.stopPropagation();
+    (event as any).stopImmediatePropagation?.();
+    cancelThreadEdit();
+}
+
 function scrollCommentsToBottom() {
     const el = commentsScrollRef.value;
     if (!el) return;
@@ -296,12 +308,14 @@ onMounted(() => {
     // Capture phase so we can open the preview even if the editor stops propagation.
     document.addEventListener('click', onGlobalClickCapture, true);
     document.addEventListener('dblclick', onGlobalDblClickCapture, true);
+    document.addEventListener('keydown', onGlobalKeyDownCapture, true);
 });
 
 onBeforeUnmount(() => {
     if (highlightTimer) window.clearTimeout(highlightTimer);
     document.removeEventListener('click', onGlobalClickCapture, true);
     document.removeEventListener('dblclick', onGlobalDblClickCapture, true);
+    document.removeEventListener('keydown', onGlobalKeyDownCapture, true);
 });
 
 const statusOptions = [
@@ -1128,16 +1142,13 @@ onMounted(() => {
                             </div>
 
                             <div class="border-muted-foreground/10 bg-background/80 border-t px-4 py-3 backdrop-blur">
-                                <div v-if="threadEditingId" class="bg-muted/40 mb-2 flex items-center justify-between rounded-md border px-3 py-2">
-                                    <div class="text-muted-foreground text-xs">Editing message</div>
-                                    <Button size="sm" type="button" variant="ghost" @click="cancelThreadEdit">Cancel</Button>
-                                </div>
                                 <div v-if="threadEditError" class="text-destructive mb-2 text-xs">{{ threadEditError }}</div>
                                 <Label class="text-muted-foreground mb-2 block text-xs">{{ threadEditingId ? 'Edit' : 'Reply' }}</Label>
                                 <ShiftEditor
                                     ref="threadComposerRef"
                                     v-model="threadComposerHtml"
                                     :axios-instance="axios"
+                                    :cancelable="Boolean(threadEditingId)"
                                     :clear-on-send="false"
                                     :remove-temp-url="removeTempUrl"
                                     :resolve-temp-url="resolveTempUrl"
@@ -1145,6 +1156,7 @@ onMounted(() => {
                                     :upload-endpoints="uploadEndpoints"
                                     data-testid="comments-editor"
                                     :placeholder="threadEditingId ? 'Edit your comment...' : 'Write a comment...'"
+                                    @cancel="cancelThreadEdit"
                                     @uploading="threadComposerUploading = $event"
                                     @send="handleThreadSend"
                                 />
