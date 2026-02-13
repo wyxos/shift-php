@@ -8,7 +8,7 @@ import { Dialog, DialogContent } from '@shift/ui/dialog';
 import { Input } from '@shift/ui/input';
 import { Label } from '@shift/ui/label';
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from '@shift/ui/sheet';
-import { Filter, Pencil, Plus, Trash2 } from 'lucide-vue-next';
+import { Filter, Paperclip, Pencil, Plus, Trash2 } from 'lucide-vue-next';
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { ContextMenuContent, ContextMenuItem, ContextMenuPortal, ContextMenuRoot, ContextMenuSeparator, ContextMenuTrigger } from 'reka-ui';
 import { toast } from 'vue-sonner';
@@ -1219,16 +1219,22 @@ onMounted(() => {
                                                         class="shift-rich text-inherit [&_img]:my-2 [&_img]:max-w-full [&_img]:cursor-zoom-in [&_img]:rounded-lg [&_img]:shadow-sm [&_img.editor-tile]:aspect-square [&_img.editor-tile]:w-[200px] [&_img.editor-tile]:max-w-[200px] [&_img.editor-tile]:object-cover"
                                                         v-html="message.content"
                                                     ></div>
-                                                    <div v-if="message.attachments?.length" class="mt-2 space-y-1">
+                                                    <div v-if="message.attachments?.length" class="mt-3 flex flex-wrap gap-2">
                                                         <a
                                                             v-for="attachment in message.attachments"
                                                             :key="attachment.id"
                                                             :href="attachment.url"
-                                                            class="block truncate text-xs underline decoration-white/40 underline-offset-2 hover:decoration-white/70"
+                                                            :class="
+                                                                message.isYou
+                                                                    ? 'border-white/20 bg-white/10 text-white hover:bg-white/15'
+                                                                    : 'border-muted-foreground/20 bg-muted/20 text-foreground hover:bg-muted/30'
+                                                            "
+                                                            class="inline-flex max-w-[260px] items-center gap-1.5 truncate rounded-md border px-2 py-1 text-xs transition"
                                                             rel="noreferrer"
                                                             target="_blank"
                                                         >
-                                                            {{ attachment.original_filename }}
+                                                            <Paperclip class="h-3 w-3 shrink-0 opacity-80" />
+                                                            <span class="min-w-0 truncate">{{ attachment.original_filename }}</span>
                                                         </a>
                                                     </div>
                                                 </div>
