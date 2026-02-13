@@ -15,6 +15,7 @@ Route::middleware(config('shift.routes.middleware'))->group(function () {
     Route::get('/shift/api/tasks/{id}', [ShiftTaskController::class, 'show'])->name('tasks.show');
     Route::post('/shift/api/tasks', [ShiftTaskController::class, 'store'])->name('tasks.store');
     Route::put('/shift/api/tasks/{id}', [ShiftTaskController::class, 'update'])->name('tasks.update');
+    Route::patch('/shift/api/tasks/{id}/toggle-status', [ShiftTaskController::class, 'toggleStatus'])->name('tasks.toggle-status');
     Route::delete('/shift/api/tasks/{id}', [ShiftTaskController::class, 'destroy'])->name('tasks.destroy');
 
     // Task thread routes

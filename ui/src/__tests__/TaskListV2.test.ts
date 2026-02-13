@@ -7,6 +7,7 @@ const getMock = vi.fn()
 const deleteMock = vi.fn()
 const postMock = vi.fn()
 const putMock = vi.fn()
+const patchMock = vi.fn()
 
 vi.mock('@/axios-config', () => ({
   default: {
@@ -14,6 +15,7 @@ vi.mock('@/axios-config', () => ({
     delete: (...args: any[]) => deleteMock(...args),
     post: (...args: any[]) => postMock(...args),
     put: (...args: any[]) => putMock(...args),
+    patch: (...args: any[]) => patchMock(...args),
   },
 }))
 
@@ -82,6 +84,7 @@ describe('TaskListV2', () => {
     deleteMock.mockReset()
     postMock.mockReset()
     putMock.mockReset()
+    patchMock.mockReset()
   })
 
   it('defaults to excluding completed and closed statuses', async () => {
@@ -182,6 +185,48 @@ describe('TaskListV2', () => {
     expect(wrapper.text()).toContain('Comments')
     expect(wrapper.text()).toContain('First')
     expect(wrapper.text()).toContain('Second')
+
+    wrapper.unmount()
+    vi.useRealTimers()
+  })
+
+  it('allows any user to change task status from the edit sheet', async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-02-10T18:00:00Z'))
+
+    getMock
+      .mockResolvedValueOnce({ data: { data: seedTasks } }) // initial fetchTasks on mount
+      .mockResolvedValueOnce({
+        data: {
+          id: 1,
+          title: 'Auth issue',
+          priority: 'high',
+          status: 'pending',
+          created_at: '2026-02-10T17:40:00Z',
+          description: '',
+          submitter: { email: 'someone@example.com' },
+          attachments: [],
+        },
+      }) // openEdit task fetch
+      .mockResolvedValueOnce({ data: { external: [] } }) // openEdit thread fetch
+
+    patchMock.mockResolvedValueOnce({ data: { status: 'in-progress' } })
+
+    const wrapper = mount(TaskListV2, { global: { stubs } })
+    await flushPromises()
+    await nextTick()
+
+    const firstRow = wrapper.findAll('[data-testid="task-row"]')[0]
+    await firstRow.find('button[title="Edit"]').trigger('click')
+    await flushPromises()
+    await nextTick()
+
+    const statusSelect = wrapper.get('[data-testid="task-status-select"]')
+    await statusSelect.setValue('in-progress')
+    await flushPromises()
+    await nextTick()
+
+    expect(patchMock).toHaveBeenCalledWith('/shift/api/tasks/1/toggle-status', expect.objectContaining({ status: 'in-progress' }))
 
     wrapper.unmount()
     vi.useRealTimers()
