@@ -9,12 +9,12 @@ import { Input } from '@shift/ui/input';
 import { Label } from '@shift/ui/label';
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from '@shift/ui/sheet';
 import { Filter, Paperclip, Pencil, Plus, Trash2 } from 'lucide-vue-next';
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { ContextMenuContent, ContextMenuItem, ContextMenuPortal, ContextMenuRoot, ContextMenuSeparator, ContextMenuTrigger } from 'reka-ui';
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { toast } from 'vue-sonner';
 import Badge from './ui/badge.vue';
-import ImageLightbox from './ui/ImageLightbox.vue';
 import ButtonGroup from './ui/ButtonGroup.vue';
+import ImageLightbox from './ui/ImageLightbox.vue';
 
 type Task = {
     id: number;
@@ -117,8 +117,15 @@ function getShiftUserEmail(): string | null {
     return null;
 }
 
+function pickFirstNonEmptyString(candidates: unknown[]): string | null {
+    for (const value of candidates) {
+        if (typeof value === 'string' && value.trim()) return value.trim();
+    }
+    return null;
+}
+
 function getTaskCreatorEmail(task: any): string | null {
-    const candidates = [
+    return pickFirstNonEmptyString([
         task?.submitter?.email,
         task?.submitter_email,
         task?.creator?.email,
@@ -127,11 +134,49 @@ function getTaskCreatorEmail(task: any): string | null {
         task?.created_by_email,
         task?.user?.email,
         task?.user_email,
-    ];
-    for (const value of candidates) {
-        if (typeof value === 'string' && value.trim()) return value.trim();
+    ]);
+}
+
+function getTaskCreatorName(task: any): string | null {
+    return pickFirstNonEmptyString([
+        task?.submitter?.name,
+        task?.submitter_name,
+        task?.creator?.name,
+        task?.creator_name,
+        task?.created_by?.name,
+        task?.created_by_name,
+        task?.user?.name,
+        task?.user_name,
+    ]);
+}
+
+function formatEnvironmentLabel(value: string): string {
+    const trimmed = value.trim();
+    if (!trimmed) return '';
+    if (/^[a-z0-9_-]+$/.test(trimmed)) {
+        return trimmed
+            .replace(/[_-]+/g, ' ')
+            .replace(/\s+/g, ' ')
+            .replace(/\b\w/g, (letter) => letter.toUpperCase());
     }
-    return null;
+    return trimmed;
+}
+
+function getTaskEnvironment(task: any): string | null {
+    const environment = pickFirstNonEmptyString([
+        task?.environment,
+        task?.task_environment,
+        task?.target_environment,
+        task?.for_environment,
+        task?.metadata?.environment,
+        task?.submitter?.environment,
+        task?.creator?.environment,
+        task?.created_by?.environment,
+        task?.user?.environment,
+    ]);
+    if (!environment) return null;
+    const label = formatEnvironmentLabel(environment);
+    return label || null;
 }
 
 function openLightboxForImage(img: HTMLImageElement) {
@@ -322,23 +367,68 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
     if (highlightTimer) window.clearTimeout(highlightTimer);
+    if (taskAutosaveTimer) window.clearTimeout(taskAutosaveTimer);
+    if (taskSaveToastId.value !== null) {
+        toast.dismiss(taskSaveToastId.value);
+        taskSaveToastId.value = null;
+    }
     document.removeEventListener('click', onGlobalClickCapture, true);
     document.removeEventListener('dblclick', onGlobalDblClickCapture, true);
     document.removeEventListener('keydown', onGlobalKeyDownCapture, true);
 });
 
 const statusOptions = [
-    { value: 'pending', label: 'Pending' },
-    { value: 'in-progress', label: 'In Progress' },
-    { value: 'awaiting-feedback', label: 'Awaiting Feedback' },
-    { value: 'completed', label: 'Completed' },
-    { value: 'closed', label: 'Closed' },
+    {
+        value: 'pending',
+        label: 'Pending',
+        selectedClass: 'border-amber-300 bg-amber-100 text-amber-900 hover:bg-amber-200',
+        unselectedClass: 'border-amber-300/60 text-amber-900 hover:bg-amber-50',
+    },
+    {
+        value: 'in-progress',
+        label: 'In Progress',
+        selectedClass: 'border-sky-300 bg-sky-100 text-sky-900 hover:bg-sky-200',
+        unselectedClass: 'border-sky-300/60 text-sky-900 hover:bg-sky-50',
+    },
+    {
+        value: 'awaiting-feedback',
+        label: 'Awaiting Feedback',
+        selectedClass: 'border-indigo-300 bg-indigo-100 text-indigo-900 hover:bg-indigo-200',
+        unselectedClass: 'border-indigo-300/60 text-indigo-900 hover:bg-indigo-50',
+    },
+    {
+        value: 'completed',
+        label: 'Completed',
+        selectedClass: 'border-emerald-300 bg-emerald-100 text-emerald-900 hover:bg-emerald-200',
+        unselectedClass: 'border-emerald-300/60 text-emerald-900 hover:bg-emerald-50',
+    },
+    {
+        value: 'closed',
+        label: 'Closed',
+        selectedClass: 'border-slate-300 bg-slate-100 text-slate-700 hover:bg-slate-200',
+        unselectedClass: 'border-slate-300/60 text-slate-700 hover:bg-slate-50',
+    },
 ];
 
 const priorityOptions = [
-    { value: 'low', label: 'Low' },
-    { value: 'medium', label: 'Medium' },
-    { value: 'high', label: 'High' },
+    {
+        value: 'low',
+        label: 'Low',
+        selectedClass: 'border-cyan-300 bg-cyan-100 text-cyan-900 hover:bg-cyan-200',
+        unselectedClass: 'border-cyan-300/60 text-cyan-900 hover:bg-cyan-50',
+    },
+    {
+        value: 'medium',
+        label: 'Medium',
+        selectedClass: 'border-fuchsia-300 bg-fuchsia-100 text-fuchsia-900 hover:bg-fuchsia-200',
+        unselectedClass: 'border-fuchsia-300/60 text-fuchsia-900 hover:bg-fuchsia-50',
+    },
+    {
+        value: 'high',
+        label: 'High',
+        selectedClass: 'border-rose-300 bg-rose-100 text-rose-900 hover:bg-rose-200',
+        unselectedClass: 'border-rose-300/60 text-rose-900 hover:bg-rose-50',
+    },
 ];
 
 const uploadEndpoints = {
@@ -393,6 +483,15 @@ const isOwner = computed(() => {
     return currentEmail.toLowerCase() === submitterEmail.toLowerCase();
 });
 
+const editTaskCreatorLabel = computed(() => getTaskCreatorName(editTask.value) ?? getTaskCreatorEmail(editTask.value) ?? 'Unknown');
+const editTaskEnvironmentLabel = computed(() => getTaskEnvironment(editTask.value) ?? 'Unknown');
+const taskSaving = ref(false);
+const taskSaveError = ref<string | null>(null);
+const pendingTaskSave = ref(false);
+const autosaveArmed = ref(false);
+let taskAutosaveTimer: number | null = null;
+const taskSaveToastId = ref<string | number | null>(null);
+
 const taskAttachments = computed(() => {
     if (!editTask.value?.attachments) return [];
     const removed = new Set(deletedAttachmentIds.value);
@@ -401,16 +500,8 @@ const taskAttachments = computed(() => {
 
 const hasUnsavedTaskChanges = computed(() => {
     if (!editOpen.value) return false;
-    const snap = initialEditSnapshot.value;
-    if (!snap) return false;
-
-    if (editForm.value.title !== snap.title) return true;
-    if (editForm.value.priority !== snap.priority) return true;
-    if (editForm.value.status !== snap.status) return true;
-    if ((editForm.value.description ?? '') !== (snap.description ?? '')) return true;
-    if (deletedAttachmentIds.value.length > 0) return true;
-
-    return false;
+    if (taskSaving.value) return true;
+    return hasPendingTaskChanges();
 });
 
 const hasUnsavedCommentDraft = computed(() => {
@@ -421,6 +512,15 @@ const hasUnsavedCommentDraft = computed(() => {
 });
 
 const hasUnsavedChanges = computed(() => hasUnsavedTaskChanges.value || hasUnsavedCommentDraft.value);
+
+watch(
+    () => [editForm.value.title, editForm.value.priority, editForm.value.status, editForm.value.description, deletedAttachmentIds.value.join(',')],
+    () => {
+        if (!editOpen.value || !autosaveArmed.value) return;
+        if (!hasPendingTaskChanges()) return;
+        scheduleTaskAutosave();
+    },
+);
 
 function attemptCloseEdit() {
     if (!hasUnsavedChanges.value) {
@@ -466,6 +566,7 @@ function closeCreate() {
 function removeAttachmentFromTask(attachmentId: number) {
     if (!deletedAttachmentIds.value.includes(attachmentId)) {
         deletedAttachmentIds.value = [...deletedAttachmentIds.value, attachmentId];
+        scheduleTaskAutosave(true);
     }
 }
 
@@ -501,11 +602,20 @@ async function createTask() {
 }
 
 async function openEdit(taskId: number) {
+    if (taskAutosaveTimer) {
+        window.clearTimeout(taskAutosaveTimer);
+        taskAutosaveTimer = null;
+    }
+
     editOpen.value = true;
     editLoading.value = true;
     editError.value = null;
     editTask.value = null;
     editUploading.value = false;
+    taskSaving.value = false;
+    taskSaveError.value = null;
+    pendingTaskSave.value = false;
+    autosaveArmed.value = false;
     threadMessages.value = [];
     threadError.value = null;
     threadTempIdentifier.value = Date.now().toString();
@@ -532,6 +642,7 @@ async function openEdit(taskId: number) {
             status: editForm.value.status,
             description: editForm.value.description,
         };
+        autosaveArmed.value = true;
         // Load comments in parallel so task details render immediately.
         void fetchThreads(taskId);
     } catch (e: any) {
@@ -542,6 +653,10 @@ async function openEdit(taskId: number) {
 }
 
 function closeEditNow() {
+    if (taskAutosaveTimer) {
+        window.clearTimeout(taskAutosaveTimer);
+        taskAutosaveTimer = null;
+    }
     editOpen.value = false;
     editTask.value = null;
     editError.value = null;
@@ -560,32 +675,129 @@ function closeEditNow() {
     threadEditingId.value = null;
     threadEditError.value = null;
     threadEditSaving.value = false;
+    taskSaving.value = false;
+    taskSaveError.value = null;
+    pendingTaskSave.value = false;
+    autosaveArmed.value = false;
+    if (taskSaveToastId.value !== null) {
+        toast.dismiss(taskSaveToastId.value);
+        taskSaveToastId.value = null;
+    }
 }
 
-async function saveEdit() {
-    if (!editTask.value) return;
-    if (!hasUnsavedTaskChanges.value) return;
+function hasPendingTaskChanges() {
+    const snap = initialEditSnapshot.value;
+    if (!snap) return false;
+    if (editForm.value.title !== snap.title) return true;
+    if (editForm.value.priority !== snap.priority) return true;
+    if (editForm.value.status !== snap.status) return true;
+    if ((editForm.value.description ?? '') !== (snap.description ?? '')) return true;
+    return deletedAttachmentIds.value.length > 0;
+}
 
-    editError.value = null;
-    editLoading.value = true;
+function currentTaskSnapshot() {
+    return {
+        title: editForm.value.title,
+        priority: editForm.value.priority,
+        status: editForm.value.status,
+        description: editForm.value.description,
+    };
+}
+
+function syncTaskRowFromEditForm(taskId: number) {
+    tasks.value = tasks.value.map((task) =>
+        task.id === taskId
+            ? {
+                  ...task,
+                  title: editForm.value.title,
+                  status: editForm.value.status,
+                  priority: editForm.value.priority,
+              }
+            : task,
+    );
+}
+
+function scheduleTaskAutosave(immediate = false) {
+    if (!autosaveArmed.value || !editTask.value) return;
+    if (taskSaving.value) {
+        pendingTaskSave.value = true;
+        return;
+    }
+    if (taskAutosaveTimer) {
+        window.clearTimeout(taskAutosaveTimer);
+        taskAutosaveTimer = null;
+    }
+    if (immediate) {
+        void saveTaskChanges();
+        return;
+    }
+    taskAutosaveTimer = window.setTimeout(() => {
+        taskAutosaveTimer = null;
+        void saveTaskChanges();
+    }, 650);
+}
+
+function showTaskSavingToast() {
+    if (taskSaveToastId.value !== null) return;
+    taskSaveToastId.value = toast.loading('Saving task changes...');
+}
+
+function showTaskSaveResultToast(success: boolean, message?: string) {
+    const id = taskSaveToastId.value ?? undefined;
+    taskSaveToastId.value = null;
+    if (success) {
+        toast.success('Task changes saved', { id, duration: 1400 });
+        return;
+    }
+    toast.error('Failed to save task changes', { id, description: message ?? 'Unknown error', duration: 4000 });
+}
+
+async function saveTaskChanges() {
+    if (!editTask.value) return;
+    if (!hasPendingTaskChanges()) return;
+    const taskId = editTask.value.id;
+
+    taskSaving.value = true;
+    taskSaveError.value = null;
+    showTaskSavingToast();
 
     try {
-        const payload = {
-            title: editForm.value.title,
-            description: editForm.value.description,
-            priority: editForm.value.priority,
-            status: editForm.value.status,
-            temp_identifier: editTempIdentifier.value,
-            deleted_attachment_ids: deletedAttachmentIds.value.length ? deletedAttachmentIds.value : undefined,
-        };
+        const payload = isOwner.value
+            ? {
+                  title: editForm.value.title,
+                  description: editForm.value.description,
+                  priority: editForm.value.priority,
+                  status: editForm.value.status,
+                  temp_identifier: editTempIdentifier.value,
+                  deleted_attachment_ids: deletedAttachmentIds.value.length ? deletedAttachmentIds.value : undefined,
+              }
+            : {
+                  status: editForm.value.status,
+              };
 
-        await axios.put(`/shift/api/tasks/${editTask.value.id}`, payload);
-        closeEditNow();
-        await fetchTasks();
+        const response = await axios.put(`/shift/api/tasks/${taskId}`, payload);
+        const data = response.data?.data ?? response.data;
+        const task = data?.task ?? data ?? null;
+        if (task) {
+            editTask.value = {
+                ...editTask.value,
+                ...task,
+                attachments: Array.isArray(task.attachments) ? task.attachments : editTask.value.attachments,
+            };
+        }
+        deletedAttachmentIds.value = [];
+        initialEditSnapshot.value = currentTaskSnapshot();
+        syncTaskRowFromEditForm(taskId);
     } catch (e: any) {
-        editError.value = e.response?.data?.error || e.response?.data?.message || e.message || 'Failed to update task';
+        taskSaveError.value = e.response?.data?.error || e.response?.data?.message || e.message || 'Failed to autosave task';
     } finally {
-        editLoading.value = false;
+        taskSaving.value = false;
+        if (pendingTaskSave.value) {
+            pendingTaskSave.value = false;
+            scheduleTaskAutosave(true);
+            return;
+        }
+        showTaskSaveResultToast(!taskSaveError.value, taskSaveError.value ?? undefined);
     }
 }
 
@@ -843,28 +1055,38 @@ async function deleteTask(taskId: number) {
     }
 }
 
-function getStatusVariant(status: string) {
-    switch (status) {
-        case 'pending':
-            return 'accent';
-        case 'completed':
-            return 'primary';
-        case 'closed':
-            return 'outline';
-        default:
-            return 'secondary';
-    }
+const statusBadgeClassMap: Record<string, string> = {
+    pending: 'border-amber-300 bg-amber-100 text-amber-900 dark:border-amber-500/40 dark:bg-amber-500/20 dark:text-amber-100',
+    'in-progress': 'border-sky-300 bg-sky-100 text-sky-900 dark:border-sky-500/40 dark:bg-sky-500/20 dark:text-sky-100',
+    'awaiting-feedback': 'border-indigo-300 bg-indigo-100 text-indigo-900 dark:border-indigo-500/40 dark:bg-indigo-500/20 dark:text-indigo-100',
+    completed: 'border-emerald-300 bg-emerald-100 text-emerald-900 dark:border-emerald-500/40 dark:bg-emerald-500/20 dark:text-emerald-100',
+    closed: 'border-slate-300 bg-slate-100 text-slate-700 dark:border-slate-500/40 dark:bg-slate-500/20 dark:text-slate-200',
+};
+
+function getStatusBadgeClass(status: string) {
+    return statusBadgeClassMap[status] ?? 'border-zinc-300 bg-zinc-100 text-zinc-800 dark:border-zinc-500/40 dark:bg-zinc-500/20 dark:text-zinc-100';
 }
 
-function getPriorityVariant(priority: string) {
-    switch (priority) {
-        case 'high':
-            return 'destructive';
-        case 'medium':
-            return 'primary';
-        default:
-            return 'outline';
-    }
+function getStatusLabel(status: string) {
+    const option = statusOptions.find((item) => item.value === status);
+    return option?.label ?? status;
+}
+
+const priorityBadgeClassMap: Record<string, string> = {
+    low: 'border-cyan-300 bg-cyan-100 text-cyan-900 dark:border-cyan-500/40 dark:bg-cyan-500/20 dark:text-cyan-100',
+    medium: 'border-fuchsia-300 bg-fuchsia-100 text-fuchsia-900 dark:border-fuchsia-500/40 dark:bg-fuchsia-500/20 dark:text-fuchsia-100',
+    high: 'border-rose-300 bg-rose-100 text-rose-900 dark:border-rose-500/40 dark:bg-rose-500/20 dark:text-rose-100',
+};
+
+function getPriorityBadgeClass(priority: string) {
+    return (
+        priorityBadgeClassMap[priority] ?? 'border-zinc-300 bg-zinc-100 text-zinc-800 dark:border-zinc-500/40 dark:bg-zinc-500/20 dark:text-zinc-100'
+    );
+}
+
+function getPriorityLabel(priority: string) {
+    const option = priorityOptions.find((item) => item.value === priority);
+    return option?.label ?? priority;
 }
 
 onMounted(() => {
@@ -977,8 +1199,12 @@ onMounted(() => {
                     <div class="flex-1">
                         <div class="text-card-foreground text-lg font-medium">{{ task.title }}</div>
                         <div class="text-muted-foreground mt-1 flex flex-wrap items-center gap-2 text-xs">
-                            <Badge :variant="getStatusVariant(task.status)">{{ task.status }}</Badge>
-                            <Badge :variant="getPriorityVariant(task.priority)">{{ task.priority }}</Badge>
+                            <Badge :class="getStatusBadgeClass(task.status)" :data-testid="`task-status-badge-${task.id}`" variant="outline">
+                                {{ getStatusLabel(task.status) }}
+                            </Badge>
+                            <Badge :class="getPriorityBadgeClass(task.priority)" :data-testid="`task-priority-badge-${task.id}`" variant="outline">
+                                {{ getPriorityLabel(task.priority) }}
+                            </Badge>
                         </div>
                     </div>
                     <div class="flex items-center gap-2">
@@ -997,7 +1223,9 @@ onMounted(() => {
                 <div class="text-muted-foreground text-xs">Page {{ currentPage }} of {{ lastPage }}</div>
                 <div class="flex items-center gap-2">
                     <Button :disabled="loading || currentPage <= 1" size="sm" variant="outline" @click="goToPage(currentPage - 1)">Previous</Button>
-                    <Button :disabled="loading || currentPage >= lastPage" size="sm" variant="outline" @click="goToPage(currentPage + 1)">Next</Button>
+                    <Button :disabled="loading || currentPage >= lastPage" size="sm" variant="outline" @click="goToPage(currentPage + 1)"
+                        >Next</Button
+                    >
                 </div>
             </div>
         </CardContent>
@@ -1057,7 +1285,7 @@ onMounted(() => {
 
     <Sheet :open="editOpen" @update:open="onEditOpenChange">
         <SheetContent class="flex h-full w-full max-w-none flex-col p-0 sm:w-1/2 sm:max-w-none" side="right">
-            <form class="flex h-full flex-col" data-testid="edit-form" @submit.prevent="saveEdit">
+            <form class="flex h-full flex-col" data-testid="edit-form">
                 <!-- Keep an accessible title for the sheet without a visible header. -->
                 <SheetHeader class="sr-only">
                     <SheetTitle>Task</SheetTitle>
@@ -1068,8 +1296,20 @@ onMounted(() => {
                     <div v-else-if="editError" class="text-destructive py-8 text-center">{{ editError }}</div>
                     <div v-else-if="editTask" class="grid h-full gap-6 lg:grid-cols-2">
                         <div class="space-y-6 overflow-auto pr-1">
-                            <div v-if="editTask.created_at" class="text-muted-foreground text-xs">
-                                Created {{ formatThreadTime(editTask.created_at) }}
+                            <div class="border-muted-foreground/20 bg-muted/10 grid gap-2 rounded-lg border p-3 text-xs">
+                                <div v-if="editTask.created_at" class="text-muted-foreground" data-testid="edit-task-created-at">
+                                    Created {{ formatThreadTime(editTask.created_at) }}
+                                </div>
+                                <div class="flex items-center justify-between gap-2">
+                                    <span class="text-muted-foreground">Environment</span>
+                                    <span class="text-foreground font-medium" data-testid="edit-task-environment">{{
+                                        editTaskEnvironmentLabel
+                                    }}</span>
+                                </div>
+                                <div class="flex items-center justify-between gap-2">
+                                    <span class="text-muted-foreground">Created by</span>
+                                    <span class="text-foreground font-medium" data-testid="edit-task-created-by">{{ editTaskCreatorLabel }}</span>
+                                </div>
                             </div>
 
                             <div class="space-y-2">
@@ -1101,13 +1341,19 @@ onMounted(() => {
                             <div class="space-y-2">
                                 <Label>Priority</Label>
                                 <template v-if="isOwner">
-                                    <ButtonGroup v-model="editForm.priority" aria-label="Task priority" :options="priorityOptions" :columns="3" />
+                                    <ButtonGroup
+                                        v-model="editForm.priority"
+                                        aria-label="Task priority"
+                                        test-id-prefix="task-priority"
+                                        :options="priorityOptions"
+                                        :columns="3"
+                                    />
                                 </template>
                                 <template v-else>
                                     <div
                                         class="border-muted-foreground/30 bg-muted/10 text-muted-foreground inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm"
                                     >
-                                        {{ editTask.priority }}
+                                        {{ getPriorityLabel(editTask.priority) }}
                                     </div>
                                 </template>
                             </div>
@@ -1245,7 +1491,7 @@ onMounted(() => {
                                                 >
                                                     <ContextMenuItem
                                                         v-if="message.isYou && message.id && !message.pending"
-                                                        class="hover:bg-accent hover:text-accent-foreground relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none"
+                                                        class="hover:bg-accent hover:text-accent-foreground relative flex cursor-default items-center rounded-sm px-2 py-1.5 text-sm outline-none select-none"
                                                         @select="startThreadEdit(message)"
                                                     >
                                                         Edit
@@ -1253,7 +1499,7 @@ onMounted(() => {
                                                     <ContextMenuSeparator class="bg-border -mx-1 my-1 h-px" />
                                                     <ContextMenuItem
                                                         v-if="message.isYou && message.id && !message.pending"
-                                                        class="text-destructive hover:bg-accent hover:text-destructive relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none"
+                                                        class="text-destructive hover:bg-accent hover:text-destructive relative flex cursor-default items-center rounded-sm px-2 py-1.5 text-sm outline-none select-none"
                                                         @select="deleteThreadMessage(message)"
                                                     >
                                                         Delete
@@ -1290,11 +1536,6 @@ onMounted(() => {
                         </div>
                     </div>
                 </div>
-
-                <SheetFooter class="flex flex-row items-center justify-between border-t px-6 py-4">
-                    <Button type="button" variant="outline" @click="attemptCloseEdit">Close</Button>
-                    <Button :disabled="editLoading || editUploading || !hasUnsavedTaskChanges" type="submit" variant="default"> Save </Button>
-                </SheetFooter>
             </form>
         </SheetContent>
     </Sheet>
@@ -1303,9 +1544,7 @@ onMounted(() => {
         <DialogContent class="sm:max-w-md">
             <div class="space-y-2">
                 <div class="text-base font-semibold">Discard changes?</div>
-                <div class="text-muted-foreground text-sm">
-                    You have unsaved changes. If you close now, they will be lost.
-                </div>
+                <div class="text-muted-foreground text-sm">You have unsaved changes. If you close now, they will be lost.</div>
             </div>
 
             <div class="mt-6 flex items-center justify-end gap-2">
