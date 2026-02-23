@@ -61,6 +61,14 @@ class ShiftTaskController extends Controller
                 $params['search'] = $request->search;
             }
 
+            if ($request->filled('environment')) {
+                $params['environment'] = $request->environment;
+            }
+
+            if ($request->filled('sort_by')) {
+                $params['sort_by'] = $request->sort_by;
+            }
+
             if ($request->filled('page')) {
                 $params['page'] = (int) $request->page;
             }
