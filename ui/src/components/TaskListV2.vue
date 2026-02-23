@@ -21,6 +21,9 @@ type Task = {
     title: string;
     status: string;
     priority: string;
+    environment?: string | null;
+    created_at?: string | null;
+    updated_at?: string | null;
 };
 
 type TaskAttachment = {
@@ -430,6 +433,12 @@ const priorityOptions = [
         unselectedClass: 'border-rose-300/60 text-rose-900 hover:bg-rose-50',
     },
 ];
+const sortByOptions = [
+    { value: 'updated_at', label: 'Updated At' },
+    { value: 'created_at', label: 'Created At' },
+    { value: 'priority', label: 'Priority' },
+];
+const defaultSortBy = 'updated_at';
 
 const uploadEndpoints = {
     init: '/shift/api/attachments/upload-init',
@@ -456,16 +465,22 @@ const defaultStatuses = statusOptions.filter((option) => !['completed', 'closed'
 const appliedStatuses = ref<string[]>([...defaultStatuses]);
 const appliedPriorities = ref<string[]>(priorityOptions.map((option) => option.value));
 const appliedSearchTerm = ref('');
+const appliedEnvironmentTerm = ref('');
+const appliedSortBy = ref(defaultSortBy);
 
 const draftStatuses = ref<string[]>([...appliedStatuses.value]);
 const draftPriorities = ref<string[]>([...appliedPriorities.value]);
 const draftSearchTerm = ref(appliedSearchTerm.value);
+const draftEnvironmentTerm = ref(appliedEnvironmentTerm.value);
+const draftSortBy = ref(appliedSortBy.value);
 
 watch(filtersOpen, (open) => {
     if (!open) return;
     draftStatuses.value = [...appliedStatuses.value];
     draftPriorities.value = [...appliedPriorities.value];
     draftSearchTerm.value = appliedSearchTerm.value;
+    draftEnvironmentTerm.value = appliedEnvironmentTerm.value;
+    draftSortBy.value = appliedSortBy.value;
 });
 
 const activeFilterCount = computed(() => {
@@ -473,6 +488,8 @@ const activeFilterCount = computed(() => {
     if (appliedStatuses.value.length && appliedStatuses.value.length < statusOptions.length) count += 1;
     if (appliedPriorities.value.length && appliedPriorities.value.length < priorityOptions.length) count += 1;
     if (appliedSearchTerm.value.trim()) count += 1;
+    if (appliedEnvironmentTerm.value.trim()) count += 1;
+    if (appliedSortBy.value !== defaultSortBy) count += 1;
     return count;
 });
 
@@ -953,10 +970,14 @@ function resetFilters() {
     draftStatuses.value = [...defaultStatuses];
     draftPriorities.value = priorityOptions.map((option) => option.value);
     draftSearchTerm.value = '';
+    draftEnvironmentTerm.value = '';
+    draftSortBy.value = defaultSortBy;
 
     appliedStatuses.value = [...draftStatuses.value];
     appliedPriorities.value = [...draftPriorities.value];
     appliedSearchTerm.value = draftSearchTerm.value;
+    appliedEnvironmentTerm.value = draftEnvironmentTerm.value;
+    appliedSortBy.value = draftSortBy.value;
 
     currentPage.value = 1;
     fetchTasks();
@@ -966,6 +987,8 @@ function applyFilters() {
     appliedStatuses.value = [...draftStatuses.value];
     appliedPriorities.value = [...draftPriorities.value];
     appliedSearchTerm.value = draftSearchTerm.value;
+    appliedEnvironmentTerm.value = draftEnvironmentTerm.value;
+    appliedSortBy.value = draftSortBy.value;
 
     currentPage.value = 1;
     fetchTasks();
@@ -993,6 +1016,11 @@ async function fetchTasks() {
             params.search = query;
         }
 
+        const environment = appliedEnvironmentTerm.value.trim();
+        if (environment) {
+            params.environment = environment;
+        }
+
         if (appliedStatuses.value.length && appliedStatuses.value.length < statusOptions.length) {
             params.status = appliedStatuses.value;
         }
@@ -1000,6 +1028,8 @@ async function fetchTasks() {
         if (appliedPriorities.value.length && appliedPriorities.value.length < priorityOptions.length) {
             params.priority = appliedPriorities.value;
         }
+
+        params.sort_by = appliedSortBy.value;
 
         const response = await axios.get('/shift/api/tasks', { params });
 
@@ -1089,6 +1119,10 @@ function getPriorityLabel(priority: string) {
     return option?.label ?? priority;
 }
 
+function getTaskEnvironmentLabel(task: Task): string {
+    return getTaskEnvironment(task) ?? 'Unknown';
+}
+
 onMounted(() => {
     fetchTasks();
 });
@@ -1126,6 +1160,11 @@ onMounted(() => {
                             </div>
 
                             <div class="space-y-2">
+                                <Label>Environment</Label>
+                                <Input v-model="draftEnvironmentTerm" data-testid="filter-environment" placeholder="e.g. Production" />
+                            </div>
+
+                            <div class="space-y-2">
                                 <div class="flex items-center justify-between">
                                     <Label>Status</Label>
                                     <Button size="sm" variant="ghost" @click="selectAllStatuses">All</Button>
@@ -1159,6 +1198,17 @@ onMounted(() => {
                                         <span>{{ option.label }}</span>
                                     </label>
                                 </div>
+                            </div>
+
+                            <div class="space-y-2">
+                                <Label>Sort By</Label>
+                                <ButtonGroup
+                                    v-model="draftSortBy"
+                                    test-id-prefix="sort-by"
+                                    aria-label="Sort tasks"
+                                    :options="sortByOptions"
+                                    :columns="3"
+                                />
                             </div>
                         </div>
 
@@ -1204,6 +1254,9 @@ onMounted(() => {
                             </Badge>
                             <Badge :class="getPriorityBadgeClass(task.priority)" :data-testid="`task-priority-badge-${task.id}`" variant="outline">
                                 {{ getPriorityLabel(task.priority) }}
+                            </Badge>
+                            <Badge :data-testid="`task-environment-badge-${task.id}`" variant="outline">
+                                {{ getTaskEnvironmentLabel(task) }}
                             </Badge>
                         </div>
                     </div>

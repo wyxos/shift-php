@@ -78,11 +78,11 @@ const stubs = {
 };
 
 const seedTasks = [
-    { id: 1, title: 'Auth issue', status: 'pending', priority: 'high' },
-    { id: 2, title: 'UI polish', status: 'in-progress', priority: 'medium' },
-    { id: 3, title: 'Docs update', status: 'awaiting-feedback', priority: 'low' },
-    { id: 4, title: 'Legacy cleanup', status: 'completed', priority: 'low' },
-    { id: 5, title: 'Close out', status: 'closed', priority: 'medium' },
+    { id: 1, title: 'Auth issue', status: 'pending', priority: 'high', environment: 'staging' },
+    { id: 2, title: 'UI polish', status: 'in-progress', priority: 'medium', environment: 'production' },
+    { id: 3, title: 'Docs update', status: 'awaiting-feedback', priority: 'low', environment: null },
+    { id: 4, title: 'Legacy cleanup', status: 'completed', priority: 'low', environment: 'production' },
+    { id: 5, title: 'Close out', status: 'closed', priority: 'medium', environment: null },
 ];
 
 const defaultStatuses = ['pending', 'in-progress', 'awaiting-feedback'];
@@ -130,7 +130,7 @@ describe('TaskListV2', () => {
         const wrapper = await mountWithTasks();
 
         expect(getMock).toHaveBeenCalledWith('/shift/api/tasks', {
-            params: { page: 1, status: defaultStatuses },
+            params: { page: 1, status: defaultStatuses, sort_by: 'updated_at' },
         });
 
         const rows = wrapper.findAll('[data-testid="task-row"]');
@@ -176,6 +176,21 @@ describe('TaskListV2', () => {
         wrapper.unmount();
     });
 
+    it('shows environment badges in list rows', async () => {
+        getMock.mockResolvedValueOnce(makeIndexResponse(seedTasks));
+
+        const wrapper = mount(TaskListV2, {
+            global: { stubs },
+        });
+        await flushPromises();
+        await nextTick();
+
+        expect(wrapper.get('[data-testid="task-environment-badge-1"]').text()).toContain('Staging');
+        expect(wrapper.get('[data-testid="task-environment-badge-3"]').text()).toContain('Unknown');
+
+        wrapper.unmount();
+    });
+
     it('filters by priority', async () => {
         getMock.mockResolvedValueOnce(makeIndexResponse(defaultTasks)).mockResolvedValueOnce(makeIndexResponse([seedTasks[0]]));
 
@@ -195,7 +210,7 @@ describe('TaskListV2', () => {
         await nextTick();
 
         expect(getMock).toHaveBeenLastCalledWith('/shift/api/tasks', {
-            params: { page: 1, status: defaultStatuses, priority: ['high'] },
+            params: { page: 1, status: defaultStatuses, priority: ['high'], sort_by: 'updated_at' },
         });
 
         const rows = wrapper.findAll('[data-testid="task-row"]');
@@ -220,12 +235,54 @@ describe('TaskListV2', () => {
         await nextTick();
 
         expect(getMock).toHaveBeenLastCalledWith('/shift/api/tasks', {
-            params: { page: 1, status: defaultStatuses, search: 'auth' },
+            params: { page: 1, status: defaultStatuses, search: 'auth', sort_by: 'updated_at' },
         });
 
         const rows = wrapper.findAll('[data-testid="task-row"]');
         expect(rows.length).toBe(1);
         expect(rows[0].text()).toContain('Auth issue');
+
+        wrapper.unmount();
+    });
+
+    it('filters by environment', async () => {
+        getMock.mockResolvedValueOnce(makeIndexResponse(defaultTasks)).mockResolvedValueOnce(makeIndexResponse([seedTasks[0]]));
+
+        const wrapper = mount(TaskListV2, { global: { stubs } });
+        await flushPromises();
+        await nextTick();
+
+        await wrapper.get('[data-testid="filter-environment"]').setValue('staging');
+        await nextTick();
+
+        await wrapper.get('[data-testid="filters-apply"]').trigger('click');
+        await flushPromises();
+        await nextTick();
+
+        expect(getMock).toHaveBeenLastCalledWith('/shift/api/tasks', {
+            params: { page: 1, status: defaultStatuses, environment: 'staging', sort_by: 'updated_at' },
+        });
+        expect(wrapper.findAll('[data-testid="task-row"]')).toHaveLength(1);
+
+        wrapper.unmount();
+    });
+
+    it('filters by sort option', async () => {
+        getMock.mockResolvedValueOnce(makeIndexResponse(defaultTasks)).mockResolvedValueOnce(makeIndexResponse(defaultTasks));
+
+        const wrapper = mount(TaskListV2, { global: { stubs } });
+        await flushPromises();
+        await nextTick();
+
+        await wrapper.get('[data-testid="sort-by-priority"]').trigger('click');
+        await nextTick();
+        await wrapper.get('[data-testid="filters-apply"]').trigger('click');
+        await flushPromises();
+        await nextTick();
+
+        expect(getMock).toHaveBeenLastCalledWith('/shift/api/tasks', {
+            params: { page: 1, status: defaultStatuses, sort_by: 'priority' },
+        });
 
         wrapper.unmount();
     });
@@ -372,10 +429,7 @@ describe('TaskListV2', () => {
 
         expect(putMock).toHaveBeenCalledWith('/shift/api/tasks/1', expect.objectContaining({ status: 'in-progress' }));
         expect(sonnerMocks.toastLoadingMock).toHaveBeenCalledWith('Saving task changes...');
-        expect(sonnerMocks.toastSuccessMock).toHaveBeenCalledWith(
-            'Task changes saved',
-            expect.objectContaining({ id: 'autosave-toast' }),
-        );
+        expect(sonnerMocks.toastSuccessMock).toHaveBeenCalledWith('Task changes saved', expect.objectContaining({ id: 'autosave-toast' }));
 
         wrapper.unmount();
         vi.useRealTimers();
