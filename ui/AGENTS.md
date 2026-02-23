@@ -23,6 +23,10 @@
 - Components:
   - ✅ DO: Keep feature components in `packages/shift-php/ui/src/components/**` (e.g. `packages/shift-php/ui/src/components/TaskList.vue`)
   - ✅ DO: Keep shared UI primitives in `packages/shift-php/ui/src/components/ui/**` (e.g. `packages/shift-php/ui/src/components/ui/button.vue`)
+  - ✅ DO: Mirror shared task UX behavior and visuals with the SHIFT Portal repo (`../shift/resources/js/**`) for task sheets, ShiftEditor keyboard behavior, ButtonGroup interactions, and status/priority color semantics.
+  - ✅ DO: Prefer shared imports via `@shared/**` and `@shift/**` before introducing SDK-only variants.
+  - ✅ DO: Use `vue-sonner` for new toast/notification UX to stay aligned with the portal.
+  - ❌ DON'T: Introduce new Oruga UI components for new frontend requests.
 - Aliases / shared imports:
   - ✅ DO: Use `@/…` for UI-local imports (mapped to `packages/shift-php/ui/src`)
   - ✅ DO: Use `@shift/...` aliases to import shared portal resources when needed (see paths in `packages/shift-php/ui/tsconfig.app.json`)
