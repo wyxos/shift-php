@@ -58,3 +58,66 @@
 .shift-rich ol ol {
     list-style: lower-alpha;
 }
+
+.ProseMirror :not(pre) > code,
+.shift-rich :not(pre) > code {
+    display: inline-block;
+    padding: 0.1rem 0.35rem;
+    border-radius: 0.3rem;
+    border: 1px solid color-mix(in srgb, currentColor 18%, transparent);
+    background: color-mix(in srgb, currentColor 10%, transparent);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+    font-size: 0.86em;
+    line-height: 1.35;
+}
+
+.ProseMirror blockquote[data-reply-to],
+.shift-rich blockquote[data-reply-to] {
+    display: block;
+    margin: 0.5rem 0;
+    padding: 0.625rem 0.75rem;
+    border: 1px solid color-mix(in srgb, currentColor 28%, transparent);
+    border-left-width: 4px;
+    border-radius: 0.5rem;
+    background: color-mix(in srgb, currentColor 8%, transparent);
+    box-shadow: 0 1px 2px color-mix(in srgb, currentColor 18%, transparent);
+    transition:
+        background-color 120ms ease,
+        border-color 120ms ease,
+        box-shadow 120ms ease;
+}
+
+.shift-rich blockquote[data-reply-to] {
+    cursor: pointer;
+}
+
+.shift-rich blockquote[data-reply-to]:hover {
+    background: color-mix(in srgb, currentColor 12%, transparent);
+    border-color: color-mix(in srgb, currentColor 42%, transparent);
+}
+
+.ProseMirror blockquote[data-reply-to] p,
+.shift-rich blockquote[data-reply-to] p {
+    margin: 0;
+}
+
+.ProseMirror blockquote[data-reply-to] p + p,
+.shift-rich blockquote[data-reply-to] p + p {
+    margin-top: 0.25rem;
+}
+
+.ProseMirror blockquote[data-reply-to] a,
+.shift-rich blockquote[data-reply-to] a {
+    color: inherit;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    font-size: 0.75rem;
+    opacity: 0.85;
+    cursor: pointer;
+}
+
+.shift-reply-target {
+    box-shadow:
+        0 0 0 2px var(--ring),
+        0 0 0 5px color-mix(in srgb, var(--ring) 35%, transparent);
+}

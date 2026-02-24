@@ -106,6 +106,8 @@ const threadComposerUploading = ref(false);
 const threadEditingId = ref<number | null>(null);
 const threadEditSaving = ref(false);
 const threadEditError = ref<string | null>(null);
+const contextMenuMessageId = ref<number | null>(null);
+const contextMenuSelectionText = ref('');
 const lastTouchTapAt = ref(0);
 const lastTouchTapId = ref<number | null>(null);
 
@@ -254,6 +256,108 @@ function renderRichContent(content: string | null | undefined): string {
     return typeof rendered === 'string' ? rendered : value;
 }
 
+function escapeHtml(value: string): string {
+    return value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+function extractPlainTextFromContent(content: string): string {
+    const rendered = renderRichContent(content);
+    return decodeHtmlToText(rendered)
+        .replace(/\r/g, '')
+        .replace(/\n{3,}/g, '\n\n')
+        .replace(/[ \t]+\n/g, '\n')
+        .replace(/\n[ \t]+/g, '\n')
+        .trim();
+}
+
+function getSelectionForMessage(message: ThreadMessage): string {
+    if (typeof window === 'undefined' || !message.id) return '';
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0 || selection.isCollapsed) return '';
+    const selectedText = selection.toString().trim();
+    if (!selectedText) return '';
+    const bubble = document.getElementById(`comment-${message.id}`);
+    if (!bubble) return '';
+    const anchorInside = selection.anchorNode ? bubble.contains(selection.anchorNode) : false;
+    const focusInside = selection.focusNode ? bubble.contains(selection.focusNode) : false;
+    return anchorInside && focusInside ? selectedText : '';
+}
+
+function onCommentContextMenuOpen(message: ThreadMessage, open: boolean) {
+    if (!open) {
+        contextMenuMessageId.value = null;
+        contextMenuSelectionText.value = '';
+        return;
+    }
+    contextMenuMessageId.value = message.id ?? null;
+    contextMenuSelectionText.value = getSelectionForMessage(message);
+}
+
+function shouldShowCopySelection(message: ThreadMessage): boolean {
+    if (message.isYou || !message.id || message.pending) return false;
+    return contextMenuMessageId.value === message.id && contextMenuSelectionText.value.length > 0;
+}
+
+async function copyTextToClipboard(text: string): Promise<boolean> {
+    const value = text.trim();
+    if (!value) return false;
+
+    try {
+        if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+            await navigator.clipboard.writeText(value);
+            return true;
+        }
+    } catch {
+        // fallback below
+    }
+
+    if (typeof document === 'undefined') return false;
+    const textarea = document.createElement('textarea');
+    textarea.value = value;
+    textarea.setAttribute('readonly', '');
+    textarea.style.position = 'fixed';
+    textarea.style.opacity = '0';
+    document.body.appendChild(textarea);
+    textarea.select();
+    const copied = document.execCommand('copy');
+    document.body.removeChild(textarea);
+    return copied;
+}
+
+async function copyEntireMessage(message: ThreadMessage) {
+    const copied = await copyTextToClipboard(extractPlainTextFromContent(message.content));
+    if (copied) {
+        toast.success('Message copied');
+        return;
+    }
+    toast.error('Unable to copy message');
+}
+
+async function copySelectedMessage() {
+    const copied = await copyTextToClipboard(contextMenuSelectionText.value);
+    if (copied) {
+        toast.success('Selection copied');
+        return;
+    }
+    toast.error('Unable to copy selection');
+}
+
+function buildReplyQuoteHtml(message: ThreadMessage): string {
+    if (!message.id) return '';
+    const plain = extractPlainTextFromContent(message.content);
+    const snippet = plain.length > 280 ? `${plain.slice(0, 277)}...` : plain;
+    const quoted = escapeHtml(snippet).replace(/\n/g, '<br>');
+    const author = escapeHtml(message.author || 'User');
+
+    return [
+        `<blockquote class="shift-reply" data-reply-to="${message.id}">`,
+        `<p>Replying to ${author}</p>`,
+        `<p>${quoted}</p>`,
+        '</blockquote>',
+        '<p></p>',
+    ].join('');
+}
+
 function openLightboxForImage(img: HTMLImageElement) {
     const src = img.currentSrc || img.src;
     if (!src) return;
@@ -265,6 +369,9 @@ function openLightboxForImage(img: HTMLImageElement) {
 function onRichContentClick(event: MouseEvent) {
     const target = event.target as HTMLElement | null;
     if (!target) return;
+
+    if (handleReplyReferenceClick(target, event)) return;
+
     const img = target.closest('img') as HTMLImageElement | null;
     if (!img) return;
     // Only intercept images inside rich html blocks (editor tiles, rendered descriptions, thread content).
@@ -282,10 +389,60 @@ function shouldHandleImage(img: HTMLImageElement) {
     return { ok: true, inEditable };
 }
 
+function parseReplyTargetId(value: string | null | undefined): number | null {
+    if (!value) return null;
+    const match = value.match(/^#?comment-(\d+)$/);
+    if (!match) return null;
+    const id = Number.parseInt(match[1], 10);
+    return Number.isFinite(id) && id > 0 ? id : null;
+}
+
+function highlightReplyTargetBubble(target: HTMLElement) {
+    target.classList.add('shift-reply-target');
+    window.setTimeout(() => {
+        target.classList.remove('shift-reply-target');
+    }, 1800);
+}
+
+function scrollToReplyTarget(commentId: number): boolean {
+    const selector = `#comment-${commentId}`;
+    const withinComments = commentsScrollRef.value?.querySelector(selector) as HTMLElement | null;
+    const target = withinComments ?? (document.getElementById(`comment-${commentId}`) as HTMLElement | null);
+    if (!target) return false;
+    target.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
+    highlightReplyTargetBubble(target);
+    return true;
+}
+
+function getReplyTargetFromEventTarget(target: HTMLElement): number | null {
+    const anchor = target.closest('a[href^="#comment-"]') as HTMLAnchorElement | null;
+    const fromAnchor = parseReplyTargetId(anchor?.getAttribute('href'));
+    if (fromAnchor) return fromAnchor;
+
+    const quote = target.closest('blockquote[data-reply-to]') as HTMLElement | null;
+    const fromQuote = parseReplyTargetId(`comment-${quote?.dataset.replyTo ?? ''}`);
+    if (fromQuote) return fromQuote;
+
+    return null;
+}
+
+function handleReplyReferenceClick(target: HTMLElement, event: MouseEvent): boolean {
+    if (!editOpen.value) return false;
+    if (target.closest('[contenteditable="true"]')) return false;
+    const commentId = getReplyTargetFromEventTarget(target);
+    if (!commentId) return false;
+    event.preventDefault();
+    event.stopPropagation();
+    return scrollToReplyTarget(commentId);
+}
+
 function onGlobalClickCapture(event: MouseEvent) {
     if (!editOpen.value) return;
     const target = event.target as HTMLElement | null;
     if (!target) return;
+
+    if (handleReplyReferenceClick(target, event)) return;
+
     const img = target.closest('img') as HTMLImageElement | null;
     if (!img) return;
     const { ok, inEditable } = shouldHandleImage(img);
@@ -758,6 +915,8 @@ async function openEdit(taskId: number, options: OpenEditOptions = {}) {
     threadEditingId.value = null;
     threadEditError.value = null;
     threadEditSaving.value = false;
+    contextMenuMessageId.value = null;
+    contextMenuSelectionText.value = '';
     if (updateHistory) {
         syncTaskQuery(taskId, 'push');
     }
@@ -812,6 +971,8 @@ function closeEditNow(updateHistory = true) {
     threadEditingId.value = null;
     threadEditError.value = null;
     threadEditSaving.value = false;
+    contextMenuMessageId.value = null;
+    contextMenuSelectionText.value = '';
     taskSaving.value = false;
     taskSaveError.value = null;
     pendingTaskSave.value = false;
@@ -1030,6 +1191,39 @@ function startThreadEdit(message: ThreadMessage) {
     });
 }
 
+function startReplyToMessage(message: ThreadMessage) {
+    if (!editTask.value) return;
+    if (!message.id || message.pending) return;
+
+    if (threadEditingId.value) {
+        cancelThreadEdit();
+    }
+
+    threadEditError.value = null;
+    threadTempIdentifier.value = Date.now().toString();
+    const quoteHtml = buildReplyQuoteHtml(message);
+    const editor = threadComposerRef.value?.editor;
+
+    if (editor) {
+        const currentHtml = editor.getHTML();
+        const hasContent = editor.getText().trim().length > 0 || currentHtml.replace(/<p><\/p>/g, '').trim().length > 0;
+
+        if (hasContent) {
+            editor.chain().focus('end').insertContent(quoteHtml).run();
+        } else {
+            editor.commands.setContent(quoteHtml, false);
+        }
+        threadComposerHtml.value = editor.getHTML();
+    } else {
+        threadComposerHtml.value = threadComposerHtml.value.trim() ? `${threadComposerHtml.value}${quoteHtml}` : quoteHtml;
+    }
+
+    void nextTick().then(() => {
+        threadComposerRef.value?.editor?.chain().focus('end').run();
+        scrollCommentsToBottomSoon();
+    });
+}
+
 function cancelThreadEdit() {
     threadEditingId.value = null;
     threadComposerHtml.value = '';
@@ -1037,6 +1231,8 @@ function cancelThreadEdit() {
     threadEditSaving.value = false;
     threadTempIdentifier.value = Date.now().toString();
     threadComposerRef.value?.reset?.();
+    contextMenuMessageId.value = null;
+    contextMenuSelectionText.value = '';
 }
 
 function shouldIgnoreEditGesture(event: Event): boolean {
@@ -1625,16 +1821,17 @@ onMounted(async () => {
                                     class="flex"
                                 >
                                     <div class="max-w-[86%]">
-                                        <ContextMenuRoot>
+                                        <ContextMenuRoot @update:open="(open) => onCommentContextMenuOpen(message, open)">
                                             <ContextMenuTrigger as-child>
                                                 <div
+                                                    :id="message.id ? `comment-${message.id}` : undefined"
                                                     :data-testid="message.id ? `comment-bubble-${message.id}` : undefined"
                                                     :class="
                                                         message.isYou
                                                             ? 'rounded-br-md bg-sky-600 text-white'
                                                             : 'border-muted-foreground/10 bg-background/70 text-foreground rounded-bl-md border'
                                                     "
-                                                    class="rounded-2xl px-3 py-2 text-sm shadow-sm"
+                                                    class="rounded-lg px-3 py-2 text-sm shadow-sm"
                                                     @dblclick="onMessageDblClick(message, $event)"
                                                     @touchend="onMessageTouchEnd(message, $event)"
                                                 >
@@ -1643,6 +1840,7 @@ onMounted(async () => {
                                                     </div>
                                                     <div
                                                         class="shift-rich text-inherit [&_img]:my-2 [&_img]:max-w-full [&_img]:cursor-zoom-in [&_img]:rounded-lg [&_img]:shadow-sm [&_img.editor-tile]:aspect-square [&_img.editor-tile]:w-[200px] [&_img.editor-tile]:max-w-[200px] [&_img.editor-tile]:object-cover"
+                                                        @click="onRichContentClick"
                                                         v-html="renderRichContent(message.content)"
                                                     ></div>
                                                     <div v-if="message.attachments?.length" class="mt-3 flex flex-wrap gap-2">
@@ -1670,13 +1868,41 @@ onMounted(async () => {
                                                     class="bg-popover text-popover-foreground z-50 min-w-[10rem] overflow-hidden rounded-md border p-1 shadow-md"
                                                 >
                                                     <ContextMenuItem
+                                                        v-if="!message.isYou"
+                                                        class="hover:bg-accent hover:text-accent-foreground relative flex cursor-default items-center rounded-sm px-2 py-1.5 text-sm outline-none select-none"
+                                                        @select="copyEntireMessage(message)"
+                                                    >
+                                                        Copy
+                                                    </ContextMenuItem>
+                                                    <ContextMenuItem
+                                                        v-if="shouldShowCopySelection(message)"
+                                                        class="hover:bg-accent hover:text-accent-foreground relative flex cursor-default items-center rounded-sm px-2 py-1.5 text-sm outline-none select-none"
+                                                        @select="copySelectedMessage"
+                                                    >
+                                                        Copy selection
+                                                    </ContextMenuItem>
+                                                    <ContextMenuItem
+                                                        v-if="!message.isYou && message.id && !message.pending"
+                                                        class="hover:bg-accent hover:text-accent-foreground relative flex cursor-default items-center rounded-sm px-2 py-1.5 text-sm outline-none select-none"
+                                                        @select="startReplyToMessage(message)"
+                                                    >
+                                                        Reply
+                                                    </ContextMenuItem>
+                                                    <ContextMenuSeparator
+                                                        v-if="!message.isYou && message.id && !message.pending"
+                                                        class="bg-border -mx-1 my-1 h-px"
+                                                    />
+                                                    <ContextMenuItem
                                                         v-if="message.isYou && message.id && !message.pending"
                                                         class="hover:bg-accent hover:text-accent-foreground relative flex cursor-default items-center rounded-sm px-2 py-1.5 text-sm outline-none select-none"
                                                         @select="startThreadEdit(message)"
                                                     >
                                                         Edit
                                                     </ContextMenuItem>
-                                                    <ContextMenuSeparator class="bg-border -mx-1 my-1 h-px" />
+                                                    <ContextMenuSeparator
+                                                        v-if="message.isYou && message.id && !message.pending"
+                                                        class="bg-border -mx-1 my-1 h-px"
+                                                    />
                                                     <ContextMenuItem
                                                         v-if="message.isYou && message.id && !message.pending"
                                                         class="text-destructive hover:bg-accent hover:text-destructive relative flex cursor-default items-center rounded-sm px-2 py-1.5 text-sm outline-none select-none"

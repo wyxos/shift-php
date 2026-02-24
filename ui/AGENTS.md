@@ -47,6 +47,7 @@
 ## Common Gotchas
 - HTTPS in dev is enabled only when Herd/Valet certs are found; customize with `VITE_CERT_NAME`, `VITE_SSL_KEY_PATH`, `VITE_SSL_CERT_PATH` (see `packages/shift-php/ui/vite.config.ts`).
 - After `npm run build`, publish to the portal app with `php artisan shift:publish --group=public`.
+- `vue-tsc` in this package currently rejects `String.prototype.replaceAll`; prefer regex-based `String.replace(...)` for compatibility.
 
 ## Pre-PR Checks
 - `npm run build`
