@@ -37,7 +37,7 @@ class TaskCreated extends Notification
         $taskTitle = $this->data['task_title'] ?? 'Task #'.$this->data['task_id'];
         $taskStatus = ucfirst($this->data['task_status'] ?? 'pending');
         $taskPriority = ucfirst($this->data['task_priority'] ?? 'medium');
-        $url = route('shift.dashboard').'/tasks/'.$this->data['task_id'].'/edit';
+        $url = route('shift.dashboard').'/tasks-v2?task='.$this->data['task_id'];
 
         return (new MailMessage)
             ->subject("New Task Created: {$taskTitle}")

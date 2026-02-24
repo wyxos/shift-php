@@ -26,7 +26,7 @@ class TaskThreadUpdated extends CoreTaskThreadUpdated
         }
 
         if (Route::has('shift.dashboard')) {
-            return route('shift.dashboard').'/tasks/'.$this->data['task_id'].'/edit';
+            return route('shift.dashboard').'/tasks-v2?task='.$this->data['task_id'];
         }
 
         return null;
