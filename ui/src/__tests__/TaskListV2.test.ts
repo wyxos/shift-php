@@ -115,6 +115,7 @@ async function mountWithTasks() {
 describe('TaskListV2', () => {
     beforeEach(() => {
         vi.useRealTimers();
+        window.history.replaceState({}, '', '/shift/tasks-v2');
         getMock.mockReset();
         deleteMock.mockReset();
         postMock.mockReset();
@@ -188,6 +189,112 @@ describe('TaskListV2', () => {
         expect(wrapper.get('[data-testid="task-environment-badge-1"]').text()).toContain('Staging');
         expect(wrapper.get('[data-testid="task-environment-badge-3"]').text()).toContain('Unknown');
 
+        wrapper.unmount();
+    });
+
+    it('syncs task id in URL when opening and closing the edit sheet', async () => {
+        const pushStateSpy = vi.spyOn(window.history, 'pushState');
+
+        getMock
+            .mockResolvedValueOnce(makeIndexResponse(defaultTasks))
+            .mockResolvedValueOnce({
+                data: {
+                    id: 1,
+                    title: 'Auth issue',
+                    priority: 'high',
+                    status: 'pending',
+                    created_at: '2026-02-10T17:40:00Z',
+                    description: '',
+                    submitter: { email: 'someone@example.com' },
+                    attachments: [],
+                },
+            })
+            .mockResolvedValueOnce({ data: { external: [] } });
+
+        const wrapper = mount(TaskListV2, { global: { stubs } });
+        await flushPromises();
+        await nextTick();
+
+        const firstRow = wrapper.findAll('[data-testid="task-row"]')[0];
+        await firstRow.find('button[title="Edit"]').trigger('click');
+        await flushPromises();
+        await nextTick();
+
+        expect(window.location.search).toContain('task=1');
+        expect(pushStateSpy.mock.calls.some(([, , next]) => next === '/shift/tasks-v2?task=1')).toBe(true);
+
+        (wrapper.vm as any).closeEditNow();
+        await nextTick();
+
+        expect(window.location.search).toBe('');
+        expect(pushStateSpy.mock.calls.some(([, , next]) => next === '/shift/tasks-v2')).toBe(true);
+        wrapper.unmount();
+        pushStateSpy.mockRestore();
+    });
+
+    it('auto-opens the edit sheet from task URL query', async () => {
+        window.history.replaceState({}, '', '/shift/tasks-v2?task=1');
+
+        getMock
+            .mockResolvedValueOnce(makeIndexResponse(defaultTasks))
+            .mockResolvedValueOnce({
+                data: {
+                    id: 1,
+                    title: 'Auth issue',
+                    priority: 'high',
+                    status: 'pending',
+                    created_at: '2026-02-10T17:40:00Z',
+                    description: '',
+                    submitter: { email: 'someone@example.com' },
+                    attachments: [],
+                },
+            })
+            .mockResolvedValueOnce({ data: { external: [] } });
+
+        const wrapper = mount(TaskListV2, { global: { stubs } });
+        await flushPromises();
+        await nextTick();
+
+        expect(getMock).toHaveBeenCalledWith('/shift/api/tasks/1');
+        expect(getMock).toHaveBeenCalledWith('/shift/api/tasks/1/threads');
+        wrapper.unmount();
+    });
+
+    it('handles browser popstate navigation for task deep links', async () => {
+        getMock
+            .mockResolvedValueOnce(makeIndexResponse(defaultTasks))
+            .mockResolvedValueOnce({
+                data: {
+                    id: 1,
+                    title: 'Auth issue',
+                    priority: 'high',
+                    status: 'pending',
+                    created_at: '2026-02-10T17:40:00Z',
+                    description: '',
+                    submitter: { email: 'someone@example.com' },
+                    attachments: [],
+                },
+            })
+            .mockResolvedValueOnce({ data: { external: [] } });
+
+        const wrapper = mount(TaskListV2, { global: { stubs } });
+        await flushPromises();
+        await nextTick();
+
+        window.history.replaceState({}, '', '/shift/tasks-v2?task=1');
+        window.dispatchEvent(new PopStateEvent('popstate'));
+        await flushPromises();
+        await nextTick();
+
+        expect(getMock).toHaveBeenCalledWith('/shift/api/tasks/1');
+
+        window.history.replaceState({}, '', '/shift/tasks-v2');
+        window.dispatchEvent(new PopStateEvent('popstate'));
+        await flushPromises();
+        await nextTick();
+
+        expect(window.location.search).toBe('');
+        expect((wrapper.vm as any).editOpen).toBe(false);
         wrapper.unmount();
     });
 
@@ -383,6 +490,100 @@ describe('TaskListV2', () => {
 
         wrapper.unmount();
         vi.useRealTimers();
+    });
+
+    it('renders markdown list comments as list HTML', async () => {
+        getMock
+            .mockResolvedValueOnce(makeIndexResponse(defaultTasks))
+            .mockResolvedValueOnce({
+                data: {
+                    id: 1,
+                    title: 'Auth issue',
+                    priority: 'high',
+                    status: 'pending',
+                    created_at: '2026-02-10T17:40:00Z',
+                    description: '',
+                    submitter: { email: 'someone@example.com' },
+                    attachments: [],
+                },
+            })
+            .mockResolvedValueOnce({
+                data: {
+                    external: [
+                        {
+                            id: 11,
+                            sender_name: 'You',
+                            is_current_user: true,
+                            content: '- first\n- second',
+                            created_at: '2026-02-09T12:01:00Z',
+                            attachments: [],
+                        },
+                    ],
+                },
+            });
+
+        const wrapper = mount(TaskListV2, { global: { stubs } });
+        await flushPromises();
+        await nextTick();
+
+        const firstRow = wrapper.findAll('[data-testid="task-row"]')[0];
+        await firstRow.find('button[title="Edit"]').trigger('click');
+        await flushPromises();
+        await nextTick();
+
+        const commentHtml = wrapper.get('[data-testid="comment-bubble-11"]').html();
+        expect(commentHtml).toContain('<ul>');
+        expect(commentHtml).toMatch(/<li>first<\/li>/i);
+        expect(commentHtml).toMatch(/<li>second<\/li>/i);
+
+        wrapper.unmount();
+    });
+
+    it('normalizes legacy list HTML comments with br-separated markers', async () => {
+        getMock
+            .mockResolvedValueOnce(makeIndexResponse(defaultTasks))
+            .mockResolvedValueOnce({
+                data: {
+                    id: 1,
+                    title: 'Auth issue',
+                    priority: 'high',
+                    status: 'pending',
+                    created_at: '2026-02-10T17:40:00Z',
+                    description: '',
+                    submitter: { email: 'someone@example.com' },
+                    attachments: [],
+                },
+            })
+            .mockResolvedValueOnce({
+                data: {
+                    external: [
+                        {
+                            id: 11,
+                            sender_name: 'You',
+                            is_current_user: true,
+                            content: '<ul><li><p>test<br>- test</p></li></ul>',
+                            created_at: '2026-02-09T12:01:00Z',
+                            attachments: [],
+                        },
+                    ],
+                },
+            });
+
+        const wrapper = mount(TaskListV2, { global: { stubs } });
+        await flushPromises();
+        await nextTick();
+
+        const firstRow = wrapper.findAll('[data-testid="task-row"]')[0];
+        await firstRow.find('button[title="Edit"]').trigger('click');
+        await flushPromises();
+        await nextTick();
+
+        const commentHtml = wrapper.get('[data-testid="comment-bubble-11"]').html();
+        const liMatches = commentHtml.match(/<li>/g) ?? [];
+        expect(commentHtml).toContain('<ul>');
+        expect(liMatches.length).toBe(2);
+
+        wrapper.unmount();
     });
 
     it('allows any user to change task status from the edit sheet', async () => {
