@@ -7,11 +7,13 @@ import { defineConfig } from 'vite';
 
 export default defineConfig(({ command }) => {
   const isServe = command === 'serve';
+  const localPortalResourcesPath = path.resolve(__dirname, '../../../resources/js');
+  const fallbackPortalResourcesPath = path.resolve(__dirname, '../../../../shift/resources/js');
   const portalResourcesPath = process.env.VITE_PORTAL_RESOURCES_PATH
     ? path.resolve(process.env.VITE_PORTAL_RESOURCES_PATH)
-    : path.resolve(__dirname, '../../../resources/js');
+    : (fs.existsSync(fallbackPortalResourcesPath) ? fallbackPortalResourcesPath : localPortalResourcesPath);
   const defaultSharedPath = path.resolve(portalResourcesPath, 'shared');
-  const fallbackSharedPath = path.resolve(__dirname, '../../../../shift/resources/js/shared');
+  const fallbackSharedPath = path.resolve(fallbackPortalResourcesPath, 'shared');
   const sharedResourcesPath = fs.existsSync(defaultSharedPath) ? defaultSharedPath : fallbackSharedPath;
 
   // Only add HTTPS when valid certs are found (dev only)
