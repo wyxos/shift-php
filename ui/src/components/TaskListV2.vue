@@ -2,20 +2,33 @@
 /* eslint-disable max-lines */
 import axios from '@/axios-config';
 import ShiftEditor from '@shared/components/ShiftEditor.vue';
+import { getTaskCreatorEmail, getTaskCreatorName, getTaskEnvironment } from '@shared/tasks/metadata';
+import {
+    DEFAULT_SORT_BY,
+    getDefaultStatuses,
+    getPriorityBadgeClass,
+    getPriorityLabel,
+    getPriorityOptions,
+    getSortByOptions,
+    getStatusBadgeClass,
+    getStatusLabel,
+    getStatusOptions,
+} from '@shared/tasks/presentation';
+import { buildReplyQuoteHtml, extractPlainTextFromContent, renderRichContent } from '@shared/tasks/rich-content';
+import { formatThreadTime, getReplyTargetFromEventTarget, mapThreadToMessage, shouldHandleImage } from '@shared/tasks/thread';
 import { Button } from '@shift/ui/button';
+import { ButtonGroup } from '@shift/ui/button-group';
 import { Card, CardContent, CardHeader, CardTitle } from '@shift/ui/card';
 import { Dialog, DialogContent } from '@shift/ui/dialog';
+import { ImageLightbox } from '@shift/ui/image-lightbox';
 import { Input } from '@shift/ui/input';
 import { Label } from '@shift/ui/label';
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from '@shift/ui/sheet';
 import { Filter, Paperclip, Pencil, Plus, Trash2 } from 'lucide-vue-next';
-import { marked } from 'marked';
 import { ContextMenuContent, ContextMenuItem, ContextMenuPortal, ContextMenuRoot, ContextMenuSeparator, ContextMenuTrigger } from 'reka-ui';
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { toast } from 'vue-sonner';
 import Badge from './ui/badge.vue';
-import ButtonGroup from './ui/ButtonGroup.vue';
-import ImageLightbox from './ui/ImageLightbox.vue';
 
 type Task = {
     id: number;
@@ -123,153 +136,6 @@ function getShiftUserEmail(): string | null {
     return null;
 }
 
-function pickFirstNonEmptyString(candidates: unknown[]): string | null {
-    for (const value of candidates) {
-        if (typeof value === 'string' && value.trim()) return value.trim();
-    }
-    return null;
-}
-
-function getTaskCreatorEmail(task: any): string | null {
-    return pickFirstNonEmptyString([
-        task?.submitter?.email,
-        task?.submitter_email,
-        task?.creator?.email,
-        task?.creator_email,
-        task?.created_by?.email,
-        task?.created_by_email,
-        task?.user?.email,
-        task?.user_email,
-    ]);
-}
-
-function getTaskCreatorName(task: any): string | null {
-    return pickFirstNonEmptyString([
-        task?.submitter?.name,
-        task?.submitter_name,
-        task?.creator?.name,
-        task?.creator_name,
-        task?.created_by?.name,
-        task?.created_by_name,
-        task?.user?.name,
-        task?.user_name,
-    ]);
-}
-
-function formatEnvironmentLabel(value: string): string {
-    const trimmed = value.trim();
-    if (!trimmed) return '';
-    if (/^[a-z0-9_-]+$/.test(trimmed)) {
-        return trimmed
-            .replace(/[_-]+/g, ' ')
-            .replace(/\s+/g, ' ')
-            .replace(/\b\w/g, (letter) => letter.toUpperCase());
-    }
-    return trimmed;
-}
-
-function getTaskEnvironment(task: any): string | null {
-    const environment = pickFirstNonEmptyString([
-        task?.environment,
-        task?.task_environment,
-        task?.target_environment,
-        task?.for_environment,
-        task?.metadata?.environment,
-        task?.submitter?.environment,
-        task?.creator?.environment,
-        task?.created_by?.environment,
-        task?.user?.environment,
-    ]);
-    if (!environment) return null;
-    const label = formatEnvironmentLabel(environment);
-    return label || null;
-}
-
-function hasHtmlMarkup(content: string): boolean {
-    return /<\/?[a-z][\s\S]*>/i.test(content);
-}
-
-function decodeHtmlToText(value: string): string {
-    if (typeof document === 'undefined') {
-        return value.replace(/<[^>]+>/g, ' ');
-    }
-    const temp = document.createElement('div');
-    temp.innerHTML = value;
-    return temp.textContent ?? '';
-}
-
-function normalizeLegacyListMarkup(html: string): string {
-    if (typeof document === 'undefined') return html;
-    if (!/(<ul|<ol)/i.test(html) || !/<br\s*\/?>/i.test(html)) return html;
-
-    const root = document.createElement('div');
-    root.innerHTML = html;
-    let changed = false;
-
-    root.querySelectorAll('ul, ol').forEach((list) => {
-        const listTag = list.tagName.toLowerCase();
-        const children = Array.from(list.children).filter((child) => child.tagName.toLowerCase() === 'li');
-
-        children.forEach((item) => {
-            if (item.querySelector('ul, ol')) return;
-
-            const fragments = item.innerHTML
-                .split(/<br\s*\/?>/gi)
-                .map((fragment) => decodeHtmlToText(fragment).trim())
-                .filter(Boolean);
-
-            if (fragments.length < 2) return;
-
-            const hasMarkedTail = fragments.slice(1).some((line) => {
-                return listTag === 'ul' ? /^[-*+]\s+/.test(line) : /^\d+[.)]\s+/.test(line);
-            });
-            if (!hasMarkedTail) return;
-
-            const normalizedLines = fragments
-                .map((line) => {
-                    return listTag === 'ul' ? line.replace(/^[-*+]\s+/, '') : line.replace(/^\d+[.)]\s+/, '');
-                })
-                .map((line) => line.trim())
-                .filter(Boolean);
-
-            if (normalizedLines.length < 2) return;
-
-            const replacement = normalizedLines.map((line) => {
-                const li = document.createElement('li');
-                li.textContent = line;
-                return li;
-            });
-
-            item.replaceWith(...replacement);
-            changed = true;
-        });
-    });
-
-    return changed ? root.innerHTML : html;
-}
-
-function renderRichContent(content: string | null | undefined): string {
-    const value = String(content ?? '');
-    if (!value.trim()) return '';
-    if (hasHtmlMarkup(value)) return normalizeLegacyListMarkup(value);
-    const rendered = marked.parse(value);
-    return typeof rendered === 'string' ? rendered : value;
-}
-
-function escapeHtml(value: string): string {
-    return value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-}
-
-function extractPlainTextFromContent(content: string): string {
-    const rendered = renderRichContent(content);
-    return decodeHtmlToText(rendered)
-        .replace(/\r/g, '')
-        .replace(/\n{3,}/g, '\n\n')
-        .replace(/[ \t]+\n/g, '\n')
-        .replace(/\n[ \t]+/g, '\n')
-        .trim();
-}
-
 function getSelectionForMessage(message: ThreadMessage): string {
     if (typeof window === 'undefined' || !message.id) return '';
     const selection = window.getSelection();
@@ -342,22 +208,6 @@ async function copySelectedMessage() {
     toast.error('Unable to copy selection');
 }
 
-function buildReplyQuoteHtml(message: ThreadMessage): string {
-    if (!message.id) return '';
-    const plain = extractPlainTextFromContent(message.content);
-    const snippet = plain.length > 280 ? `${plain.slice(0, 277)}...` : plain;
-    const quoted = escapeHtml(snippet).replace(/\n/g, '<br>');
-    const author = escapeHtml(message.author || 'User');
-
-    return [
-        `<blockquote class="shift-reply" data-reply-to="${message.id}">`,
-        `<p>Replying to ${author}</p>`,
-        `<p>${quoted}</p>`,
-        '</blockquote>',
-        '<p></p>',
-    ].join('');
-}
-
 function openLightboxForImage(img: HTMLImageElement) {
     const src = img.currentSrc || img.src;
     if (!src) return;
@@ -382,21 +232,6 @@ function onRichContentClick(event: MouseEvent) {
     openLightboxForImage(img);
 }
 
-function shouldHandleImage(img: HTMLImageElement) {
-    const inRich = Boolean(img.closest('.shift-rich')) || Boolean(img.closest('.tiptap')) || img.classList.contains('editor-tile');
-    if (!inRich) return { ok: false, inEditable: false };
-    const inEditable = Boolean(img.closest('[contenteditable="true"]'));
-    return { ok: true, inEditable };
-}
-
-function parseReplyTargetId(value: string | null | undefined): number | null {
-    if (!value) return null;
-    const match = value.match(/^#?comment-(\d+)$/);
-    if (!match) return null;
-    const id = Number.parseInt(match[1], 10);
-    return Number.isFinite(id) && id > 0 ? id : null;
-}
-
 function highlightReplyTargetBubble(target: HTMLElement) {
     target.classList.add('shift-reply-target');
     window.setTimeout(() => {
@@ -412,18 +247,6 @@ function scrollToReplyTarget(commentId: number): boolean {
     target.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
     highlightReplyTargetBubble(target);
     return true;
-}
-
-function getReplyTargetFromEventTarget(target: HTMLElement): number | null {
-    const anchor = target.closest('a[href^="#comment-"]') as HTMLAnchorElement | null;
-    const fromAnchor = parseReplyTargetId(anchor?.getAttribute('href'));
-    if (fromAnchor) return fromAnchor;
-
-    const quote = target.closest('blockquote[data-reply-to]') as HTMLElement | null;
-    const fromQuote = parseReplyTargetId(`comment-${quote?.dataset.replyTo ?? ''}`);
-    if (fromQuote) return fromQuote;
-
-    return null;
 }
 
 function handleReplyReferenceClick(target: HTMLElement, event: MouseEvent): boolean {
@@ -505,53 +328,6 @@ function onCommentsMediaLoadCapture(event: Event) {
     scrollCommentsToBottomSoon();
 }
 
-function formatThreadTime(value: any): string {
-    if (!value) return '';
-    const date = value instanceof Date ? value : new Date(String(value));
-    if (Number.isNaN(date.getTime())) return String(value);
-
-    const now = new Date();
-    const startToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const startYesterday = new Date(startToday);
-    startYesterday.setDate(startToday.getDate() - 1);
-
-    const time = new Intl.DateTimeFormat('en-GB', {
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: false,
-    }).format(date);
-
-    if (date >= startToday) {
-        return time;
-    }
-
-    if (date >= startYesterday && date < startToday) {
-        return `Yesterday - ${time}`;
-    }
-
-    const day = new Intl.DateTimeFormat('en-GB', { day: '2-digit' }).format(date);
-    const month = new Intl.DateTimeFormat('en-GB', { month: 'short' }).format(date);
-    return `${day} ${month} ${time}`;
-}
-
-function mapThreadToMessage(thread: any): ThreadMessage {
-    const id = typeof thread?.id === 'number' ? (thread.id as number) : undefined;
-    const author = String(thread?.sender_name ?? thread?.author ?? 'Unknown');
-    const isYou = Boolean(thread?.is_current_user ?? thread?.isYou);
-    const content = String(thread?.content ?? '');
-    const time = formatThreadTime(thread?.created_at);
-    const attachments = Array.isArray(thread?.attachments) ? (thread.attachments as TaskAttachment[]) : [];
-    return {
-        clientId: id ? `thread-${id}` : `thread-${Date.now()}`,
-        id,
-        author,
-        time,
-        content,
-        isYou,
-        attachments,
-    };
-}
-
 async function fetchThreads(taskId: number) {
     threadLoading.value = true;
     threadError.value = null;
@@ -559,7 +335,7 @@ async function fetchThreads(taskId: number) {
         const response = await axios.get(`/shift/api/tasks/${taskId}/threads`);
         const payload = response.data?.data ?? response.data;
         const list = Array.isArray(payload?.external) ? payload.external : [];
-        threadMessages.value = list.map(mapThreadToMessage);
+        threadMessages.value = list.map((thread: any) => mapThreadToMessage<TaskAttachment>(thread));
         scrollCommentsToBottomSoon();
     } catch (e: any) {
         threadError.value = e.response?.data?.error || e.response?.data?.message || e.message || 'Failed to load comments';
@@ -611,65 +387,10 @@ onBeforeUnmount(() => {
     window.removeEventListener('popstate', onTaskQueryPopState);
 });
 
-const statusOptions = [
-    {
-        value: 'pending',
-        label: 'Pending',
-        selectedClass: 'border-amber-300 bg-amber-100 text-amber-900 hover:bg-amber-200',
-        unselectedClass: 'border-amber-300/60 text-amber-900 hover:bg-amber-50',
-    },
-    {
-        value: 'in-progress',
-        label: 'In Progress',
-        selectedClass: 'border-sky-300 bg-sky-100 text-sky-900 hover:bg-sky-200',
-        unselectedClass: 'border-sky-300/60 text-sky-900 hover:bg-sky-50',
-    },
-    {
-        value: 'awaiting-feedback',
-        label: 'Awaiting Feedback',
-        selectedClass: 'border-indigo-300 bg-indigo-100 text-indigo-900 hover:bg-indigo-200',
-        unselectedClass: 'border-indigo-300/60 text-indigo-900 hover:bg-indigo-50',
-    },
-    {
-        value: 'completed',
-        label: 'Completed',
-        selectedClass: 'border-emerald-300 bg-emerald-100 text-emerald-900 hover:bg-emerald-200',
-        unselectedClass: 'border-emerald-300/60 text-emerald-900 hover:bg-emerald-50',
-    },
-    {
-        value: 'closed',
-        label: 'Closed',
-        selectedClass: 'border-slate-300 bg-slate-100 text-slate-700 hover:bg-slate-200',
-        unselectedClass: 'border-slate-300/60 text-slate-700 hover:bg-slate-50',
-    },
-];
-
-const priorityOptions = [
-    {
-        value: 'low',
-        label: 'Low',
-        selectedClass: 'border-cyan-300 bg-cyan-100 text-cyan-900 hover:bg-cyan-200',
-        unselectedClass: 'border-cyan-300/60 text-cyan-900 hover:bg-cyan-50',
-    },
-    {
-        value: 'medium',
-        label: 'Medium',
-        selectedClass: 'border-fuchsia-300 bg-fuchsia-100 text-fuchsia-900 hover:bg-fuchsia-200',
-        unselectedClass: 'border-fuchsia-300/60 text-fuchsia-900 hover:bg-fuchsia-50',
-    },
-    {
-        value: 'high',
-        label: 'High',
-        selectedClass: 'border-rose-300 bg-rose-100 text-rose-900 hover:bg-rose-200',
-        unselectedClass: 'border-rose-300/60 text-rose-900 hover:bg-rose-50',
-    },
-];
-const sortByOptions = [
-    { value: 'updated_at', label: 'Updated At' },
-    { value: 'created_at', label: 'Created At' },
-    { value: 'priority', label: 'Priority' },
-];
-const defaultSortBy = 'updated_at';
+const statusOptions = getStatusOptions({ includeClosed: true });
+const priorityOptions = getPriorityOptions();
+const sortByOptions = getSortByOptions();
+const defaultSortBy = DEFAULT_SORT_BY;
 
 const uploadEndpoints = {
     init: '/shift/api/attachments/upload-init',
@@ -691,7 +412,7 @@ function resolveTempUrl(data: any): string {
     return '';
 }
 
-const defaultStatuses = statusOptions.filter((option) => !['completed', 'closed'].includes(option.value)).map((option) => option.value);
+const defaultStatuses = getDefaultStatuses(statusOptions, ['completed', 'closed']);
 
 const appliedStatuses = ref<string[]>([...defaultStatuses]);
 const appliedPriorities = ref<string[]>(priorityOptions.map((option) => option.value));
@@ -1120,7 +841,7 @@ async function handleThreadSend(payload: { html: string; attachments?: any[] }) 
 
             const data = response.data?.data ?? response.data;
             const thread = data?.thread ?? data;
-            const serverMsg = mapThreadToMessage(thread);
+            const serverMsg = mapThreadToMessage<TaskAttachment>(thread);
             threadMessages.value = threadMessages.value.map((m) =>
                 m.id === threadEditingId.value ? { ...m, content: serverMsg.content, attachments: serverMsg.attachments } : m,
             );
@@ -1158,7 +879,7 @@ async function handleThreadSend(payload: { html: string; attachments?: any[] }) 
         });
         const data = response.data?.data ?? response.data;
         const thread = data?.thread ?? data;
-        const serverMsg = mapThreadToMessage(thread);
+        const serverMsg = mapThreadToMessage<TaskAttachment>(thread);
         threadMessages.value = [...threadMessages.value.filter((m) => m.clientId !== localId), serverMsg];
         threadTempIdentifier.value = Date.now().toString();
         threadComposerHtml.value = '';
@@ -1402,40 +1123,6 @@ async function deleteTask(taskId: number) {
     } finally {
         deleteLoading.value = null;
     }
-}
-
-const statusBadgeClassMap: Record<string, string> = {
-    pending: 'border-amber-300 bg-amber-100 text-amber-900 dark:border-amber-500/40 dark:bg-amber-500/20 dark:text-amber-100',
-    'in-progress': 'border-sky-300 bg-sky-100 text-sky-900 dark:border-sky-500/40 dark:bg-sky-500/20 dark:text-sky-100',
-    'awaiting-feedback': 'border-indigo-300 bg-indigo-100 text-indigo-900 dark:border-indigo-500/40 dark:bg-indigo-500/20 dark:text-indigo-100',
-    completed: 'border-emerald-300 bg-emerald-100 text-emerald-900 dark:border-emerald-500/40 dark:bg-emerald-500/20 dark:text-emerald-100',
-    closed: 'border-slate-300 bg-slate-100 text-slate-700 dark:border-slate-500/40 dark:bg-slate-500/20 dark:text-slate-200',
-};
-
-function getStatusBadgeClass(status: string) {
-    return statusBadgeClassMap[status] ?? 'border-zinc-300 bg-zinc-100 text-zinc-800 dark:border-zinc-500/40 dark:bg-zinc-500/20 dark:text-zinc-100';
-}
-
-function getStatusLabel(status: string) {
-    const option = statusOptions.find((item) => item.value === status);
-    return option?.label ?? status;
-}
-
-const priorityBadgeClassMap: Record<string, string> = {
-    low: 'border-cyan-300 bg-cyan-100 text-cyan-900 dark:border-cyan-500/40 dark:bg-cyan-500/20 dark:text-cyan-100',
-    medium: 'border-fuchsia-300 bg-fuchsia-100 text-fuchsia-900 dark:border-fuchsia-500/40 dark:bg-fuchsia-500/20 dark:text-fuchsia-100',
-    high: 'border-rose-300 bg-rose-100 text-rose-900 dark:border-rose-500/40 dark:bg-rose-500/20 dark:text-rose-100',
-};
-
-function getPriorityBadgeClass(priority: string) {
-    return (
-        priorityBadgeClassMap[priority] ?? 'border-zinc-300 bg-zinc-100 text-zinc-800 dark:border-zinc-500/40 dark:bg-zinc-500/20 dark:text-zinc-100'
-    );
-}
-
-function getPriorityLabel(priority: string) {
-    const option = priorityOptions.find((item) => item.value === priority);
-    return option?.label ?? priority;
 }
 
 function getTaskEnvironmentLabel(task: Task): string {
