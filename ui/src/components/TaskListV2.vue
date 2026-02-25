@@ -2,6 +2,8 @@
 /* eslint-disable max-lines */
 import axios from '@/axios-config';
 import ShiftEditor from '@shared/components/ShiftEditor.vue';
+import { getTaskIdFromQuery, syncTaskQuery } from '@shared/tasks/history';
+import { copyTextToClipboard, getLightboxImageData, getSelectionForMessage as getSelectionForMessageText, shouldShowCopySelection as shouldShowCopySelectionForContext } from '@shared/tasks/interaction';
 import { getTaskCreatorEmail, getTaskCreatorName, getTaskEnvironment } from '@shared/tasks/metadata';
 import {
     DEFAULT_SORT_BY,
@@ -136,19 +138,6 @@ function getShiftUserEmail(): string | null {
     return null;
 }
 
-function getSelectionForMessage(message: ThreadMessage): string {
-    if (typeof window === 'undefined' || !message.id) return '';
-    const selection = window.getSelection();
-    if (!selection || selection.rangeCount === 0 || selection.isCollapsed) return '';
-    const selectedText = selection.toString().trim();
-    if (!selectedText) return '';
-    const bubble = document.getElementById(`comment-${message.id}`);
-    if (!bubble) return '';
-    const anchorInside = selection.anchorNode ? bubble.contains(selection.anchorNode) : false;
-    const focusInside = selection.focusNode ? bubble.contains(selection.focusNode) : false;
-    return anchorInside && focusInside ? selectedText : '';
-}
-
 function onCommentContextMenuOpen(message: ThreadMessage, open: boolean) {
     if (!open) {
         contextMenuMessageId.value = null;
@@ -156,38 +145,11 @@ function onCommentContextMenuOpen(message: ThreadMessage, open: boolean) {
         return;
     }
     contextMenuMessageId.value = message.id ?? null;
-    contextMenuSelectionText.value = getSelectionForMessage(message);
+    contextMenuSelectionText.value = getSelectionForMessageText(message.id);
 }
 
 function shouldShowCopySelection(message: ThreadMessage): boolean {
-    if (message.isYou || !message.id || message.pending) return false;
-    return contextMenuMessageId.value === message.id && contextMenuSelectionText.value.length > 0;
-}
-
-async function copyTextToClipboard(text: string): Promise<boolean> {
-    const value = text.trim();
-    if (!value) return false;
-
-    try {
-        if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
-            await navigator.clipboard.writeText(value);
-            return true;
-        }
-    } catch {
-        // fallback below
-    }
-
-    if (typeof document === 'undefined') return false;
-    const textarea = document.createElement('textarea');
-    textarea.value = value;
-    textarea.setAttribute('readonly', '');
-    textarea.style.position = 'fixed';
-    textarea.style.opacity = '0';
-    document.body.appendChild(textarea);
-    textarea.select();
-    const copied = document.execCommand('copy');
-    document.body.removeChild(textarea);
-    return copied;
+    return shouldShowCopySelectionForContext(message, contextMenuMessageId.value, contextMenuSelectionText.value);
 }
 
 async function copyEntireMessage(message: ThreadMessage) {
@@ -209,10 +171,10 @@ async function copySelectedMessage() {
 }
 
 function openLightboxForImage(img: HTMLImageElement) {
-    const src = img.currentSrc || img.src;
-    if (!src) return;
-    lightboxSrc.value = src;
-    lightboxAlt.value = img.alt || img.title || 'Image';
+    const data = getLightboxImageData(img);
+    if (!data) return;
+    lightboxSrc.value = data.src;
+    lightboxAlt.value = data.alt;
     lightboxOpen.value = true;
 }
 
@@ -481,34 +443,9 @@ const hasUnsavedCommentDraft = computed(() => {
 });
 
 const hasUnsavedChanges = computed(() => hasUnsavedTaskChanges.value || hasUnsavedCommentDraft.value);
-const taskQueryParam = 'task';
-type HistoryMode = 'push' | 'replace';
 type OpenEditOptions = {
     updateHistory?: boolean;
 };
-
-function getTaskIdFromQuery(): number | null {
-    if (typeof window === 'undefined') return null;
-    const raw = new URLSearchParams(window.location.search).get(taskQueryParam);
-    if (!raw) return null;
-    const taskId = Number.parseInt(raw, 10);
-    return Number.isFinite(taskId) && taskId > 0 ? taskId : null;
-}
-
-function syncTaskQuery(taskId: number | null, mode: HistoryMode = 'push') {
-    if (typeof window === 'undefined') return;
-    const url = new URL(window.location.href);
-    if (taskId === null) {
-        url.searchParams.delete(taskQueryParam);
-    } else {
-        url.searchParams.set(taskQueryParam, String(taskId));
-    }
-    const next = `${url.pathname}${url.search}${url.hash}`;
-    const current = `${window.location.pathname}${window.location.search}${window.location.hash}`;
-    if (next === current) return;
-    const historyMethod = mode === 'replace' ? 'replaceState' : 'pushState';
-    window.history[historyMethod](window.history.state, '', next);
-}
 
 function onTaskQueryPopState() {
     const taskId = getTaskIdFromQuery();
