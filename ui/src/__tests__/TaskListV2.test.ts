@@ -59,6 +59,11 @@ const stubs = {
     ShiftEditor: {
         props: ['modelValue'],
         template: `<div v-bind="$attrs">
+      <textarea
+        data-testid="stub-editor-input"
+        :value="modelValue"
+        @input="$emit('update:modelValue', $event.target.value)"
+      />
       <button
         data-testid="stub-send"
         @click="$emit('send', { html: modelValue || '<p>hello</p>', attachments: [] })"
@@ -389,6 +394,57 @@ describe('TaskListV2', () => {
 
         expect(getMock).toHaveBeenLastCalledWith('/shift/api/tasks', {
             params: { page: 1, status: defaultStatuses, sort_by: 'priority' },
+        });
+
+        wrapper.unmount();
+    });
+
+    it('creates a task with description and sends it to the API', async () => {
+        const createdDescription = 'Client repro notes: description should persist.';
+
+        getMock
+            .mockResolvedValueOnce(makeIndexResponse(defaultTasks)) // initial fetch on mount
+            .mockResolvedValueOnce(
+                makeIndexResponse([
+                    { id: 99, title: 'Created from UI', status: 'pending', priority: 'medium', environment: 'staging' },
+                    ...defaultTasks,
+                ]),
+            ); // refresh after create
+
+        postMock.mockResolvedValueOnce({
+            data: {
+                data: {
+                    id: 99,
+                    title: 'Created from UI',
+                    description: createdDescription,
+                    status: 'pending',
+                    priority: 'medium',
+                },
+            },
+        });
+
+        const wrapper = mount(TaskListV2, { global: { stubs } });
+        await flushPromises();
+        await nextTick();
+
+        await wrapper.get('[data-testid="open-create-task"]').trigger('click');
+        await nextTick();
+
+        await wrapper.get('[data-testid="create-task-title"]').setValue('Created from UI');
+        await wrapper.get('[data-testid="create-description-editor"] [data-testid="stub-editor-input"]').setValue(createdDescription);
+        await wrapper.get('[data-testid="create-task-form"]').trigger('submit');
+        await flushPromises();
+        await nextTick();
+
+        expect(postMock).toHaveBeenCalledWith(
+            '/shift/api/tasks',
+            expect.objectContaining({
+                title: 'Created from UI',
+                description: createdDescription,
+            }),
+        );
+        expect(getMock).toHaveBeenLastCalledWith('/shift/api/tasks', {
+            params: { page: 1, status: defaultStatuses, sort_by: 'updated_at' },
         });
 
         wrapper.unmount();
