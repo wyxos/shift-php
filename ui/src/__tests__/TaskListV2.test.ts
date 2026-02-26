@@ -468,6 +468,7 @@ describe('TaskListV2', () => {
                     status: 'pending',
                     environment: 'staging',
                     created_at: '2026-02-10T17:40:00Z',
+                    updated_at: '2026-02-10T17:55:00Z',
                     description: '',
                     submitter: { name: 'Taylor Brown', email: 'someone@example.com' },
                     attachments: [],
@@ -486,6 +487,7 @@ describe('TaskListV2', () => {
 
         expect(wrapper.get('[data-testid="edit-task-environment"]').text()).toContain('Staging');
         expect(wrapper.get('[data-testid="edit-task-created-by"]').text()).toContain('Taylor Brown');
+        expect(wrapper.get('[data-testid="edit-task-updated-at"]').text()).toContain('Updated');
         expect(wrapper.get('[data-testid="task-status-pending"]').classes()).toContain('bg-amber-100');
 
         wrapper.unmount();
@@ -653,7 +655,20 @@ describe('TaskListV2', () => {
             .mockResolvedValueOnce({ data: { external: [] } }) // openEdit thread fetch
             .mockResolvedValueOnce(makeIndexResponse(defaultTasks)); // refresh after save
 
-        putMock.mockResolvedValueOnce({ data: { message: 'Task updated successfully' } });
+        putMock.mockResolvedValueOnce({
+            data: {
+                task: {
+                    id: 1,
+                    title: 'Auth issue',
+                    priority: 'high',
+                    status: 'in-progress',
+                    description: '',
+                    created_at: '2026-02-10T17:40:00Z',
+                    updated_at: '2026-02-10T18:00:00Z',
+                    attachments: [],
+                },
+            },
+        });
 
         const wrapper = mount(TaskListV2, { global: { stubs } });
         await flushPromises();
@@ -675,6 +690,9 @@ describe('TaskListV2', () => {
         await nextTick();
 
         expect(putMock).toHaveBeenCalledWith('/shift/api/tasks/1', expect.objectContaining({ status: 'in-progress' }));
+        expect(getMock).toHaveBeenLastCalledWith('/shift/api/tasks', {
+            params: { page: 1, status: defaultStatuses, sort_by: 'updated_at' },
+        });
         expect(sonnerMocks.toastLoadingMock).toHaveBeenCalledWith('Saving task changes...');
         expect(sonnerMocks.toastSuccessMock).toHaveBeenCalledWith('Task changes saved', expect.objectContaining({ id: 'autosave-toast' }));
 

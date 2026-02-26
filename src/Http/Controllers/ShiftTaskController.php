@@ -181,7 +181,7 @@ class ShiftTaskController extends Controller
                 ->put($baseUrl.'/api/tasks/'.$id, $payload);
 
             if ($response->successful()) {
-                return response()->json(['message' => 'Task updated successfully']);
+                return response()->json($response->json());
             }
 
             return response()->json(['error' => $response->json()['message'] ?? 'Failed to update task'], 422);
