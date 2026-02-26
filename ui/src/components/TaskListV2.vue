@@ -1163,7 +1163,7 @@ onMounted(async () => {
                     </SheetContent>
                 </Sheet>
 
-                <Button size="sm" variant="default" @click="openCreate">
+                <Button data-testid="open-create-task" size="sm" variant="default" @click="openCreate">
                     <Plus class="mr-2 h-4 w-4" />
                     Create
                 </Button>
@@ -1230,7 +1230,7 @@ onMounted(async () => {
 
     <Sheet v-model:open="createOpen">
         <SheetContent class="flex h-full w-full max-w-none flex-col p-0 sm:w-1/2 sm:max-w-none lg:w-1/3" side="right">
-            <form class="flex h-full flex-col" @submit.prevent="createTask">
+            <form class="flex h-full flex-col" data-testid="create-task-form" @submit.prevent="createTask">
                 <SheetHeader class="p-0">
                     <div class="px-6 pt-6 pb-3">
                         <SheetTitle>Create Task</SheetTitle>
@@ -1241,7 +1241,7 @@ onMounted(async () => {
                 <div class="flex-1 space-y-6 overflow-auto px-6 pb-6">
                     <div class="space-y-2">
                         <Label>Task</Label>
-                        <Input v-model="createForm.title" placeholder="Short, descriptive title" required />
+                        <Input v-model="createForm.title" data-testid="create-task-title" placeholder="Short, descriptive title" required />
                     </div>
 
                     <div class="space-y-2">
@@ -1252,6 +1252,7 @@ onMounted(async () => {
                     <div class="space-y-2">
                         <Label>Description</Label>
                         <ShiftEditor
+                            data-testid="create-description-editor"
                             v-model="createForm.description"
                             :axios-instance="axios"
                             :min-height="180"
@@ -1271,7 +1272,7 @@ onMounted(async () => {
 
                 <SheetFooter class="flex flex-row items-center justify-between border-t px-6 py-4">
                     <Button type="button" variant="outline" @click="closeCreate">Cancel</Button>
-                    <Button :disabled="createLoading || createUploading" type="submit" variant="default">
+                    <Button data-testid="submit-create-task" :disabled="createLoading || createUploading" type="submit" variant="default">
                         <Plus class="mr-2 h-4 w-4" />
                         {{ createLoading ? 'Creating...' : 'Create' }}
                     </Button>
