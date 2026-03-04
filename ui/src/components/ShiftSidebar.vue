@@ -11,7 +11,7 @@ import {
     SidebarMenuItem,
 } from '@shift/ui/sidebar';
 import { useRoute } from 'vue-router';
-import { Inbox, ListChecks } from 'lucide-vue-next';
+import { Inbox } from 'lucide-vue-next';
 import AppLogo from '@shift/components/AppLogo.vue';
 
 const appUrl = window.shiftConfig.baseUrl;
@@ -22,13 +22,8 @@ const route = useRoute();
 const mainNavItems = [
     {
         title: 'Tasks',
-        href: '/',
+        href: '/tasks',
         icon: Inbox,
-    },
-    {
-        title: 'Tasks V2',
-        href: '/tasks-v2',
-        icon: ListChecks,
     },
 ];
 </script>

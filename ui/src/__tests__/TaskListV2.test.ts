@@ -120,7 +120,7 @@ async function mountWithTasks() {
 describe('TaskListV2', () => {
     beforeEach(() => {
         vi.useRealTimers();
-        window.history.replaceState({}, '', '/shift/tasks-v2');
+        window.history.replaceState({}, '', '/shift/tasks');
         getMock.mockReset();
         deleteMock.mockReset();
         postMock.mockReset();
@@ -226,19 +226,19 @@ describe('TaskListV2', () => {
         await nextTick();
 
         expect(window.location.search).toContain('task=1');
-        expect(pushStateSpy.mock.calls.some(([, , next]) => next === '/shift/tasks-v2?task=1')).toBe(true);
+        expect(pushStateSpy.mock.calls.some(([, , next]) => next === '/shift/tasks?task=1')).toBe(true);
 
         (wrapper.vm as any).closeEditNow();
         await nextTick();
 
         expect(window.location.search).toBe('');
-        expect(pushStateSpy.mock.calls.some(([, , next]) => next === '/shift/tasks-v2')).toBe(true);
+        expect(pushStateSpy.mock.calls.some(([, , next]) => next === '/shift/tasks')).toBe(true);
         wrapper.unmount();
         pushStateSpy.mockRestore();
     });
 
     it('auto-opens the edit sheet from task URL query', async () => {
-        window.history.replaceState({}, '', '/shift/tasks-v2?task=1');
+        window.history.replaceState({}, '', '/shift/tasks?task=1');
 
         getMock
             .mockResolvedValueOnce(makeIndexResponse(defaultTasks))
@@ -286,14 +286,14 @@ describe('TaskListV2', () => {
         await flushPromises();
         await nextTick();
 
-        window.history.replaceState({}, '', '/shift/tasks-v2?task=1');
+        window.history.replaceState({}, '', '/shift/tasks?task=1');
         window.dispatchEvent(new PopStateEvent('popstate'));
         await flushPromises();
         await nextTick();
 
         expect(getMock).toHaveBeenCalledWith('/shift/api/tasks/1');
 
-        window.history.replaceState({}, '', '/shift/tasks-v2');
+        window.history.replaceState({}, '', '/shift/tasks');
         window.dispatchEvent(new PopStateEvent('popstate'));
         await flushPromises();
         await nextTick();

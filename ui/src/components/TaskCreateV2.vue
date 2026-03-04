@@ -66,7 +66,7 @@ async function createTask() {
 
     await axios.post('/shift/api/tasks', payload)
     toast.success('Task created', { description: 'Your task has been added to the queue.' })
-    await router.push({ name: 'task-list-v2' })
+    await router.push({ name: 'task-list' })
   } catch (e: any) {
     createError.value = e.response?.data?.error || e.response?.data?.message || e.message || 'Unknown error'
   } finally {
@@ -75,7 +75,7 @@ async function createTask() {
 }
 
 function cancel() {
-  router.push({ name: 'task-list-v2' })
+  router.push({ name: 'task-list' })
 }
 </script>
 
