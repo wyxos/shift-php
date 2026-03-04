@@ -13,6 +13,9 @@ return [
     'token' => env('SHIFT_TOKEN'),
     'project' => env('SHIFT_PROJECT'),
     'url' => env('SHIFT_URL', 'https://shift.wyxos.com'),
+    'ai' => [
+        'enabled' => env('SHIFT_AI_ENABLED', false),
+    ],
 
     /*
     |--------------------------------------------------------------------------
