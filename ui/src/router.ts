@@ -1,41 +1,42 @@
-import { createRouter, createWebHistory } from 'vue-router';
-import TaskList from './components/TaskList.vue';
+import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router';
 import TaskListV2 from './components/TaskListV2.vue';
-import TaskCreateV2 from './components/TaskCreateV2.vue';
-import TaskDetails from './components/TaskDetails.vue';
-import CreateTask from './components/CreateTask.vue';
-import EditTask from './components/EditTask.vue';
 
-const routes = [
+const routes: RouteRecordRaw[] = [
   {
     path: '/',
+    redirect: '/tasks',
+  },
+  {
+    path: '/tasks',
     name: 'task-list',
-    component: TaskList
+    component: TaskListV2
   },
   {
     path: '/tasks-v2',
     name: 'task-list-v2',
-    component: TaskListV2
+    redirect: to => ({ path: '/tasks', query: to.query }),
   },
   {
     path: '/tasks-v2/create',
-    name: 'create-task-v2',
-    component: TaskCreateV2
+    redirect: '/tasks',
   },
   {
     path: '/tasks/create',
-    name: 'create-task',
-    component: CreateTask
+    redirect: '/tasks',
   },
   {
     path: '/tasks/:id/edit',
-    name: 'edit-task',
-    component: EditTask
+    redirect: to => ({
+      path: '/tasks',
+      query: { ...to.query, task: String(to.params.id) },
+    }),
   },
   {
     path: '/tasks/:id',
-    name: 'task-details',
-    component: TaskDetails
+    redirect: to => ({
+      path: '/tasks',
+      query: { ...to.query, task: String(to.params.id) },
+    }),
   }
 ];
 

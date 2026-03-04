@@ -1079,7 +1079,7 @@ onMounted(async () => {
     <Card class="w-full">
         <CardHeader class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-                <CardTitle>Tasks V2</CardTitle>
+                <CardTitle>Tasks</CardTitle>
                 <p class="text-muted-foreground text-sm">Default view hides completed and closed tasks.</p>
             </div>
             <div class="flex flex-wrap items-center gap-2">
