@@ -96,6 +96,7 @@ class ShiftController extends Controller
         $user = auth()->user();
         $username = $user ? $user->name : null;
         $email = $user ? $user->email : null;
+        $aiEnabled = (bool) config('shift.ai.enabled', false);
 
         $shiftConfig = json_encode([
             'loginRoute' => $loginRoute,
@@ -104,6 +105,7 @@ class ShiftController extends Controller
             'appName' => $appName,
             'username' => $username,
             'email' => $email,
+            'aiEnabled' => $aiEnabled,
         ], JSON_UNESCAPED_SLASHES);
 
         $script = <<<SCRIPT

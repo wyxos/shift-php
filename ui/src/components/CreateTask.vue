@@ -33,6 +33,7 @@ const uploadEndpoints = {
 
 const removeTempUrl = '/shift/api/attachments/remove-temp';
 const aiImproveUrl = '/shift/api/ai/improve';
+const aiImproveEnabled = Boolean(window.shiftConfig?.aiEnabled);
 
 function resolveTempUrl(data: any): string {
     if (data && data.url) return data.url as string;
@@ -118,6 +119,7 @@ function cancel() {
                     :temp-identifier="tempIdentifier"
                     :min-height="180"
                     :axios-instance="axios"
+                    :enable-ai-improve="aiImproveEnabled"
                     :upload-endpoints="uploadEndpoints"
                     :remove-temp-url="removeTempUrl"
                     :ai-improve-url="aiImproveUrl"

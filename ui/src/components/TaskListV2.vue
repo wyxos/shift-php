@@ -372,6 +372,7 @@ const uploadEndpoints = {
 
 const removeTempUrl = '/shift/api/attachments/remove-temp';
 const aiImproveUrl = '/shift/api/ai/improve';
+const aiImproveEnabled = Boolean(window.shiftConfig?.aiEnabled);
 
 function resolveTempUrl(data: any): string {
     if (data && data.url) return data.url as string;
@@ -1258,6 +1259,7 @@ onMounted(async () => {
                             data-testid="create-description-editor"
                             v-model="createForm.description"
                             :axios-instance="axios"
+                            :enable-ai-improve="aiImproveEnabled"
                             :ai-improve-url="aiImproveUrl"
                             :min-height="180"
                             :remove-temp-url="removeTempUrl"
@@ -1369,6 +1371,7 @@ onMounted(async () => {
                                     <ShiftEditor
                                         v-model="editForm.description"
                                         :axios-instance="axios"
+                                        :enable-ai-improve="aiImproveEnabled"
                                         :ai-improve-url="aiImproveUrl"
                                         :remove-temp-url="removeTempUrl"
                                         :resolve-temp-url="resolveTempUrl"
@@ -1556,6 +1559,7 @@ onMounted(async () => {
                                     ref="threadComposerRef"
                                     v-model="threadComposerHtml"
                                     :axios-instance="axios"
+                                    :enable-ai-improve="aiImproveEnabled"
                                     :ai-context="threadAiContext"
                                     :ai-improve-url="aiImproveUrl"
                                     :cancelable="Boolean(threadEditingId)"
