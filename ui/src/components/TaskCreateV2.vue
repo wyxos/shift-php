@@ -20,6 +20,7 @@ const uploadEndpoints = {
 }
 
 const removeTempUrl = '/shift/api/attachments/remove-temp'
+const aiImproveUrl = '/shift/api/ai/improve'
 
 function resolveTempUrl(data: any): string {
   if (data && data.url) return data.url as string
@@ -112,6 +113,7 @@ function cancel() {
             :axios-instance="axios"
             :upload-endpoints="uploadEndpoints"
             :remove-temp-url="removeTempUrl"
+            :ai-improve-url="aiImproveUrl"
             :resolve-temp-url="resolveTempUrl"
             placeholder="Write the full task details, then drag files into the editor."
             @uploading="isEditorUploading = $event"

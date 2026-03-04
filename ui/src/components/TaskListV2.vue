@@ -2,6 +2,7 @@
 /* eslint-disable max-lines */
 import axios from '@/axios-config';
 import ShiftEditor from '@shared/components/ShiftEditor.vue';
+import { buildThreadAiContext } from '@shared/tasks/ai';
 import { getTaskIdFromQuery, syncTaskQuery } from '@shared/tasks/history';
 import {
     copyTextToClipboard,
@@ -121,6 +122,7 @@ const threadLoading = ref(false);
 const threadSending = ref(false);
 const threadError = ref<string | null>(null);
 const threadMessages = ref<ThreadMessage[]>([]);
+const threadAiContext = computed(() => buildThreadAiContext(threadMessages.value));
 
 const threadComposerRef = ref<InstanceType<typeof ShiftEditor> | null>(null);
 const threadComposerHtml = ref('');
@@ -369,6 +371,7 @@ const uploadEndpoints = {
 };
 
 const removeTempUrl = '/shift/api/attachments/remove-temp';
+const aiImproveUrl = '/shift/api/ai/improve';
 
 function resolveTempUrl(data: any): string {
     if (data && data.url) return data.url as string;
@@ -1255,6 +1258,7 @@ onMounted(async () => {
                             data-testid="create-description-editor"
                             v-model="createForm.description"
                             :axios-instance="axios"
+                            :ai-improve-url="aiImproveUrl"
                             :min-height="180"
                             :remove-temp-url="removeTempUrl"
                             :resolve-temp-url="resolveTempUrl"
@@ -1365,6 +1369,7 @@ onMounted(async () => {
                                     <ShiftEditor
                                         v-model="editForm.description"
                                         :axios-instance="axios"
+                                        :ai-improve-url="aiImproveUrl"
                                         :remove-temp-url="removeTempUrl"
                                         :resolve-temp-url="resolveTempUrl"
                                         :temp-identifier="editTempIdentifier"
@@ -1551,6 +1556,8 @@ onMounted(async () => {
                                     ref="threadComposerRef"
                                     v-model="threadComposerHtml"
                                     :axios-instance="axios"
+                                    :ai-context="threadAiContext"
+                                    :ai-improve-url="aiImproveUrl"
                                     :cancelable="Boolean(threadEditingId)"
                                     :clear-on-send="false"
                                     :remove-temp-url="removeTempUrl"
