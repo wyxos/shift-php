@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Wyxos\Shift\Http\Controllers\ShiftAiController;
 use Wyxos\Shift\Http\Controllers\ShiftAttachmentController;
 use Wyxos\Shift\Http\Controllers\ShiftController;
 use Wyxos\Shift\Http\Controllers\ShiftNotificationController;
@@ -36,6 +37,7 @@ Route::middleware(config('shift.routes.middleware'))->group(function () {
     Route::get('/shift/api/attachments/list-temp', [ShiftAttachmentController::class, 'listTemp'])->name('attachments.list-temp');
     Route::get('/shift/api/attachments/temp/{temp}/{filename}', [ShiftAttachmentController::class, 'showTemp'])->name('attachments.temp');
     Route::get('/shift/api/attachments/{attachment}/download', [ShiftAttachmentController::class, 'download'])->name('attachments.download');
+    Route::post('/shift/api/ai/improve', [ShiftAiController::class, 'improve'])->name('ai.improve');
 
     Route::get('/shift/{page?}', [ShiftController::class, 'index'])
         ->name('shift.dashboard')
