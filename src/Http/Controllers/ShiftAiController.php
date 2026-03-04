@@ -5,11 +5,18 @@ namespace Wyxos\Shift\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Http;
+use Throwable;
 
 class ShiftAiController extends Controller
 {
     public function improve(Request $request)
     {
+        if (! config('shift.ai.enabled', false)) {
+            return response()->json([
+                'error' => 'AI improvement is disabled.',
+            ], 404);
+        }
+
         $apiToken = config('shift.token');
         $project = config('shift.project');
 
@@ -57,7 +64,7 @@ class ShiftAiController extends Controller
             return response()->json([
                 'error' => $response->json()['error'] ?? $response->json()['message'] ?? 'Failed to improve message',
             ], $status);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             return response()->json(['error' => 'Failed to improve message: '.$e->getMessage()], 500);
         }
     }

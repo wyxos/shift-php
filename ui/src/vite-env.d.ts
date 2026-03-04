@@ -8,5 +8,6 @@ interface Window {
         appName: string;
         username: string;
         email?: string;
+        aiEnabled: boolean;
     };
 }
