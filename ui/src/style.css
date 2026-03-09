@@ -1,9 +1,19 @@
 @import '../../../../resources/css/app.css';
 
-/* Ensure Tailwind scans the shift app's UI components for class generation */
+/* Ensure Tailwind scans the same portal sources the SDK resolves via aliases.
+   We include both the SDK harness copies and the sibling SHIFT portal repo for local path-repo work. */
 @source "../../../../resources/js/components/**/*.vue";
+@source "../../../../resources/js/components/**/*.ts";
 @source "../../../../resources/js/layouts/**/*.vue";
+@source "../../../../resources/js/shared/**/*.vue";
+@source "../../../../resources/js/shared/**/*.ts";
+@source "../../../../../shift/resources/js/components/**/*.vue";
+@source "../../../../../shift/resources/js/components/**/*.ts";
+@source "../../../../../shift/resources/js/layouts/**/*.vue";
+@source "../../../../../shift/resources/js/shared/**/*.vue";
+@source "../../../../../shift/resources/js/shared/**/*.ts";
 @source "./**/*.vue";
+@source "./**/*.ts";
 
 /* Tiptap inline image node-view:
    Keep the "remove image" CTA pinned to the image tile, not the full editor width. */
