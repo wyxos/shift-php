@@ -2,7 +2,7 @@
 import { flushPromises, mount } from '@vue/test-utils';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { nextTick } from 'vue';
-import TaskListV2 from '../components/TaskListV2.vue';
+import TaskList from '../components/TaskList.vue';
 
 const getMock = vi.fn();
 const deleteMock = vi.fn();
@@ -109,7 +109,7 @@ function makeIndexResponse(tasks: any[]) {
 
 async function mountWithTasks() {
     getMock.mockResolvedValueOnce(makeIndexResponse(defaultTasks));
-    const wrapper = mount(TaskListV2, {
+    const wrapper = mount(TaskList, {
         global: { stubs },
     });
     await flushPromises();
@@ -117,10 +117,11 @@ async function mountWithTasks() {
     return wrapper;
 }
 
-describe('TaskListV2', () => {
+describe('TaskList', () => {
     beforeEach(() => {
         vi.useRealTimers();
         window.history.replaceState({}, '', '/shift/tasks');
+        (window as any).shiftConfig = {};
         getMock.mockReset();
         deleteMock.mockReset();
         postMock.mockReset();
@@ -151,7 +152,7 @@ describe('TaskListV2', () => {
     it('uses distinct status badge colors for each status', async () => {
         getMock.mockResolvedValueOnce(makeIndexResponse(seedTasks));
 
-        const wrapper = mount(TaskListV2, {
+        const wrapper = mount(TaskList, {
             global: { stubs },
         });
         await flushPromises();
@@ -169,7 +170,7 @@ describe('TaskListV2', () => {
     it('uses distinct priority badge colors for each priority', async () => {
         getMock.mockResolvedValueOnce(makeIndexResponse(seedTasks));
 
-        const wrapper = mount(TaskListV2, {
+        const wrapper = mount(TaskList, {
             global: { stubs },
         });
         await flushPromises();
@@ -185,7 +186,7 @@ describe('TaskListV2', () => {
     it('shows environment badges in list rows', async () => {
         getMock.mockResolvedValueOnce(makeIndexResponse(seedTasks));
 
-        const wrapper = mount(TaskListV2, {
+        const wrapper = mount(TaskList, {
             global: { stubs },
         });
         await flushPromises();
@@ -216,7 +217,7 @@ describe('TaskListV2', () => {
             })
             .mockResolvedValueOnce({ data: { external: [] } });
 
-        const wrapper = mount(TaskListV2, { global: { stubs } });
+        const wrapper = mount(TaskList, { global: { stubs } });
         await flushPromises();
         await nextTick();
 
@@ -256,7 +257,7 @@ describe('TaskListV2', () => {
             })
             .mockResolvedValueOnce({ data: { external: [] } });
 
-        const wrapper = mount(TaskListV2, { global: { stubs } });
+        const wrapper = mount(TaskList, { global: { stubs } });
         await flushPromises();
         await nextTick();
 
@@ -282,7 +283,7 @@ describe('TaskListV2', () => {
             })
             .mockResolvedValueOnce({ data: { external: [] } });
 
-        const wrapper = mount(TaskListV2, { global: { stubs } });
+        const wrapper = mount(TaskList, { global: { stubs } });
         await flushPromises();
         await nextTick();
 
@@ -306,7 +307,7 @@ describe('TaskListV2', () => {
     it('filters by priority', async () => {
         getMock.mockResolvedValueOnce(makeIndexResponse(defaultTasks)).mockResolvedValueOnce(makeIndexResponse([seedTasks[0]]));
 
-        const wrapper = mount(TaskListV2, { global: { stubs } });
+        const wrapper = mount(TaskList, { global: { stubs } });
         await flushPromises();
         await nextTick();
 
@@ -335,7 +336,7 @@ describe('TaskListV2', () => {
     it('filters by search term', async () => {
         getMock.mockResolvedValueOnce(makeIndexResponse(defaultTasks)).mockResolvedValueOnce(makeIndexResponse([seedTasks[0]]));
 
-        const wrapper = mount(TaskListV2, { global: { stubs } });
+        const wrapper = mount(TaskList, { global: { stubs } });
         await flushPromises();
         await nextTick();
 
@@ -360,7 +361,7 @@ describe('TaskListV2', () => {
     it('filters by environment', async () => {
         getMock.mockResolvedValueOnce(makeIndexResponse(defaultTasks)).mockResolvedValueOnce(makeIndexResponse([seedTasks[0]]));
 
-        const wrapper = mount(TaskListV2, { global: { stubs } });
+        const wrapper = mount(TaskList, { global: { stubs } });
         await flushPromises();
         await nextTick();
 
@@ -382,7 +383,7 @@ describe('TaskListV2', () => {
     it('filters by sort option', async () => {
         getMock.mockResolvedValueOnce(makeIndexResponse(defaultTasks)).mockResolvedValueOnce(makeIndexResponse(defaultTasks));
 
-        const wrapper = mount(TaskListV2, { global: { stubs } });
+        const wrapper = mount(TaskList, { global: { stubs } });
         await flushPromises();
         await nextTick();
 
@@ -423,14 +424,20 @@ describe('TaskListV2', () => {
             },
         });
 
-        const wrapper = mount(TaskListV2, { global: { stubs } });
+        const wrapper = mount(TaskList, { global: { stubs } });
         await flushPromises();
         await nextTick();
 
         await wrapper.get('[data-testid="open-create-task"]').trigger('click');
         await nextTick();
 
+        const createPriorityGroup = wrapper.get('[aria-label="Task priority"]');
+        expect(createPriorityGroup.classes()).toContain('grid');
+        expect(createPriorityGroup.classes()).toContain('grid-cols-3');
+
         await wrapper.get('[data-testid="create-task-title"]').setValue('Created from UI');
+        await wrapper.get('[data-testid="create-task-priority-high"]').trigger('click');
+        expect(wrapper.get('[data-testid="create-task-priority-high"]').classes()).toContain('bg-rose-100');
         await wrapper.get('[data-testid="create-description-editor"] [data-testid="stub-editor-input"]').setValue(createdDescription);
         await wrapper.get('[data-testid="create-task-form"]').trigger('submit');
         await flushPromises();
@@ -441,6 +448,7 @@ describe('TaskListV2', () => {
             expect.objectContaining({
                 title: 'Created from UI',
                 description: createdDescription,
+                priority: 'high',
             }),
         );
         expect(getMock).toHaveBeenLastCalledWith('/shift/api/tasks', {
@@ -490,7 +498,7 @@ describe('TaskListV2', () => {
                 },
             }); // openEdit thread fetch
 
-        const wrapper = mount(TaskListV2, { global: { stubs } });
+        const wrapper = mount(TaskList, { global: { stubs } });
         await flushPromises();
         await nextTick();
 
@@ -532,7 +540,7 @@ describe('TaskListV2', () => {
             }) // openEdit task fetch
             .mockResolvedValueOnce({ data: { external: [] } }); // openEdit thread fetch
 
-        const wrapper = mount(TaskListV2, { global: { stubs } });
+        const wrapper = mount(TaskList, { global: { stubs } });
         await flushPromises();
         await nextTick();
 
@@ -541,13 +549,52 @@ describe('TaskListV2', () => {
         await flushPromises();
         await nextTick();
 
+        const editStatusGroup = wrapper.get('[aria-label="Task status"]');
         expect(wrapper.get('[data-testid="edit-task-environment"]').text()).toContain('Staging');
         expect(wrapper.get('[data-testid="edit-task-created-by"]').text()).toContain('Taylor Brown');
         expect(wrapper.get('[data-testid="edit-task-updated-at"]').text()).toContain('Updated');
+        expect(editStatusGroup.classes()).toContain('grid');
+        expect(editStatusGroup.classes()).toContain('grid-cols-4');
         expect(wrapper.get('[data-testid="task-status-pending"]').classes()).toContain('bg-amber-100');
 
         wrapper.unmount();
         vi.useRealTimers();
+    });
+
+    it('renders the owner priority buttons in a 3-column group inside the edit sheet', async () => {
+        (window as any).shiftConfig = { email: 'someone@example.com' };
+
+        getMock
+            .mockResolvedValueOnce(makeIndexResponse(defaultTasks))
+            .mockResolvedValueOnce({
+                data: {
+                    id: 1,
+                    title: 'Auth issue',
+                    priority: 'high',
+                    status: 'pending',
+                    created_at: '2026-02-10T17:40:00Z',
+                    description: '',
+                    submitter: { email: 'someone@example.com' },
+                    attachments: [],
+                },
+            })
+            .mockResolvedValueOnce({ data: { external: [] } });
+
+        const wrapper = mount(TaskList, { global: { stubs } });
+        await flushPromises();
+        await nextTick();
+
+        const firstRow = wrapper.findAll('[data-testid="task-row"]')[0];
+        await firstRow.find('button[title="Edit"]').trigger('click');
+        await flushPromises();
+        await nextTick();
+
+        const editPriorityGroup = wrapper.get('[aria-label="Task priority"]');
+        expect(editPriorityGroup.classes()).toContain('grid');
+        expect(editPriorityGroup.classes()).toContain('grid-cols-3');
+        expect(wrapper.get('[data-testid="task-priority-high"]').classes()).toContain('bg-rose-100');
+
+        wrapper.unmount();
     });
 
     it('renders markdown list comments as list HTML', async () => {
@@ -580,7 +627,7 @@ describe('TaskListV2', () => {
                 },
             });
 
-        const wrapper = mount(TaskListV2, { global: { stubs } });
+        const wrapper = mount(TaskList, { global: { stubs } });
         await flushPromises();
         await nextTick();
 
@@ -627,7 +674,7 @@ describe('TaskListV2', () => {
                 },
             });
 
-        const wrapper = mount(TaskListV2, { global: { stubs } });
+        const wrapper = mount(TaskList, { global: { stubs } });
         await flushPromises();
         await nextTick();
 
@@ -674,7 +721,7 @@ describe('TaskListV2', () => {
                 },
             });
 
-        const wrapper = mount(TaskListV2, { global: { stubs } });
+        const wrapper = mount(TaskList, { global: { stubs } });
         await flushPromises();
         await nextTick();
 
@@ -726,7 +773,7 @@ describe('TaskListV2', () => {
             },
         });
 
-        const wrapper = mount(TaskListV2, { global: { stubs } });
+        const wrapper = mount(TaskList, { global: { stubs } });
         await flushPromises();
         await nextTick();
 
@@ -788,7 +835,7 @@ describe('TaskListV2', () => {
             },
         });
 
-        const wrapper = mount(TaskListV2, { global: { stubs } });
+        const wrapper = mount(TaskList, { global: { stubs } });
         await flushPromises();
         await nextTick();
 
@@ -863,7 +910,7 @@ describe('TaskListV2', () => {
             },
         });
 
-        const wrapper = mount(TaskListV2, { global: { stubs } });
+        const wrapper = mount(TaskList, { global: { stubs } });
         await flushPromises();
         await nextTick();
 
@@ -922,7 +969,7 @@ describe('TaskListV2', () => {
                 },
             }); // openEdit thread fetch
 
-        const wrapper = mount(TaskListV2, { global: { stubs } });
+        const wrapper = mount(TaskList, { global: { stubs } });
         await flushPromises();
         await nextTick();
 
@@ -982,7 +1029,7 @@ describe('TaskListV2', () => {
                 },
             });
 
-        const wrapper = mount(TaskListV2, { global: { stubs } });
+        const wrapper = mount(TaskList, { global: { stubs } });
         await flushPromises();
         await nextTick();
 
@@ -1036,7 +1083,7 @@ describe('TaskListV2', () => {
                 },
             });
 
-        const wrapper = mount(TaskListV2, { global: { stubs } });
+        const wrapper = mount(TaskList, { global: { stubs } });
         await flushPromises();
         await nextTick();
 
@@ -1102,7 +1149,7 @@ describe('TaskListV2', () => {
             },
         });
 
-        const wrapper = mount(TaskListV2, { global: { stubs } });
+        const wrapper = mount(TaskList, { global: { stubs } });
         await flushPromises();
         await nextTick();
 
@@ -1173,7 +1220,7 @@ describe('TaskListV2', () => {
                 },
             });
 
-        const wrapper = mount(TaskListV2, { global: { stubs } });
+        const wrapper = mount(TaskList, { global: { stubs } });
         await flushPromises();
         await nextTick();
 
@@ -1245,7 +1292,7 @@ describe('TaskListV2', () => {
                 },
             });
 
-        const wrapper = mount(TaskListV2, { global: { stubs } });
+        const wrapper = mount(TaskList, { global: { stubs } });
         await flushPromises();
         await nextTick();
 
