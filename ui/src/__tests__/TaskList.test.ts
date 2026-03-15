@@ -138,7 +138,7 @@ describe('TaskList', () => {
     beforeEach(() => {
         vi.useRealTimers();
         window.history.replaceState({}, '', '/shift/tasks');
-        (window as any).shiftConfig = {};
+        (window as any).shiftConfig = { appEnvironment: 'local' };
         getMock.mockReset();
         deleteMock.mockReset();
         postMock.mockReset();
@@ -511,7 +511,7 @@ describe('TaskList', () => {
             '/shift/api/tasks',
             expect.objectContaining({
                 title: 'Created with collaborators',
-                environment: 'production',
+                environment: 'local',
                 internal_collaborator_ids: [77],
                 external_collaborators: [
                     {
@@ -619,6 +619,7 @@ describe('TaskList', () => {
 
         const editStatusGroup = wrapper.get('[aria-label="Task status"]');
         expect(wrapper.get('[data-testid="edit-task-environment"]').text()).toContain('Staging');
+        expect(wrapper.find('[data-testid="edit-task-environment-select"]').exists()).toBe(false);
         expect(wrapper.get('[data-testid="edit-task-created-by"]').text()).toContain('Taylor Brown');
         expect(wrapper.get('[data-testid="edit-task-updated-at"]').text()).toContain('Updated');
         expect(editStatusGroup.classes()).toContain('grid');

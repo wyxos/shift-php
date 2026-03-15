@@ -14,6 +14,7 @@ import { Skeleton } from '@shift/ui/skeleton';
 import { Card, CardHeader, CardTitle, CardContent } from '@shift/ui/card';
 import Select from './ui/select.vue';
 import FormItem from './ui/form-item.vue';
+import { getRuntimeAppEnvironment } from '../lib/runtime-config';
 
 const router = useRouter();
 const route = useRoute();
@@ -305,8 +306,7 @@ async function updateTask() {
         // Get the current URL for the source_url
         const source_url = window.location.origin;
 
-        // Get the environment from the config or default to 'production'
-        const environment = import.meta.env.VITE_APP_ENV || 'production';
+        const environment = getRuntimeAppEnvironment();
 
         // Get description content from the editor
         const descriptionContent = descriptionEditorRef.value?.getMarkdown() || editTaskData.value.description;
