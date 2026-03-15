@@ -72,6 +72,23 @@ const stubs = {
       </button>
     </div>`,
     },
+    TaskCollaboratorField: {
+        props: ['modelValue', 'readOnly'],
+        template: `<div data-testid="stub-task-collaborators" :data-read-only="String(Boolean(readOnly))">
+      <button
+        data-testid="stub-add-internal-collaborator"
+        @click="$emit('update:modelValue', { internal: [{ id: 77, name: 'Shift User', email: 'shift@example.com' }], external: (modelValue && modelValue.external) || [] })"
+      >
+        add internal
+      </button>
+      <button
+        data-testid="stub-add-external-collaborator"
+        @click="$emit('update:modelValue', { internal: (modelValue && modelValue.internal) || [], external: [{ id: 'client-2', name: 'Project User', email: 'project@example.com' }] })"
+      >
+        add external
+      </button>
+    </div>`,
+    },
     Sheet: { template: '<div><slot /></div>' },
     SheetContent: { template: '<div><slot /></div>' },
     SheetHeader: { template: '<div><slot /></div>' },
@@ -454,6 +471,57 @@ describe('TaskList', () => {
         expect(getMock).toHaveBeenLastCalledWith('/shift/api/tasks', {
             params: { page: 1, status: defaultStatuses, sort_by: 'updated_at' },
         });
+
+        wrapper.unmount();
+    });
+
+
+    it('includes collaborator payload when creating a task', async () => {
+        getMock
+            .mockResolvedValueOnce(makeIndexResponse(defaultTasks))
+            .mockResolvedValueOnce(makeIndexResponse(defaultTasks));
+
+        postMock.mockResolvedValueOnce({
+            data: {
+                data: {
+                    id: 120,
+                    title: 'Created with collaborators',
+                    status: 'pending',
+                    priority: 'medium',
+                },
+            },
+        });
+
+        const wrapper = mount(TaskList, { global: { stubs } });
+        await flushPromises();
+        await nextTick();
+
+        await wrapper.get('[data-testid="open-create-task"]').trigger('click');
+        await nextTick();
+
+        const createCollaboratorStub = wrapper.findAll('[data-testid="stub-task-collaborators"]')[0];
+        await createCollaboratorStub.get('[data-testid="stub-add-internal-collaborator"]').trigger('click');
+        await createCollaboratorStub.get('[data-testid="stub-add-external-collaborator"]').trigger('click');
+        await wrapper.get('[data-testid="create-task-title"]').setValue('Created with collaborators');
+        await wrapper.get('[data-testid="create-task-form"]').trigger('submit');
+        await flushPromises();
+        await nextTick();
+
+        expect(postMock).toHaveBeenCalledWith(
+            '/shift/api/tasks',
+            expect.objectContaining({
+                title: 'Created with collaborators',
+                environment: 'production',
+                internal_collaborator_ids: [77],
+                external_collaborators: [
+                    {
+                        id: 'client-2',
+                        name: 'Project User',
+                        email: 'project@example.com',
+                    },
+                ],
+            }),
+        );
 
         wrapper.unmount();
     });
@@ -1343,4 +1411,118 @@ describe('TaskList', () => {
 
         wrapper.unmount();
     });
+
+    it('patches collaborator changes through the dedicated collaborator endpoint', async () => {
+        vi.useFakeTimers();
+        (window as any).shiftConfig = { email: 'viewer@example.com' };
+
+        getMock
+            .mockResolvedValueOnce(makeIndexResponse(defaultTasks))
+            .mockResolvedValueOnce({
+                data: {
+                    id: 1,
+                    project_id: 10,
+                    title: 'Auth issue',
+                    priority: 'high',
+                    status: 'pending',
+                    environment: 'staging',
+                    created_at: '2026-02-10T17:40:00Z',
+                    description: '',
+                    submitter: { email: 'submitter@example.com' },
+                    attachments: [],
+                    can_manage_collaborators: true,
+                    internal_collaborators: [],
+                    external_collaborators: [],
+                },
+            })
+            .mockResolvedValueOnce({ data: { external: [] } })
+            .mockResolvedValueOnce(makeIndexResponse(defaultTasks));
+
+        patchMock.mockResolvedValueOnce({
+            data: {
+                id: 1,
+                title: 'Auth issue',
+                status: 'pending',
+                priority: 'high',
+                environment: 'staging',
+                attachments: [],
+                can_manage_collaborators: true,
+                internal_collaborators: [],
+                external_collaborators: [
+                    {
+                        id: 'client-2',
+                        name: 'Project User',
+                        email: 'project@example.com',
+                    },
+                ],
+            },
+        });
+
+        const wrapper = mount(TaskList, { global: { stubs } });
+        await flushPromises();
+        await nextTick();
+
+        await wrapper.findAll('[data-testid="task-row"]')[0].find('button[title="Edit"]').trigger('click');
+        await flushPromises();
+        await nextTick();
+
+        const editCollaboratorStub = wrapper.findAll('[data-testid="stub-task-collaborators"]').at(-1);
+        expect(editCollaboratorStub?.attributes('data-read-only')).toBe('false');
+        await editCollaboratorStub!.get('[data-testid="stub-add-external-collaborator"]').trigger('click');
+        await nextTick();
+        await vi.advanceTimersByTimeAsync(700);
+        await flushPromises();
+        await nextTick();
+
+        expect(putMock).not.toHaveBeenCalled();
+        expect(patchMock).toHaveBeenCalledWith('/shift/api/tasks/1/collaborators', {
+            environment: 'staging',
+            internal_collaborator_ids: [],
+            external_collaborators: [
+                {
+                    id: 'client-2',
+                    name: 'Project User',
+                    email: 'project@example.com',
+                },
+            ],
+        });
+
+        wrapper.unmount();
+        vi.useRealTimers();
+    });
+
+    it('renders collaborator management as read-only when the task cannot manage collaborators', async () => {
+        getMock
+            .mockResolvedValueOnce(makeIndexResponse(defaultTasks))
+            .mockResolvedValueOnce({
+                data: {
+                    id: 1,
+                    title: 'Auth issue',
+                    priority: 'high',
+                    status: 'pending',
+                    created_at: '2026-02-10T17:40:00Z',
+                    description: '',
+                    submitter: { email: 'submitter@example.com' },
+                    attachments: [],
+                    can_manage_collaborators: false,
+                    internal_collaborators: [],
+                    external_collaborators: [],
+                },
+            })
+            .mockResolvedValueOnce({ data: { external: [] } });
+
+        const wrapper = mount(TaskList, { global: { stubs } });
+        await flushPromises();
+        await nextTick();
+
+        await wrapper.findAll('[data-testid="task-row"]')[0].find('button[title="Edit"]').trigger('click');
+        await flushPromises();
+        await nextTick();
+
+        const editCollaboratorStub = wrapper.findAll('[data-testid="stub-task-collaborators"]').at(-1);
+        expect(editCollaboratorStub?.attributes('data-read-only')).toBe('true');
+
+        wrapper.unmount();
+    });
+
 });
