@@ -18,6 +18,8 @@ This will:
 
 * Prompt for your SHIFT API token and project token
 * Save them to your `.env`
+* Register the current `APP_ENV` and `APP_URL` with SHIFT for external collaborator lookups
+* Scaffold `App\Services\ShiftCollaboratorResolver` when it does not exist
 * Publish frontend and config files
 
 ---
@@ -30,6 +32,7 @@ Add your SHIFT credentials to `.env`:
 SHIFT_TOKEN=your-api-token
 SHIFT_PROJECT=your-project-token
 SHIFT_URL=https://shift.wyxos.com
+SHIFT_COLLABORATORS_RESOLVER=App\Services\ShiftCollaboratorResolver
 ```
 
 Optional: Publish config to customize routes/middleware.
@@ -88,6 +91,16 @@ When tasks are submitted, the package automatically includes:
 
 * Authenticated user's name, email, and ID
 * Current environment and application URL
+
+### External Collaborators
+
+`install:shift` registers the current consumer environment with SHIFT, and the package exposes:
+
+* `GET /shift/api/collaborators/external`
+
+SHIFT calls this endpoint using the project token to retrieve eligible external users for the selected project environment.
+
+The generated resolver is intentionally permissive only for `APP_ENV=local`. For every other environment it returns no users until you replace the TODO stub with your app-specific rules.
 
 ---
 

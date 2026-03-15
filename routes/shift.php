@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Wyxos\Shift\Http\Controllers\ShiftAiController;
 use Wyxos\Shift\Http\Controllers\ShiftAttachmentController;
+use Wyxos\Shift\Http\Controllers\ShiftCollaboratorController;
 use Wyxos\Shift\Http\Controllers\ShiftController;
 use Wyxos\Shift\Http\Controllers\ShiftDashboardController;
 use Wyxos\Shift\Http\Controllers\ShiftNotificationController;
@@ -10,6 +11,7 @@ use Wyxos\Shift\Http\Controllers\ShiftTaskController;
 use Wyxos\Shift\Http\Controllers\ShiftTaskThreadController;
 
 Route::post('/shift/api/notifications', [ShiftNotificationController::class, 'store']);
+Route::get('/shift/api/collaborators/external', [ShiftCollaboratorController::class, 'external']);
 
 Route::middleware(config('shift.routes.middleware'))->group(function () {
     // Task routes

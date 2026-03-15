@@ -17,6 +17,10 @@ return [
         'enabled' => env('SHIFT_AI_ENABLED', false),
     ],
 
+    'collaborators' => [
+        'resolver' => env('SHIFT_COLLABORATORS_RESOLVER', App\Services\ShiftCollaboratorResolver::class),
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | Default Routes
