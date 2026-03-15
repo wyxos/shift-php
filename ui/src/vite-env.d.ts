@@ -9,5 +9,6 @@ interface Window {
         username: string;
         email?: string;
         aiEnabled: boolean;
+        appEnvironment?: string;
     };
 }

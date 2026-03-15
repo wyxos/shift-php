@@ -35,6 +35,7 @@ import {
 } from '@shared/tasks/presentation';
 import { buildReplyQuoteHtml, extractPlainTextFromContent, renderRichContent } from '@shared/tasks/rich-content';
 import { formatThreadTime, getReplyTargetFromEventTarget, mapThreadToMessage, shouldHandleImage } from '@shared/tasks/thread';
+import { getRuntimeAppEnvironment } from '../lib/runtime-config';
 import { Button } from '@shift/ui/button';
 import { ButtonGroup } from '@shift/ui/button-group';
 import { Card, CardContent, CardHeader, CardTitle } from '@shift/ui/card';
@@ -394,7 +395,7 @@ const uploadEndpoints = {
 const removeTempUrl = '/shift/api/attachments/remove-temp';
 const aiImproveUrl = '/shift/api/ai/improve';
 const aiImproveEnabled = Boolean(window.shiftConfig?.aiEnabled);
-const currentAppEnvironment = import.meta.env.VITE_APP_ENV || 'production';
+const currentAppEnvironment = getRuntimeAppEnvironment();
 
 function resolveTempUrl(data: any): string {
     if (data && data.url) return data.url as string;
@@ -833,6 +834,18 @@ async function saveTaskChanges() {
 
     if (!needsCoreUpdate && !needsCollaboratorUpdate) return;
 
+    const collaboratorPayload = needsCollaboratorUpdate
+        ? {
+              environment: editTask.value.environment ?? currentAppEnvironment,
+              internal_collaborator_ids: editForm.value.collaborators.internal.map((collaborator) => Number(collaborator.id)),
+              external_collaborators: editForm.value.collaborators.external.map((collaborator) => ({
+                  id: collaborator.id,
+                  name: collaborator.name,
+                  email: collaborator.email,
+              })),
+          }
+        : null;
+
     taskSaving.value = true;
     taskSaveError.value = null;
     showTaskSavingToast();
@@ -857,16 +870,8 @@ async function saveTaskChanges() {
             mergeEditedTask(data?.task ?? data ?? null);
         }
 
-        if (needsCollaboratorUpdate) {
-            const response = await axios.patch(`/shift/api/tasks/${taskId}/collaborators`, {
-                environment: editTask.value.environment ?? currentAppEnvironment,
-                internal_collaborator_ids: editForm.value.collaborators.internal.map((collaborator) => Number(collaborator.id)),
-                external_collaborators: editForm.value.collaborators.external.map((collaborator) => ({
-                    id: collaborator.id,
-                    name: collaborator.name,
-                    email: collaborator.email,
-                })),
-            });
+        if (needsCollaboratorUpdate && collaboratorPayload) {
+            const response = await axios.patch(`/shift/api/tasks/${taskId}/collaborators`, collaboratorPayload);
             const data = response.data?.data ?? response.data;
             mergeEditedTask(data?.task ?? data ?? null);
         }
@@ -1219,18 +1224,18 @@ onMounted(async () => {
                         </SheetHeader>
                         <div class="flex-1 space-y-6 overflow-auto px-6 pb-6">
                             <div class="space-y-2">
-                                <Label>Search</Label>
+                                <Label class="text-muted-foreground">Search</Label>
                                 <Input v-model="draftSearchTerm" data-testid="filter-search" placeholder="Search by title" />
                             </div>
 
                             <div class="space-y-2">
-                                <Label>Environment</Label>
+                                <Label class="text-muted-foreground">Environment</Label>
                                 <Input v-model="draftEnvironmentTerm" data-testid="filter-environment" placeholder="e.g. Production" />
                             </div>
 
                             <div class="space-y-2">
                                 <div class="flex items-center justify-between">
-                                    <Label>Status</Label>
+                                    <Label class="text-muted-foreground">Status</Label>
                                     <Button size="sm" variant="ghost" @click="selectAllStatuses">All</Button>
                                 </div>
                                 <div class="grid gap-2">
@@ -1248,7 +1253,7 @@ onMounted(async () => {
 
                             <div class="space-y-2">
                                 <div class="flex items-center justify-between">
-                                    <Label>Priority</Label>
+                                    <Label class="text-muted-foreground">Priority</Label>
                                     <Button size="sm" variant="ghost" @click="selectAllPriorities">All</Button>
                                 </div>
                                 <div class="grid gap-2">
@@ -1265,7 +1270,7 @@ onMounted(async () => {
                             </div>
 
                             <div class="space-y-2">
-                                <Label>Sort By</Label>
+                                <Label class="text-muted-foreground">Sort By</Label>
                                 <ButtonGroup
                                     v-model="draftSortBy"
                                     test-id-prefix="sort-by"
@@ -1427,13 +1432,13 @@ onMounted(async () => {
                             </div>
 
                             <div class="space-y-2">
-                                <Label>Task</Label>
+                                <Label class="text-muted-foreground">Task</Label>
                                 <template v-if="isOwner">
                                     <Input v-model="editForm.title" placeholder="Short, descriptive title" required />
                                 </template>
                                 <template v-else>
                                     <div
-                                        class="border-muted-foreground/30 bg-muted/10 text-muted-foreground rounded-md border border-dashed p-3 text-sm"
+                                        class="border-muted-foreground/30 bg-muted/10 text-foreground rounded-md border border-dashed p-3 text-sm"
                                     >
                                         {{ editTask.title }}
                                     </div>
@@ -1441,7 +1446,7 @@ onMounted(async () => {
                             </div>
 
                             <div class="space-y-2">
-                                <Label>Status</Label>
+                                <Label class="text-muted-foreground">Status</Label>
                                 <ButtonGroup
                                     v-model="editForm.status"
                                     aria-label="Task status"
@@ -1453,7 +1458,7 @@ onMounted(async () => {
                             </div>
 
                             <div class="space-y-2">
-                                <Label>Priority</Label>
+                                <Label class="text-muted-foreground">Priority</Label>
                                 <template v-if="isOwner">
                                     <ButtonGroup
                                         v-model="editForm.priority"
@@ -1465,7 +1470,7 @@ onMounted(async () => {
                                 </template>
                                 <template v-else>
                                     <div
-                                        class="border-muted-foreground/30 bg-muted/10 text-muted-foreground inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm"
+                                        class="border-muted-foreground/30 bg-muted/10 text-foreground inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm"
                                     >
                                         {{ getPriorityLabel(editTask.priority) }}
                                     </div>
@@ -1473,7 +1478,7 @@ onMounted(async () => {
                             </div>
 
                             <div class="space-y-2">
-                                <Label>Description</Label>
+                                <Label class="text-muted-foreground">Description</Label>
                                 <template v-if="isOwner">
                                     <ShiftEditor
                                         v-model="editForm.description"
@@ -1489,13 +1494,13 @@ onMounted(async () => {
                                     />
                                 </template>
                                 <template v-else>
-                                    <div class="border-muted-foreground/30 bg-muted/10 text-muted-foreground rounded-lg border p-4 text-sm">
+                                    <div class="border-muted-foreground/30 bg-muted/10 text-foreground rounded-lg border p-4 text-sm">
                                         <div
                                             v-if="editTask.description"
                                             class="tiptap shift-rich [&_img]:max-w-full [&_img]:cursor-zoom-in [&_img]:rounded-lg [&_img]:shadow-sm [&_img.editor-tile]:aspect-square [&_img.editor-tile]:w-[200px] [&_img.editor-tile]:max-w-[200px] [&_img.editor-tile]:object-cover"
                                             v-html="renderRichContent(editTask.description)"
                                         ></div>
-                                        <div v-else>No description provided.</div>
+                                        <div v-else class="text-muted-foreground">No description provided.</div>
                                     </div>
                                 </template>
                             </div>
@@ -1515,12 +1520,12 @@ onMounted(async () => {
                             </div>
 
                             <div class="space-y-2">
-                                <Label>Attachments</Label>
+                                <Label class="text-muted-foreground">Attachments</Label>
                                 <div v-if="taskAttachments.length" class="space-y-2">
                                     <div
                                         v-for="attachment in taskAttachments"
                                         :key="attachment.id"
-                                        class="border-muted-foreground/20 bg-muted/10 text-muted-foreground flex items-center gap-2 rounded-md border px-3 py-2 text-sm"
+                                        class="border-muted-foreground/20 bg-muted/10 text-foreground flex items-center gap-2 rounded-md border px-3 py-2 text-sm"
                                     >
                                         <a
                                             :href="attachment.url"

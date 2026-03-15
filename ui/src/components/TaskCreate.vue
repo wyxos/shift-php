@@ -7,6 +7,7 @@ import { Plus } from 'lucide-vue-next';
 import { computed, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { toast } from 'vue-sonner';
+import { getRuntimeAppEnvironment } from '../lib/runtime-config';
 
 const uploadEndpoints = {
     init: '/shift/api/attachments/upload-init',
@@ -54,7 +55,7 @@ async function createTask() {
 
     try {
         const source_url = window.location.origin;
-        const environment = import.meta.env.VITE_APP_ENV || 'production';
+        const environment = getRuntimeAppEnvironment();
 
         const payload = {
             title: newTask.value.title,

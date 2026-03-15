@@ -106,6 +106,7 @@ class ShiftController extends Controller
             'username' => $username,
             'email' => $email,
             'aiEnabled' => $aiEnabled,
+            'appEnvironment' => (string) config('app.env', 'production'),
         ], JSON_UNESCAPED_SLASHES);
 
         $script = <<<SCRIPT

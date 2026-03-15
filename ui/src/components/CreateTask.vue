@@ -7,6 +7,7 @@ import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { toast } from 'vue-sonner';
 import axios from '../axios-config';
+import { getRuntimeAppEnvironment } from '../lib/runtime-config';
 
 const router = useRouter();
 const createError = ref<string | null>(null);
@@ -54,8 +55,7 @@ async function createTask() {
         // Get the current URL for the source_url
         const source_url = window.location.origin;
 
-        // Get the environment from the config or default to 'production'
-        const environment = import.meta.env.VITE_APP_ENV || 'production';
+        const environment = getRuntimeAppEnvironment();
 
         // Create the payload with task data and temp_identifier for attachments
         const payload = {
