@@ -17,9 +17,11 @@ Route::middleware(config('shift.routes.middleware'))->group(function () {
     // Task routes
     Route::get('/shift/api/dashboard', [ShiftDashboardController::class, 'index'])->name('dashboard.index');
     Route::get('/shift/api/tasks', [ShiftTaskController::class, 'index'])->name('tasks.index');
+    Route::get('/shift/api/task-collaborators', [ShiftCollaboratorController::class, 'task'])->name('task-collaborators.index');
     Route::get('/shift/api/tasks/{id}', [ShiftTaskController::class, 'show'])->name('tasks.show');
     Route::post('/shift/api/tasks', [ShiftTaskController::class, 'store'])->name('tasks.store');
     Route::put('/shift/api/tasks/{id}', [ShiftTaskController::class, 'update'])->name('tasks.update');
+    Route::patch('/shift/api/tasks/{id}/collaborators', [ShiftTaskController::class, 'updateCollaborators'])->name('tasks.collaborators.update');
     Route::patch('/shift/api/tasks/{id}/toggle-status', [ShiftTaskController::class, 'toggleStatus'])->name('tasks.toggle-status');
     Route::delete('/shift/api/tasks/{id}', [ShiftTaskController::class, 'destroy'])->name('tasks.destroy');
 

@@ -2,8 +2,16 @@
 /* eslint-disable max-lines */
 import axios from '@/axios-config';
 import ShiftEditor from '@shared/components/ShiftEditor.vue';
+import TaskCollaboratorField from '@shared/components/TaskCollaboratorField.vue';
 import TaskCreateForm from '@shared/components/TaskCreateForm.vue';
 import { buildThreadAiContext } from '@shared/tasks/ai';
+import {
+    collaboratorsEqual,
+    emptyTaskCollaborators,
+    normalizeTaskCollaborators,
+    type CollaboratorOption,
+    type TaskCollaboratorSelection,
+} from '@shared/tasks/collaborators';
 import { getTaskIdFromQuery, syncTaskQuery } from '@shared/tasks/history';
 import {
     copyTextToClipboard,
@@ -59,10 +67,14 @@ type TaskAttachment = {
 };
 
 type TaskDetail = Task & {
+    project_id?: number;
     description?: string;
     created_at?: string;
     submitter?: { name?: string; email?: string };
     attachments?: TaskAttachment[];
+    can_manage_collaborators?: boolean;
+    internal_collaborators?: CollaboratorOption[];
+    external_collaborators?: CollaboratorOption[];
 };
 
 type ThreadMessage = {
@@ -99,6 +111,7 @@ const createForm = ref({
     title: '',
     priority: 'medium',
     description: '',
+    collaborators: emptyTaskCollaborators(),
 });
 
 const editOpen = ref(false);
@@ -113,10 +126,17 @@ const editForm = ref({
     priority: 'medium',
     status: 'pending',
     description: '',
+    collaborators: emptyTaskCollaborators(),
 });
 
 const confirmCloseOpen = ref(false);
-const initialEditSnapshot = ref<{ title: string; priority: string; status: string; description: string } | null>(null);
+const initialEditSnapshot = ref<{
+    title: string;
+    priority: string;
+    status: string;
+    description: string;
+    collaborators: TaskCollaboratorSelection;
+} | null>(null);
 
 const threadTempIdentifier = ref(Date.now().toString());
 const threadLoading = ref(false);
@@ -374,6 +394,7 @@ const uploadEndpoints = {
 const removeTempUrl = '/shift/api/attachments/remove-temp';
 const aiImproveUrl = '/shift/api/ai/improve';
 const aiImproveEnabled = Boolean(window.shiftConfig?.aiEnabled);
+const currentAppEnvironment = import.meta.env.VITE_APP_ENV || 'production';
 
 function resolveTempUrl(data: any): string {
     if (data && data.url) return data.url as string;
@@ -425,6 +446,7 @@ const isOwner = computed(() => {
     if (!currentEmail || !submitterEmail) return false;
     return currentEmail.toLowerCase() === submitterEmail.toLowerCase();
 });
+const canManageCollaborators = computed(() => Boolean(editTask.value?.can_manage_collaborators));
 
 const editTaskCreatorLabel = computed(() => getTaskCreatorName(editTask.value) ?? getTaskCreatorEmail(editTask.value) ?? 'Unknown');
 const editTaskEnvironmentLabel = computed(() => getTaskEnvironment(editTask.value) ?? 'Unknown');
@@ -473,7 +495,14 @@ function onTaskQueryPopState() {
 }
 
 watch(
-    () => [editForm.value.title, editForm.value.priority, editForm.value.status, editForm.value.description, deletedAttachmentIds.value.join(',')],
+    () => [
+        editForm.value.title,
+        editForm.value.priority,
+        editForm.value.status,
+        editForm.value.description,
+        JSON.stringify(editForm.value.collaborators),
+        deletedAttachmentIds.value.join(','),
+    ],
     () => {
         if (!editOpen.value || !autosaveArmed.value) return;
         if (!hasPendingTaskChanges()) return;
@@ -507,6 +536,7 @@ function resetCreateForm() {
         title: '',
         priority: 'medium',
         description: '',
+        collaborators: emptyTaskCollaborators(),
     };
     createTempIdentifier.value = Date.now().toString();
     createError.value = null;
@@ -514,7 +544,17 @@ function resetCreateForm() {
 }
 
 function updateCreateForm(value: { title: string; priority: string; description: string }) {
-    createForm.value = value;
+    createForm.value = {
+        ...createForm.value,
+        ...value,
+    };
+}
+
+function updateCreateCollaborators(value: TaskCollaboratorSelection) {
+    createForm.value = {
+        ...createForm.value,
+        collaborators: normalizeTaskCollaborators(value),
+    };
 }
 
 function openCreate() {
@@ -539,15 +579,20 @@ async function createTask() {
 
     try {
         const source_url = window.location.origin;
-        const environment = import.meta.env.VITE_APP_ENV || 'production';
 
         const payload = {
             title: createForm.value.title,
             description: createForm.value.description,
             priority: createForm.value.priority,
             source_url,
-            environment,
+            environment: currentAppEnvironment,
             temp_identifier: createTempIdentifier.value,
+            internal_collaborator_ids: createForm.value.collaborators.internal.map((collaborator) => Number(collaborator.id)),
+            external_collaborators: createForm.value.collaborators.external.map((collaborator) => ({
+                id: collaborator.id,
+                name: collaborator.name,
+                email: collaborator.email,
+            })),
         };
 
         const response = await axios.post('/shift/api/tasks', payload);
@@ -604,6 +649,10 @@ async function openEdit(taskId: number, options: OpenEditOptions = {}) {
             priority: data?.priority ?? 'medium',
             status: data?.status ?? 'pending',
             description: data?.description ?? '',
+            collaborators: normalizeTaskCollaborators({
+                internal: data?.internal_collaborators ?? [],
+                external: data?.external_collaborators ?? [],
+            }),
         };
         editTempIdentifier.value = Date.now().toString();
         initialEditSnapshot.value = {
@@ -611,6 +660,7 @@ async function openEdit(taskId: number, options: OpenEditOptions = {}) {
             priority: editForm.value.priority,
             status: editForm.value.status,
             description: editForm.value.description,
+            collaborators: normalizeTaskCollaborators(editForm.value.collaborators),
         };
         autosaveArmed.value = true;
         // Load comments in parallel so task details render immediately.
@@ -639,6 +689,7 @@ function closeEditNow(updateHistory = true) {
         priority: 'medium',
         status: 'pending',
         description: '',
+        collaborators: emptyTaskCollaborators(),
     };
     initialEditSnapshot.value = null;
     threadComposerHtml.value = '';
@@ -667,6 +718,7 @@ function hasPendingTaskChanges() {
     if (editForm.value.priority !== snap.priority) return true;
     if (editForm.value.status !== snap.status) return true;
     if ((editForm.value.description ?? '') !== (snap.description ?? '')) return true;
+    if (!collaboratorsEqual(editForm.value.collaborators, snap.collaborators)) return true;
     return deletedAttachmentIds.value.length > 0;
 }
 
@@ -676,7 +728,40 @@ function currentTaskSnapshot() {
         priority: editForm.value.priority,
         status: editForm.value.status,
         description: editForm.value.description,
+        collaborators: normalizeTaskCollaborators(editForm.value.collaborators),
     };
+}
+
+function hasCollaboratorManagementChanges() {
+    const snap = initialEditSnapshot.value;
+    if (!snap) return false;
+    return !collaboratorsEqual(editForm.value.collaborators, snap.collaborators);
+}
+
+function mergeEditedTask(task: Partial<TaskDetail> | null | undefined) {
+    if (!editTask.value || !task) return;
+
+    editTask.value = {
+        ...editTask.value,
+        ...task,
+        attachments: Array.isArray(task.attachments) ? task.attachments : editTask.value.attachments,
+    };
+
+    if (task.internal_collaborators || task.external_collaborators) {
+        editForm.value.collaborators = normalizeTaskCollaborators({
+            internal: Array.isArray(task.internal_collaborators) ? task.internal_collaborators : editForm.value.collaborators.internal,
+            external: Array.isArray(task.external_collaborators) ? task.external_collaborators : editForm.value.collaborators.external,
+        });
+    }
+}
+
+function updateEditCollaborators(value: TaskCollaboratorSelection) {
+    editForm.value.collaborators = normalizeTaskCollaborators(value);
+
+    if (!editOpen.value || !autosaveArmed.value) return;
+    if (!hasPendingTaskChanges()) return;
+
+    scheduleTaskAutosave();
 }
 
 function syncTaskRowFromEditForm(taskId: number) {
@@ -730,36 +815,62 @@ function showTaskSaveResultToast(success: boolean, message?: string) {
 async function saveTaskChanges() {
     if (!editTask.value) return;
     if (!hasPendingTaskChanges()) return;
+
+    const snapshot = initialEditSnapshot.value;
+    if (!snapshot) return;
+
     const taskId = editTask.value.id;
+    const needsCollaboratorUpdate = canManageCollaborators.value && hasCollaboratorManagementChanges();
+    const needsCoreUpdate = isOwner.value
+        ? (
+              editForm.value.title !== snapshot.title ||
+              editForm.value.priority !== snapshot.priority ||
+              editForm.value.status !== snapshot.status ||
+              (editForm.value.description ?? '') !== (snapshot.description ?? '') ||
+              deletedAttachmentIds.value.length > 0
+          )
+        : editForm.value.status !== snapshot.status;
+
+    if (!needsCoreUpdate && !needsCollaboratorUpdate) return;
 
     taskSaving.value = true;
     taskSaveError.value = null;
     showTaskSavingToast();
 
     try {
-        const payload = isOwner.value
-            ? {
-                  title: editForm.value.title,
-                  description: editForm.value.description,
-                  priority: editForm.value.priority,
-                  status: editForm.value.status,
-                  temp_identifier: editTempIdentifier.value,
-                  deleted_attachment_ids: deletedAttachmentIds.value.length ? deletedAttachmentIds.value : undefined,
-              }
-            : {
-                  status: editForm.value.status,
-              };
+        if (needsCoreUpdate) {
+            const payload = isOwner.value
+                ? {
+                      title: editForm.value.title,
+                      description: editForm.value.description,
+                      priority: editForm.value.priority,
+                      status: editForm.value.status,
+                      temp_identifier: editTempIdentifier.value,
+                      deleted_attachment_ids: deletedAttachmentIds.value.length ? deletedAttachmentIds.value : undefined,
+                  }
+                : {
+                      status: editForm.value.status,
+                  };
 
-        const response = await axios.put(`/shift/api/tasks/${taskId}`, payload);
-        const data = response.data?.data ?? response.data;
-        const task = data?.task ?? data ?? null;
-        if (task) {
-            editTask.value = {
-                ...editTask.value,
-                ...task,
-                attachments: Array.isArray(task.attachments) ? task.attachments : editTask.value.attachments,
-            };
+            const response = await axios.put(`/shift/api/tasks/${taskId}`, payload);
+            const data = response.data?.data ?? response.data;
+            mergeEditedTask(data?.task ?? data ?? null);
         }
+
+        if (needsCollaboratorUpdate) {
+            const response = await axios.patch(`/shift/api/tasks/${taskId}/collaborators`, {
+                environment: editTask.value.environment ?? currentAppEnvironment,
+                internal_collaborator_ids: editForm.value.collaborators.internal.map((collaborator) => Number(collaborator.id)),
+                external_collaborators: editForm.value.collaborators.external.map((collaborator) => ({
+                    id: collaborator.id,
+                    name: collaborator.name,
+                    email: collaborator.email,
+                })),
+            });
+            const data = response.data?.data ?? response.data;
+            mergeEditedTask(data?.task ?? data ?? null);
+        }
+
         deletedAttachmentIds.value = [];
         initialEditSnapshot.value = currentTaskSnapshot();
         syncTaskRowFromEditForm(taskId);
@@ -1260,6 +1371,16 @@ onMounted(async () => {
                 @update:modelValue="updateCreateForm"
                 @update:uploading="createUploading = $event"
             >
+                <TaskCollaboratorField
+                    :model-value="createForm.collaborators"
+                    lookup-url="/shift/api/task-collaborators"
+                    internal-label="SHIFT Team"
+                    internal-description="Collaborators from the SHIFT portal for this project."
+                    external-label="Project Users"
+                    external-description="Users from this app who should be able to access the task."
+                    @update:model-value="updateCreateCollaborators"
+                />
+
                 <template #actions>
                     <SheetFooter class="flex flex-row items-center justify-between border-t px-6 py-4">
                         <Button type="button" variant="outline" @click="closeCreate">Cancel</Button>
@@ -1377,6 +1498,20 @@ onMounted(async () => {
                                         <div v-else>No description provided.</div>
                                     </div>
                                 </template>
+                            </div>
+
+                            <div class="space-y-2">
+                                <TaskCollaboratorField
+                                    :model-value="editForm.collaborators"
+                                    :disabled="editLoading || editUploading"
+                                    lookup-url="/shift/api/task-collaborators"
+                                    internal-label="SHIFT Team"
+                                    internal-description="Collaborators from the SHIFT portal for this project."
+                                    external-label="Project Users"
+                                    external-description="Users from this app who should be able to access the task."
+                                    :read-only="!canManageCollaborators"
+                                    @update:model-value="updateEditCollaborators"
+                                />
                             </div>
 
                             <div class="space-y-2">

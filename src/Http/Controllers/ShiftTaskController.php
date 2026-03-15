@@ -2,53 +2,31 @@
 
 namespace Wyxos\Shift\Http\Controllers;
 
+use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Str;
 
 class ShiftTaskController extends Controller
 {
-    /**
-     * Display a listing of the tasks.
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
     public function index(Request $request)
     {
-        $apiToken = config('shift.token');
-        $project = config('shift.project');
-
-        if (empty($apiToken) || empty($project)) {
-            return response()->json(['error' => 'SHIFT configuration missing. Please install Shift package and configure SHIFT_TOKEN and SHIFT_PROJECT in .env'], 500);
+        $configurationError = $this->configurationErrorResponse();
+        if ($configurationError) {
+            return $configurationError;
         }
 
-        $baseUrl = config('shift.url');
         $user = auth()->user();
         if (! $user) {
             return response()->json(['error' => 'Unauthenticated'], 401);
         }
 
         try {
-            $url = $baseUrl.'/api/tasks';
-
-            $project = config('shift.project');
-
             $params = [
-                'project' => $project,
-                'user' => [
-                    'name' => $user->name,
-                    'email' => $user->email,
-                    'id' => $user->id,
-                    'environment' => config('app.env'),
-                    'url' => config('app.url'),
-                ],
-                'metadata' => [
-                    'url' => config('app.url'),
-                    'environment' => config('app.env'),
-                ],
+                ...$this->basePayload(),
             ];
 
-            // Add status filter if provided
             if ($request->has('status')) {
                 $params['status'] = $request->status;
             }
@@ -73,9 +51,7 @@ class ShiftTaskController extends Controller
                 $params['page'] = (int) $request->page;
             }
 
-            $response = Http::withToken($apiToken)
-                ->acceptJson()
-                ->get($url, $params);
+            $response = $this->shiftClient()->get($this->baseUrl().'/api/tasks', $params);
 
             if ($response->successful()) {
                 return response()->json($response->json());
@@ -87,46 +63,26 @@ class ShiftTaskController extends Controller
         }
     }
 
-    /**
-     * Store a newly created task in storage.
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
     public function store(Request $request)
     {
-        $apiToken = config('shift.token');
-        $project = config('shift.project');
-
-        if (empty($apiToken) || empty($project)) {
-            return response()->json(['error' => 'SHIFT configuration missing. Please install Shift package and configure SHIFT_TOKEN and SHIFT_PROJECT in .env'], 500);
+        $configurationError = $this->configurationErrorResponse();
+        if ($configurationError) {
+            return $configurationError;
         }
-        $baseUrl = config('shift.url');
+
         $user = auth()->user();
         if (! $user) {
             return response()->json(['error' => 'Unauthenticated'], 401);
         }
+
         try {
-            // Regular JSON request with temp_identifier for attachments
             $payload = [
                 ...$request->except('status'),
                 'status' => 'pending',
-                'project' => $project,
-                'user' => [
-                    'name' => $user->name,
-                    'email' => $user->email,
-                    'id' => $user->id,
-                    'environment' => config('app.env'),
-                    'url' => config('app.url'),
-                ],
-                'metadata' => [
-                    'url' => config('app.url'),
-                    'environment' => config('app.env'),
-                ],
+                ...$this->basePayload(),
             ];
 
-            $response = Http::withToken($apiToken)
-                ->acceptJson()
-                ->post($baseUrl.'/api/tasks', $payload);
+            $response = $this->shiftClient()->post($this->baseUrl().'/api/tasks', $payload);
 
             if ($response->successful()) {
                 return response()->json($response->json());
@@ -138,47 +94,25 @@ class ShiftTaskController extends Controller
         }
     }
 
-    /**
-     * Update the specified task in storage.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\JsonResponse
-     */
     public function update(Request $request, $id)
     {
-        $token = config('shift.token');
-        $project = config('shift.project');
-
-        if (empty($token) || empty($project)) {
-            return response()->json(['error' => 'SHIFT configuration missing. Please install Shift package and configure SHIFT_TOKEN and SHIFT_PROJECT in .env'], 500);
+        $configurationError = $this->configurationErrorResponse();
+        if ($configurationError) {
+            return $configurationError;
         }
-        $baseUrl = config('shift.url');
+
         $user = auth()->user();
         if (! $user) {
             return response()->json(['error' => 'Unauthenticated'], 401);
         }
 
         try {
-            // Regular JSON request with temp_identifier for attachments
             $payload = [
                 ...$request->all(),
-                'project' => $project,
-                'user' => [
-                    'name' => $user->name,
-                    'email' => $user->email,
-                    'id' => $user->id,
-                    'environment' => config('app.env'),
-                    'url' => config('app.url'),
-                ],
-                'metadata' => [
-                    'url' => config('app.url'),
-                    'environment' => config('app.env'),
-                ],
+                ...$this->basePayload(),
             ];
 
-            $response = Http::withToken($token)
-                ->acceptJson()
-                ->put($baseUrl.'/api/tasks/'.$id, $payload);
+            $response = $this->shiftClient()->put($this->baseUrl().'/api/tasks/'.$id, $payload);
 
             if ($response->successful()) {
                 return response()->json($response->json());
@@ -190,36 +124,63 @@ class ShiftTaskController extends Controller
         }
     }
 
-    public function show(int $id)
+    public function updateCollaborators(Request $request, int $id)
     {
-        $token = config('shift.token');
-        $project = config('shift.project');
-
-        if (empty($token) || empty($project)) {
-            return response()->json(['error' => 'SHIFT configuration missing. Please install Shift package and configure SHIFT_TOKEN and SHIFT_PROJECT in .env'], 500);
+        $configurationError = $this->configurationErrorResponse();
+        if ($configurationError) {
+            return $configurationError;
         }
-        $baseUrl = config('shift.url');
+
         $user = auth()->user();
         if (! $user) {
             return response()->json(['error' => 'Unauthenticated'], 401);
         }
+
+        $attributes = $request->validate([
+            'environment' => 'nullable|string|max:255',
+            'internal_collaborator_ids' => 'nullable|array',
+            'internal_collaborator_ids.*' => 'integer',
+            'external_collaborators' => 'nullable|array',
+            'external_collaborators.*.id' => 'required',
+            'external_collaborators.*.name' => 'required|string|max:255',
+            'external_collaborators.*.email' => 'required|email',
+        ]);
+
         try {
-            // Prepare query parameters - only include simple parameters in the query
-            $params = [
-                'project' => $project,
-                'user' => [
-                    'name' => $user->name,
-                    'email' => $user->email,
-                    'id' => $user->id,
-                    'environment' => config('app.env'),
-                    'url' => config('app.url'),
-                ],
+            $payload = [
+                ...$attributes,
+                ...$this->basePayload(),
             ];
 
-            // Add user and metadata information to headers instead of query params
-            $response = Http::withToken($token)
-                ->acceptJson()
-                ->get($baseUrl.'/api/tasks/'.$id, $params);
+            $response = $this->shiftClient()->patch($this->baseUrl().'/api/tasks/'.$id.'/collaborators', $payload);
+
+            if ($response->successful()) {
+                return response()->json($response->json());
+            }
+
+            return response()->json(['error' => $response->json()['message'] ?? 'Failed to update task collaborators'], 422);
+        } catch (\Throwable $e) {
+            return response()->json(['error' => 'Failed to update task collaborators: '.$e->getMessage()], 500);
+        }
+    }
+
+    public function show(int $id)
+    {
+        $configurationError = $this->configurationErrorResponse();
+        if ($configurationError) {
+            return $configurationError;
+        }
+
+        $user = auth()->user();
+        if (! $user) {
+            return response()->json(['error' => 'Unauthenticated'], 401);
+        }
+
+        try {
+            $response = $this->shiftClient()->get($this->baseUrl().'/api/tasks/'.$id, [
+                'project' => config('shift.project'),
+                'user' => $this->userPayload(),
+            ]);
 
             if ($response->successful()) {
                 return response()->json($response->json());
@@ -231,43 +192,20 @@ class ShiftTaskController extends Controller
         }
     }
 
-    /**
-     * Remove the specified task from storage.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\JsonResponse
-     */
     public function destroy($id)
     {
-        $token = config('shift.token');
-        $project = config('shift.project');
-
-        if (empty($token) || empty($project)) {
-            return response()->json(['error' => 'SHIFT configuration missing. Please install Shift package and configure SHIFT_TOKEN and SHIFT_PROJECT in .env'], 500);
+        $configurationError = $this->configurationErrorResponse();
+        if ($configurationError) {
+            return $configurationError;
         }
-        $baseUrl = config('shift.url');
+
         $user = auth()->user();
         if (! $user) {
             return response()->json(['error' => 'Unauthenticated'], 401);
         }
 
         try {
-            $response = Http::withToken($token)
-                ->acceptJson()
-                ->delete($baseUrl.'/api/tasks/'.$id, [
-                    'project' => $project,
-                    'user' => [
-                        'name' => $user->name,
-                        'email' => $user->email,
-                        'id' => $user->id,
-                        'environment' => config('app.env'),
-                        'url' => config('app.url'),
-                    ],
-                    'metadata' => [
-                        'url' => config('app.url'),
-                        'environment' => config('app.env'),
-                    ],
-                ]);
+            $response = $this->shiftClient()->delete($this->baseUrl().'/api/tasks/'.$id, $this->basePayload());
 
             if ($response->successful()) {
                 return response()->json(['message' => 'Task deleted successfully']);
@@ -279,22 +217,13 @@ class ShiftTaskController extends Controller
         }
     }
 
-    /**
-     * Toggle task status for the authenticated user.
-     *
-     * This is intentionally separate from update() so non-owners can still change status
-     * without having to provide title/description payloads required by SHIFT.
-     */
     public function toggleStatus(Request $request, int $id)
     {
-        $token = config('shift.token');
-        $project = config('shift.project');
-
-        if (empty($token) || empty($project)) {
-            return response()->json(['error' => 'SHIFT configuration missing. Please install Shift package and configure SHIFT_TOKEN and SHIFT_PROJECT in .env'], 500);
+        $configurationError = $this->configurationErrorResponse();
+        if ($configurationError) {
+            return $configurationError;
         }
 
-        $baseUrl = config('shift.url');
         $user = auth()->user();
         if (! $user) {
             return response()->json(['error' => 'Unauthenticated'], 401);
@@ -307,23 +236,10 @@ class ShiftTaskController extends Controller
         try {
             $payload = [
                 'status' => $attributes['status'],
-                'project' => $project,
-                'user' => [
-                    'name' => $user->name,
-                    'email' => $user->email,
-                    'id' => $user->id,
-                    'environment' => config('app.env'),
-                    'url' => config('app.url'),
-                ],
-                'metadata' => [
-                    'url' => config('app.url'),
-                    'environment' => config('app.env'),
-                ],
+                ...$this->basePayload(),
             ];
 
-            $response = Http::withToken($token)
-                ->acceptJson()
-                ->patch($baseUrl.'/api/tasks/'.$id.'/toggle-status', $payload);
+            $response = $this->shiftClient()->patch($this->baseUrl().'/api/tasks/'.$id.'/toggle-status', $payload);
 
             if ($response->successful()) {
                 return response()->json($response->json());
@@ -333,5 +249,79 @@ class ShiftTaskController extends Controller
         } catch (\Throwable $e) {
             return response()->json(['error' => 'Failed to update task status: '.$e->getMessage()], 500);
         }
+    }
+
+    private function configurationErrorResponse(): ?\Illuminate\Http\JsonResponse
+    {
+        if (blank(config('shift.token')) || blank(config('shift.project'))) {
+            return response()->json(['error' => 'SHIFT configuration missing. Please install Shift package and configure SHIFT_TOKEN and SHIFT_PROJECT in .env'], 500);
+        }
+
+        return null;
+    }
+
+    private function baseUrl(): string
+    {
+        return rtrim((string) config('shift.url'), '/');
+    }
+
+    private function userPayload(): array
+    {
+        $user = auth()->user();
+
+        return [
+            'name' => $user->name,
+            'email' => $user->email,
+            'id' => $user->id,
+            'environment' => config('app.env'),
+            'url' => config('app.url'),
+        ];
+    }
+
+    private function basePayload(): array
+    {
+        return [
+            'project' => config('shift.project'),
+            'user' => $this->userPayload(),
+            'metadata' => [
+                'url' => config('app.url'),
+                'environment' => config('app.env'),
+            ],
+        ];
+    }
+
+    private function shiftClient(): PendingRequest
+    {
+        $request = Http::withToken((string) config('shift.token'))
+            ->acceptJson();
+
+        if ($this->isLocalOrPrivateUrl($this->baseUrl())) {
+            $request = $request->withoutVerifying();
+        }
+
+        return $request;
+    }
+
+    private function isLocalOrPrivateUrl(string $url): bool
+    {
+        $host = parse_url($url, PHP_URL_HOST);
+
+        if (! is_string($host) || $host === '') {
+            return true;
+        }
+
+        if (in_array($host, ['localhost', '127.0.0.1', '::1'], true)) {
+            return true;
+        }
+
+        if (Str::endsWith($host, ['.test', '.local'])) {
+            return true;
+        }
+
+        if (filter_var($host, FILTER_VALIDATE_IP) !== false) {
+            return filter_var($host, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) === false;
+        }
+
+        return false;
     }
 }
