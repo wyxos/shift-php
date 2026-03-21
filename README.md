@@ -18,7 +18,7 @@ By default, `install:shift` now uses the SHIFT browser/device verification flow:
 - Creates a SHIFT install session
 - Prints the verification URL and short code for browser approval
 - Polls until the session is approved or expires
-- Loads the projects you can install into and lets you choose one
+- Loads the projects you can install into and lets you choose one, or create a new standalone SHIFT project if none exist yet
 - Finalizes the install and writes `SHIFT_TOKEN` / `SHIFT_PROJECT`
 - Registers the current app environment for external collaborator lookup
 - Scaffolds `App\Services\ShiftCollaboratorResolver` when it does not exist

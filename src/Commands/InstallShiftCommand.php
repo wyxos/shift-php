@@ -218,7 +218,7 @@ class InstallShiftCommand extends Command
 
         $session = $this->waitForInstallSessionApproval($client, $session);
         $projects = $client->projects($session);
-        $selectedProject = $this->chooseInstallableProject($projects);
+        $selectedProject = $this->chooseOrCreateInstallableProject($client, $session, $projects);
         $credentials = $client->finalize($session, $selectedProject);
 
         $this->environmentRegisteredDuringCredentialResolution = true;
@@ -264,8 +264,14 @@ class InstallShiftCommand extends Command
         }
     }
 
-    private function chooseInstallableProject(array $projects): array
+    private function chooseOrCreateInstallableProject(InstallSessionClient $client, array $session, array $projects): array
     {
+        if ($projects === []) {
+            $this->warn('No manageable SHIFT projects were found for your account.');
+
+            return $this->createInstallableProject($client, $session);
+        }
+
         $options = [];
         $projectsByOption = [];
 
@@ -275,9 +281,47 @@ class InstallShiftCommand extends Command
             $projectsByOption[$label] = $project;
         }
 
+        $createOption = '[+] Create a new SHIFT project';
+        $options[] = $createOption;
+
         $selection = $this->choice('Select which SHIFT project to link to this application', $options, 0);
 
+        if ($selection === $createOption) {
+            return $this->createInstallableProject($client, $session);
+        }
+
         return $projectsByOption[$selection] ?? $projects[0];
+    }
+
+    private function createInstallableProject(InstallSessionClient $client, array $session): array
+    {
+        $defaultName = $this->defaultInstallProjectName();
+
+        while (true) {
+            $name = trim((string) $this->ask('Enter a name for the new SHIFT project', $defaultName));
+
+            if ($name === '') {
+                $this->error('A project name is required.');
+
+                continue;
+            }
+
+            $project = $client->createProject($session, $name);
+            $this->info("Created SHIFT project: {$project['name']}");
+
+            return $project;
+        }
+    }
+
+    private function defaultInstallProjectName(): string
+    {
+        $appName = trim((string) config('app.name', ''));
+
+        if ($appName !== '') {
+            return $appName;
+        }
+
+        return Str::headline(basename(base_path()));
     }
 
     private function isApprovedInstallSessionStatus(?string $status): bool
