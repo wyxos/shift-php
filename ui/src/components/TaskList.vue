@@ -1215,7 +1215,7 @@ onMounted(async () => {
                             </Badge>
                         </Button>
                     </SheetTrigger>
-                    <SheetContent class="flex h-full w-[320px] flex-col p-0" side="right">
+                    <SheetContent class="flex h-full flex-col p-0" side="right">
                         <SheetHeader class="p-0">
                             <div class="px-6 pt-6 pb-3">
                                 <SheetTitle>Filters</SheetTitle>
@@ -1354,7 +1354,7 @@ onMounted(async () => {
     </Card>
 
     <Sheet v-model:open="createOpen">
-        <SheetContent class="flex h-full w-full max-w-none flex-col p-0 sm:w-1/2 sm:max-w-none lg:w-1/3" side="right">
+        <SheetContent class="flex h-full flex-col p-0" side="right">
             <SheetHeader class="p-0">
                 <div class="px-6 pt-6 pb-3">
                     <SheetTitle>Create Task</SheetTitle>
@@ -1400,7 +1400,7 @@ onMounted(async () => {
     </Sheet>
 
     <Sheet :open="editOpen" @update:open="onEditOpenChange">
-        <SheetContent class="flex h-full w-full max-w-none flex-col p-0 sm:w-1/2 sm:max-w-none" side="right">
+        <SheetContent class="flex h-full flex-col p-0" side="right">
             <form class="flex h-full flex-col" data-testid="edit-form">
                 <!-- Keep an accessible title for the sheet without a visible header. -->
                 <SheetHeader class="sr-only">
