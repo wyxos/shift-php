@@ -25,6 +25,10 @@ class InstallSessionClient
         '/api/sdk/install/sessions/projects',
     ];
 
+    private const CREATE_PROJECT_PATHS = [
+        '/api/sdk/install/sessions/projects/create',
+    ];
+
     private const FINALIZE_PATHS = [
         '/api/sdk/install/sessions/finalize',
     ];
@@ -88,13 +92,24 @@ class InstallSessionClient
             $this->attempt('GET', $this->restfulSessionUrls($sessionId, ['/projects']), $this->sessionQuery($session)),
         ]), 'Unable to load installable SHIFT projects.');
 
-        $projects = $this->normalizeProjects($response);
+        return $this->normalizeProjects($response);
+    }
 
-        if ($projects === []) {
-            throw new RuntimeException('SHIFT did not return any installable projects for this session.');
-        }
+    public function createProject(array $session, string $name): array
+    {
+        $sessionId = $this->requireSessionId($session);
+        $payload = array_filter([
+            'device_code' => $sessionId,
+            'session' => $sessionId,
+            'session_id' => $sessionId,
+            'name' => trim($name),
+        ], static fn ($value) => $value !== null && $value !== '');
 
-        return $projects;
+        $response = $this->requestJsonWithFallbacks([
+            $this->attempt('POST', $this->candidateUrls(self::CREATE_PROJECT_PATHS), $payload),
+        ], 'Unable to create a SHIFT project for this install session.');
+
+        return $this->normalizeProject($response);
     }
 
     public function finalize(array $session, array $project): array
@@ -241,10 +256,10 @@ class InstallSessionClient
                 'session',
             ]),
             'status' => Str::lower($this->stringValue($payload, [
-                'data.status',
                 'data.state',
-                'status',
+                'data.status',
                 'state',
+                'status',
             ]) ?? 'pending'),
             'verification_url' => $this->normalizeUrl($this->stringValue($payload, [
                 'data.verification_uri_complete',
@@ -327,63 +342,103 @@ class InstallSessionClient
                 continue;
             }
 
-            $id = $this->stringValue($item, [
-                'id',
-                'uuid',
-                'project_id',
-                'token',
-                'project_token',
-            ]);
+            $project = $this->normalizeProjectItem($item);
 
-            $token = $this->stringValue($item, [
-                'token',
-                'project_token',
-            ]);
-
-            $name = $this->stringValue($item, [
-                'name',
-                'title',
-            ]);
-
-            $client = $this->stringValue($item, [
-                'client_name',
-                'client.name',
-                'client',
-            ]);
-
-            $organisation = $this->stringValue($item, [
-                'organisation_name',
-                'organization_name',
-                'organisation.name',
-                'organization.name',
-                'organisation',
-                'organization',
-            ]);
-
-            $label = $this->stringValue($item, ['label']);
-
-            if ($label === null) {
-                $label = implode(' / ', array_values(array_filter([
-                    $organisation,
-                    $client,
-                    $name,
-                ], static fn ($value) => $value !== null && $value !== '')));
+            if ($project === null) {
+                continue;
             }
 
-            if ($label === '') {
-                $label = $name ?? $token ?? $id ?? 'Unnamed project';
-            }
-
-            $projects[] = [
-                'id' => $id ?? $token ?? $label,
-                'token' => $token,
-                'name' => $name ?? $label,
-                'label' => $label,
-                'raw' => $item,
-            ];
+            $projects[] = $project;
         }
 
         return $projects;
+    }
+
+    private function normalizeProject(array $payload): array
+    {
+        $item = $this->pathValue($payload, 'data.project');
+
+        if (! is_array($item)) {
+            $item = $this->pathValue($payload, 'project');
+        }
+
+        if (is_array($item)) {
+            $project = $this->normalizeProjectItem($item);
+
+            if ($project !== null) {
+                return $project;
+            }
+        }
+
+        $projects = $this->normalizeProjects($payload);
+
+        if ($projects !== []) {
+            return $projects[0];
+        }
+
+        throw new RuntimeException('SHIFT did not return a usable project for this install session.');
+    }
+
+    private function normalizeProjectItem(array $item): ?array
+    {
+        $id = $this->stringValue($item, [
+            'id',
+            'uuid',
+            'project_id',
+            'token',
+            'project_token',
+        ]);
+
+        $token = $this->stringValue($item, [
+            'token',
+            'project_token',
+        ]);
+
+        $name = $this->stringValue($item, [
+            'name',
+            'title',
+        ]);
+
+        $client = $this->stringValue($item, [
+            'client_name',
+            'client.name',
+            'client',
+        ]);
+
+        $organisation = $this->stringValue($item, [
+            'organisation_name',
+            'organization_name',
+            'organisation.name',
+            'organization.name',
+            'organisation',
+            'organization',
+        ]);
+
+        $label = $this->stringValue($item, ['label']);
+
+        if ($label === null) {
+            $label = implode(' / ', array_values(array_filter([
+                $organisation,
+                $client,
+                $name,
+            ], static fn ($value) => $value !== null && $value !== '')));
+        }
+
+        if ($label === '') {
+            $label = $name ?? $token ?? $id ?? 'Unnamed project';
+        }
+
+        if ($label === '' && $id === null && $token === null) {
+            return null;
+        }
+
+        return [
+            'id' => $id ?? $token ?? $label,
+            'token' => $token,
+            'name' => $name ?? $label,
+            'label' => $label,
+            'raw' => $item,
+        ];
     }
 
     private function attempt(string $method, array $urls, array $payload): array
