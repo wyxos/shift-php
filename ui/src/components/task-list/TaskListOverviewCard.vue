@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import ActionIconButton from '@shared/components/ActionIconButton.vue';
 import { getPriorityBadgeClass, getPriorityLabel, getStatusBadgeClass, getStatusLabel } from '@shared/tasks/presentation';
 import { Button } from '@shift/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@shift/ui/card';
@@ -128,13 +129,18 @@ defineProps<Props>();
                     </div>
 
                     <div class="flex items-center gap-2">
-                        <Button size="sm" title="Edit" variant="outline" @click="openEdit(task.id)">
+                        <ActionIconButton label="Edit task" title="Edit" @click="openEdit(task.id)">
                             <Pencil class="h-4 w-4" />
-                        </Button>
-                        <Button :disabled="deleteLoading === task.id" size="sm" title="Delete" variant="destructive" @click="deleteTask(task.id)">
-                            <span v-if="deleteLoading === task.id">Deleting...</span>
-                            <Trash2 v-else class="h-4 w-4" />
-                        </Button>
+                        </ActionIconButton>
+                        <ActionIconButton
+                            label="Delete task"
+                            title="Delete"
+                            variant="destructive"
+                            :loading="deleteLoading === task.id"
+                            @click="deleteTask(task.id)"
+                        >
+                            <Trash2 class="h-4 w-4" />
+                        </ActionIconButton>
                     </div>
                 </li>
             </ul>
