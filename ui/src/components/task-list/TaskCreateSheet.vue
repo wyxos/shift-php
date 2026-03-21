@@ -62,9 +62,11 @@ const aiImproveEnabled = getTaskListAiImproveEnabled();
                 <TaskCollaboratorField
                     :model-value="form.collaborators"
                     lookup-url="/shift/api/task-collaborators"
-                    internal-label="SHIFT Team"
+                    internal-label="SHIFT"
+                    internal-badge-label="SHIFT"
                     internal-description="Collaborators from the SHIFT portal for this project."
                     external-label="Project Users"
+                    :external-badge-label="null"
                     external-description="Users from this app who should be able to access the task."
                     @update:model-value="updateCollaborators"
                 />
