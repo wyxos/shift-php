@@ -35,7 +35,6 @@ import {
 } from '@shared/tasks/presentation';
 import { buildReplyQuoteHtml, extractPlainTextFromContent, renderRichContent } from '@shared/tasks/rich-content';
 import { formatThreadTime, getReplyTargetFromEventTarget, mapThreadToMessage, shouldHandleImage } from '@shared/tasks/thread';
-import { getRuntimeAppEnvironment } from '../lib/runtime-config';
 import { Button } from '@shift/ui/button';
 import { ButtonGroup } from '@shift/ui/button-group';
 import { Card, CardContent, CardHeader, CardTitle } from '@shift/ui/card';
@@ -48,6 +47,7 @@ import { Filter, Paperclip, Pencil, Plus, Trash2 } from 'lucide-vue-next';
 import { ContextMenuContent, ContextMenuItem, ContextMenuPortal, ContextMenuRoot, ContextMenuSeparator, ContextMenuTrigger } from 'reka-ui';
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { toast } from 'vue-sonner';
+import { getRuntimeAppEnvironment } from '../lib/runtime-config';
 import Badge from './ui/badge.vue';
 
 type Task = {
@@ -158,6 +158,11 @@ const lastTouchTapAt = ref(0);
 const lastTouchTapId = ref<number | null>(null);
 
 const commentsScrollRef = ref<HTMLElement | null>(null);
+const editMobilePane = ref<'details' | 'comments'>('details');
+const editMobilePaneOptions = [
+    { value: 'details', label: 'Details' },
+    { value: 'comments', label: 'Comments' },
+];
 
 const lightboxOpen = ref(false);
 const lightboxSrc = ref('');
@@ -339,6 +344,11 @@ async function fetchThreads(taskId: number) {
 
 watch(editOpen, async (open) => {
     if (!open) return;
+    scrollCommentsToBottomSoon();
+});
+
+watch(editMobilePane, (pane) => {
+    if (!editOpen.value || pane !== 'comments') return;
     scrollCommentsToBottomSoon();
 });
 
@@ -637,6 +647,7 @@ async function openEdit(taskId: number, options: OpenEditOptions = {}) {
     threadEditSaving.value = false;
     contextMenuMessageId.value = null;
     contextMenuSelectionText.value = '';
+    editMobilePane.value = 'details';
     if (updateHistory) {
         syncTaskQuery(taskId, 'push');
     }
@@ -699,6 +710,7 @@ function closeEditNow(updateHistory = true) {
     threadEditSaving.value = false;
     contextMenuMessageId.value = null;
     contextMenuSelectionText.value = '';
+    editMobilePane.value = 'details';
     taskSaving.value = false;
     taskSaveError.value = null;
     pendingTaskSave.value = false;
@@ -823,13 +835,11 @@ async function saveTaskChanges() {
     const taskId = editTask.value.id;
     const needsCollaboratorUpdate = canManageCollaborators.value && hasCollaboratorManagementChanges();
     const needsCoreUpdate = isOwner.value
-        ? (
-              editForm.value.title !== snapshot.title ||
-              editForm.value.priority !== snapshot.priority ||
-              editForm.value.status !== snapshot.status ||
-              (editForm.value.description ?? '') !== (snapshot.description ?? '') ||
-              deletedAttachmentIds.value.length > 0
-          )
+        ? editForm.value.title !== snapshot.title ||
+          editForm.value.priority !== snapshot.priority ||
+          editForm.value.status !== snapshot.status ||
+          (editForm.value.description ?? '') !== (snapshot.description ?? '') ||
+          deletedAttachmentIds.value.length > 0
         : editForm.value.status !== snapshot.status;
 
     if (!needsCoreUpdate && !needsCollaboratorUpdate) return;
@@ -1222,7 +1232,7 @@ onMounted(async () => {
                                 <SheetDescription class="text-muted-foreground mt-1 text-sm"> Refine your task list in real time. </SheetDescription>
                             </div>
                         </SheetHeader>
-                        <div class="flex-1 space-y-6 overflow-auto px-6 pb-6">
+                        <div class="min-h-0 flex-1 space-y-6 overflow-y-auto px-6 pb-6">
                             <div class="space-y-2">
                                 <Label class="text-muted-foreground">Search</Label>
                                 <Input v-model="draftSearchTerm" data-testid="filter-search" placeholder="Search by title" />
@@ -1354,7 +1364,7 @@ onMounted(async () => {
     </Card>
 
     <Sheet v-model:open="createOpen">
-        <SheetContent class="flex h-full flex-col p-0" side="right">
+        <SheetContent class="flex h-full flex-col p-0" side="right" width-preset="task">
             <SheetHeader class="p-0">
                 <div class="px-6 pt-6 pb-3">
                     <SheetTitle>Create Task</SheetTitle>
@@ -1363,6 +1373,7 @@ onMounted(async () => {
             </SheetHeader>
 
             <TaskCreateForm
+                class="min-h-0 flex-1"
                 :model-value="createForm"
                 :temp-identifier="createTempIdentifier"
                 :axios-instance="axios"
@@ -1400,18 +1411,28 @@ onMounted(async () => {
     </Sheet>
 
     <Sheet :open="editOpen" @update:open="onEditOpenChange">
-        <SheetContent class="flex h-full flex-col p-0" side="right">
-            <form class="flex h-full flex-col" data-testid="edit-form">
+        <SheetContent class="flex h-full flex-col p-0" side="right" width-preset="task">
+            <form class="flex h-full min-h-0 flex-col" data-testid="edit-form">
                 <!-- Keep an accessible title for the sheet without a visible header. -->
                 <SheetHeader class="sr-only">
                     <SheetTitle>Task</SheetTitle>
                 </SheetHeader>
 
-                <div class="flex-1 overflow-hidden px-6 py-10" @click="onRichContentClick">
+                <div v-if="editTask && !editLoading && !editError" class="border-b px-6 py-4 lg:hidden">
+                    <ButtonGroup
+                        v-model="editMobilePane"
+                        aria-label="Edit task section"
+                        test-id-prefix="edit-mobile-pane"
+                        :options="editMobilePaneOptions"
+                        :columns="2"
+                    />
+                </div>
+
+                <div class="flex-1 overflow-y-auto px-6 pt-6 pb-10 lg:min-h-0 lg:overflow-hidden lg:py-10" @click="onRichContentClick">
                     <div v-if="editLoading" class="text-muted-foreground py-8 text-center">Loading task...</div>
                     <div v-else-if="editError" class="text-destructive py-8 text-center">{{ editError }}</div>
-                    <div v-else-if="editTask" class="grid h-full gap-6 lg:grid-cols-2">
-                        <div class="space-y-6 overflow-auto pr-1">
+                    <div v-else-if="editTask" class="grid gap-6 lg:h-full lg:min-h-0 lg:grid-cols-2">
+                        <div :class="[editMobilePane === 'comments' ? 'hidden lg:block' : 'block', 'space-y-6 pr-1 lg:min-h-0 lg:overflow-y-auto']">
                             <div class="border-muted-foreground/20 bg-muted/10 grid gap-2 rounded-lg border p-3 text-xs">
                                 <div v-if="editTask.created_at" class="text-muted-foreground" data-testid="edit-task-created-at">
                                     Created {{ formatThreadTime(editTask.created_at) }}
@@ -1437,9 +1458,7 @@ onMounted(async () => {
                                     <Input v-model="editForm.title" placeholder="Short, descriptive title" required />
                                 </template>
                                 <template v-else>
-                                    <div
-                                        class="border-muted-foreground/30 bg-muted/10 text-foreground rounded-md border border-dashed p-3 text-sm"
-                                    >
+                                    <div class="border-muted-foreground/30 bg-muted/10 text-foreground rounded-md border border-dashed p-3 text-sm">
                                         {{ editTask.title }}
                                     </div>
                                 </template>
@@ -1453,7 +1472,8 @@ onMounted(async () => {
                                     test-id-prefix="task-status"
                                     :disabled="editLoading || editUploading"
                                     :options="statusOptions.filter((option) => option.value !== 'closed')"
-                                    :columns="4"
+                                    :columns="2"
+                                    class="xl:grid-cols-4"
                                 />
                             </div>
 
@@ -1556,7 +1576,10 @@ onMounted(async () => {
                         </div>
 
                         <div
-                            class="border-muted-foreground/10 via-background to-background flex h-full flex-col overflow-hidden rounded-2xl border bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900/5"
+                            :class="[
+                                editMobilePane === 'details' ? 'hidden lg:flex' : 'flex',
+                                'border-muted-foreground/10 via-background to-background max-h-[70vh] min-h-[28rem] flex-col overflow-hidden rounded-2xl border bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900/5 lg:h-full lg:max-h-none lg:min-h-0',
+                            ]"
                         >
                             <div class="border-muted-foreground/10 flex items-center justify-between border-b px-4 py-3">
                                 <div>
