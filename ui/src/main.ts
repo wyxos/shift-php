@@ -1,8 +1,9 @@
-import { createApp } from 'vue'
-import './style.css'
-import App from './App.vue'
-import router from './router'
+import { createApp } from 'vue';
+import { initializeTheme } from '@shift/composables/useAppearance';
+import './style.css';
+import App from './App.vue';
+import router from './router';
 
-createApp(App)
-  .use(router)
-  .mount('#app')
+initializeTheme();
+
+createApp(App).use(router).mount('#app');

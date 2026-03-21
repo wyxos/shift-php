@@ -2,6 +2,7 @@
 import { onMounted, ref, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import axios from '../axios-config';
+import ActionIconButton from '@shared/components/ActionIconButton.vue';
 import { Pencil, Trash2, Plus, Filter } from 'lucide-vue-next';
 import { Button } from '@shift/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@shift/ui/card';
@@ -181,23 +182,20 @@ onMounted(() => {
                     </Badge>
                     <span class="ml-2 text-xs text-muted-foreground uppercase">{{ task.priority }}</span>
                     <div class="mt-2 flex space-x-2 sm:mt-0">
-                        <router-link
-                            :to="{ name: 'edit-task', params: { id: task.id.toString() } }"
-                            class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring border border-input bg-transparent shadow-sm hover:bg-accent hover:text-accent-foreground h-8 px-3"
-                            title="Edit"
-                        >
-                            <Pencil class="h-4 w-4" />
-                        </router-link>
-                        <Button
-                            variant="destructive"
-                            size="sm"
-                            :disabled="deleteLoading === task.id"
-                            @click="deleteTask(task.id)"
+                        <ActionIconButton as-child label="Edit task" title="Edit">
+                            <router-link :to="{ name: 'edit-task', params: { id: task.id.toString() } }">
+                                <Pencil class="h-4 w-4" />
+                            </router-link>
+                        </ActionIconButton>
+                        <ActionIconButton
+                            label="Delete task"
                             title="Delete"
+                            variant="destructive"
+                            :loading="deleteLoading === task.id"
+                            @click="deleteTask(task.id)"
                         >
-                            <span v-if="deleteLoading === task.id">Deleting...</span>
-                            <Trash2 v-else class="h-4 w-4" />
-                        </Button>
+                            <Trash2 class="h-4 w-4" />
+                        </ActionIconButton>
                     </div>
                 </li>
             </ul>
