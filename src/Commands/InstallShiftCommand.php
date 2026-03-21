@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use RuntimeException;
+use Symfony\Component\Console\Formatter\OutputFormatterStyle;
 use Wyxos\Shift\Support\InstallSessionClient;
 
 class InstallShiftCommand extends Command
@@ -17,6 +18,8 @@ class InstallShiftCommand extends Command
 
     private bool $environmentRegisteredDuringCredentialResolution = false;
 
+    private bool $usedBrowserVerification = false;
+
     protected $signature = 'install:shift
         {--manual : Prompt for raw SHIFT credentials instead of using browser verification.}';
 
@@ -24,8 +27,10 @@ class InstallShiftCommand extends Command
 
     public function handle(): int
     {
-        $this->info('Starting SHIFT installation...');
+        $this->configureOutputStyles();
+        $this->components->info('Starting SHIFT installation.');
         $this->environmentRegisteredDuringCredentialResolution = false;
+        $this->usedBrowserVerification = false;
 
         try {
             [$environment, $url] = $this->resolveApplicationContext();
@@ -59,24 +64,33 @@ class InstallShiftCommand extends Command
 
                 return self::FAILURE;
             }
-        } else {
-            $this->info("Registered {$environment} => {$url} with SHIFT.");
         }
 
-        $this->ensureResolverExists();
+        $resolverScaffolded = $this->ensureResolverExists();
 
-        $this->info('SHIFT installation complete.');
+        $this->newLine();
+        $this->components->info($this->usedBrowserVerification
+            ? 'SHIFT authorization approved.'
+            : 'Configured SHIFT credentials.');
+        $this->components->info("Registered {$environment} => {$url} with SHIFT.");
 
-        if ($this->confirm('Would you like to run a test by creating a dummy task?')) {
-            $this->call('shift:test');
+        if ($resolverScaffolded) {
+            $this->components->info('Scaffolded App\\Services\\ShiftCollaboratorResolver.');
         }
 
+        $this->newLine();
         $this->call('vendor:publish', [
             '--tag' => 'shift',
             '--force' => true,
         ]);
 
-        $this->info('Assets published successfully.');
+        $this->newLine();
+        $this->components->info('SHIFT installation complete.');
+
+        if ($this->confirm('Run a test task now?', false)) {
+            $this->newLine();
+            $this->call('shift:test');
+        }
 
         return self::SUCCESS;
     }
@@ -222,7 +236,7 @@ class InstallShiftCommand extends Command
         $credentials = $client->finalize($session, $selectedProject);
 
         $this->environmentRegisteredDuringCredentialResolution = true;
-        $this->info('SHIFT authorization approved.');
+        $this->usedBrowserVerification = true;
 
         return [$credentials['token'], $credentials['project']];
     }
@@ -307,7 +321,7 @@ class InstallShiftCommand extends Command
             }
 
             $project = $client->createProject($session, $name);
-            $this->info("Created SHIFT project: {$project['name']}");
+            $this->components->info("Created SHIFT project: {$project['name']}");
 
             return $project;
         }
@@ -399,8 +413,6 @@ class InstallShiftCommand extends Command
 
             throw new RuntimeException((string) $message);
         }
-
-        $this->info("Registered {$environment} => {$url} with SHIFT.");
     }
 
     private function shiftBaseUrl(): string
@@ -419,12 +431,12 @@ class InstallShiftCommand extends Command
         return "\"{$escaped}\"";
     }
 
-    private function ensureResolverExists(): void
+    private function ensureResolverExists(): bool
     {
         $resolverPath = app_path('Services/ShiftCollaboratorResolver.php');
 
         if (File::exists($resolverPath)) {
-            return;
+            return false;
         }
 
         File::ensureDirectoryExists(dirname($resolverPath));
@@ -437,7 +449,7 @@ class InstallShiftCommand extends Command
 
         File::put($resolverPath, $stub);
 
-        $this->info('Scaffolded App\\Services\\ShiftCollaboratorResolver.');
+        return true;
     }
 
     private function isLocalOrPrivateUrl(string $url): bool
@@ -466,5 +478,10 @@ class InstallShiftCommand extends Command
     private function shouldWarnAboutUrl(string $url): bool
     {
         return $this->isLocalOrPrivateUrl($url);
+    }
+
+    private function configureOutputStyles(): void
+    {
+        $this->output->getFormatter()->setStyle('question', new OutputFormatterStyle('yellow', null, ['bold']));
     }
 }
