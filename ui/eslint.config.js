@@ -13,7 +13,7 @@ export default defineConfigWithVueTs(
     rules: {
       'vue/multi-word-component-names': 'off',
       '@typescript-eslint/no-explicit-any': 'off',
-      'max-lines': ['warn', { max: 500 }],
+            'max-lines': ['error', { max: 500 }],
     },
   },
   prettier,
