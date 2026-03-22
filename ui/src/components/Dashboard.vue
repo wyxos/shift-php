@@ -2,8 +2,7 @@
 import { Badge } from '@shift/ui/badge';
 import { Button } from '@shift/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@shift/ui/card';
-import { ChartContainer, ChartCrosshair, ChartTooltip, ChartTooltipContent, componentToString } from '@shift/ui/chart';
-import { Donut } from '@unovis/ts';
+import { ChartContainer } from '@shift/ui/chart';
 import { VisAxis, VisDonut, VisGroupedBar, VisSingleContainer, VisXYContainer } from '@unovis/vue';
 import { CheckCircle2, Clock3, Flame, UserCircle2 } from 'lucide-vue-next';
 import { useRouter } from 'vue-router';
@@ -145,17 +144,6 @@ const {
                                     :tick-format="formatDateTick"
                                 />
                                 <VisAxis type="y" :num-ticks="4" :tick-line="false" :domain-line="false" />
-                                <ChartTooltip />
-                                <ChartCrosshair
-                                    :template="
-                                        componentToString(throughputChartConfig, ChartTooltipContent, {
-                                            labelFormatter(value: number | Date) {
-                                                return new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-                                            },
-                                        })
-                                    "
-                                    :color="[throughputChartConfig.created.color, throughputChartConfig.completed.color]"
-                                />
                             </VisXYContainer>
                         </ChartContainer>
                         <div class="text-muted-foreground mt-3 flex items-center justify-between text-xs">
@@ -181,13 +169,6 @@ const {
                                     :color="statusDonutColor"
                                     :arc-width="24"
                                     :corner-radius="3"
-                                />
-                                <ChartTooltip
-                                    :triggers="{
-                                        [Donut.selectors.segment]: componentToString(statusChartConfig, ChartTooltipContent, {
-                                            labelKey: 'label',
-                                        })!,
-                                    }"
                                 />
                             </VisSingleContainer>
                         </ChartContainer>
@@ -223,15 +204,6 @@ const {
                                     :tick-format="formatPriorityTick"
                                 />
                                 <VisAxis type="y" :num-ticks="4" :tick-line="false" :domain-line="false" />
-                                <ChartTooltip />
-                                <ChartCrosshair
-                                    :template="
-                                        componentToString(priorityChartConfig, ChartTooltipContent, {
-                                            labelKey: 'label',
-                                        })
-                                    "
-                                    color="#0000"
-                                />
                             </VisXYContainer>
                         </ChartContainer>
                     </CardContent>
@@ -264,15 +236,6 @@ const {
                                     :tick-format="formatProjectTick"
                                 />
                                 <VisAxis type="y" :num-ticks="4" :tick-line="false" :domain-line="false" />
-                                <ChartTooltip />
-                                <ChartCrosshair
-                                    :template="
-                                        componentToString(projectChartConfig, ChartTooltipContent, {
-                                            labelKey: 'project',
-                                        })
-                                    "
-                                    color="#0000"
-                                />
                             </VisXYContainer>
                         </ChartContainer>
                     </CardContent>
@@ -295,13 +258,6 @@ const {
                                         :color="ownershipDonutColor"
                                         :arc-width="20"
                                         :corner-radius="3"
-                                    />
-                                    <ChartTooltip
-                                        :triggers="{
-                                            [Donut.selectors.segment]: componentToString(ownershipChartConfig, ChartTooltipContent, {
-                                                labelKey: 'label',
-                                            })!,
-                                        }"
                                     />
                                 </VisSingleContainer>
                             </ChartContainer>
@@ -352,15 +308,6 @@ const {
                                     :tick-format="formatMyStatusTick"
                                 />
                                 <VisAxis type="y" :num-ticks="4" :tick-line="false" :domain-line="false" />
-                                <ChartTooltip />
-                                <ChartCrosshair
-                                    :template="
-                                        componentToString(myStatusChartConfig, ChartTooltipContent, {
-                                            labelKey: 'label',
-                                        })
-                                    "
-                                    color="#0000"
-                                />
                             </VisXYContainer>
                         </ChartContainer>
                     </CardContent>
