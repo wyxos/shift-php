@@ -1,76 +1,29 @@
 # SHIFT PHP SDK Package (`packages/shift-php/`)
 
-## Code edit instructions
+Applies inside `packages/shift-php/**` except where `ui/AGENTS.md` is more specific.
 
-After you've finished editing
+## Package Boundaries
+- This directory is the nested Composer package and its own Git repo.
+- `/shift/**` routes belong here, not in the harness app.
+- The dashboard shell is served by `src/Http/Controllers/ShiftController.php`.
+- `/shift/api/**` controllers proxy authenticated user context back to the SHIFT portal using `config('shift.url')`, `config('shift.token')`, and `config('shift.project')`.
+- Keep package routes, proxy payloads, and portal expectations aligned with the main SHIFT repo `../shift`.
 
-- Use the jetbrains mcp (if available) to find any problems
-- Run format command if available
-- Run lint command if available
+## Current Contract Rules
+- `routes/shift.php` keeps two public endpoints outside the main middleware group: `POST /shift/api/notifications` and `GET /shift/api/collaborators/external`.
+- `POST /shift/api/notifications` is intentionally public but must stay signed with `X-Shift-Timestamp` and `X-Shift-Signature`. Keep it aligned with `src/Http/Controllers/ShiftNotificationController.php` and the portal sender.
+- `GET /shift/api/collaborators/external` stays outside the main middleware group but authorizes with the configured project token.
+- All other `/shift/api/**` task, thread, attachment, and dashboard endpoints stay behind `config('shift.routes.middleware')`.
+- Attachment downloads must keep using the client-app proxy route (`/shift/api/attachments/{attachment}/download`), not direct portal URLs.
+- In local development, `src/Http/Controllers/ShiftController.php` prefers the Vite dev server and falls back to built files in `public/shift-assets/`.
 
-## How to find problems
+## Install, Publish, and Release Rules
+- `php artisan install:shift` supports browser verification and install sessions, registers the consumer app environment and URL with SHIFT, writes `SHIFT_TOKEN` and `SHIFT_PROJECT`, scaffolds `App\Services\ShiftCollaboratorResolver` when needed, and publishes assets and config at the end.
+- After UI or public asset changes, publish with `php artisan shift:publish --group=public`.
+- After config or template changes, publish with `php artisan shift:publish --group=all`.
+- This directory has its own `.git`; package commits, tags, and releases happen here.
+- `npm run release` still runs `release.mjs`, but unattended releases should prefer `node ~/Developer/wyxos/scripts/release-shift.mjs shift-php ...` or `... both ...`.
 
-- DO THIS FIRST: Check the jetbrains provided MCP server (one of intellij, pycharm, webstorm) using get_file_problems
-    - Only provide a file path if you know where the problem is, but not what the problem is. If you don't know where the problem is:
-        - Inspect code changes with git
-        - Run tests
-- Run tests
-- Run lint
-- Inspect changed files
-
-## Package Identity
-- Laravel package that provides:
-  - `/shift/**` dashboard (served from built SPA assets)
-  - `/shift/api/**` endpoints that proxy to the SHIFT portal API
-  - Artisan commands for install/publish/test
-
-## Setup & Run
-- Local dev (from repo root):
-  - Install package into the portal app: `composer install`
-  - Publish package assets/config: `php artisan shift:publish --group=all`
-  - Run installer prompts: `php artisan install:shift`
-  - Create a test task: `php artisan shift:test`
-- UI build + publish (from repo root):
-  - Build SDK UI: `npm run build:shift`
-  - Publish built assets: `php artisan shift:publish --group=public`
-  - One-shot: `npm run shift:test`
-- Release (nested repo): run `npm run release` from `packages/shift-php/` (or root `npm run release` to publish after).
--
-- When used from the real SHIFT Portal repo, prefer toggling local/online with: `php artisan shift:toggle --local --path=/path/to/shift-sdk-package/packages/shift-php`
-
-## Patterns & Conventions
-- Service provider is the integration hub:
-  - ✅ DO: Register publish tags/commands/routes via `packages/shift-php/src/ShiftServiceProvider.php`
-- Routes live in the package:
-  - ✅ DO: Add/modify package routes in `packages/shift-php/routes/shift.php`
-  - ❌ DON'T: Add SDK routes to the portal app’s `routes/web.php`
-- Controllers are organized under `src/Http/Controllers/**`:
-  - ✅ DO: Follow the proxy pattern used in `packages/shift-php/src/Http/Controllers/ShiftTaskController.php`
-  - ✅ DO: Keep dashboard serving logic in `packages/shift-php/src/Http/Controllers/ShiftController.php`
-- Commands live under `src/Commands/**`:
-  - ✅ DO: Follow the signature/handle pattern in `packages/shift-php/src/Commands/InstallShiftCommand.php`
-  - ✅ DO: Use publish tags via `packages/shift-php/src/Commands/PublishShiftCommand.php`
-- Frontend build artifacts:
-  - ❌ DON'T: Edit generated files in `packages/shift-php/public/shift-assets/**` (e.g. `packages/shift-php/public/shift-assets/index.html`)
-  - ✅ DO: Edit source in `packages/shift-php/ui/src/**` and rebuild/publish
-
-## Touch Points / Key Files
-- Package entrypoint: `packages/shift-php/src/ShiftServiceProvider.php`
-- Package routes: `packages/shift-php/routes/shift.php`
-- Dashboard HTML/proxy: `packages/shift-php/src/Http/Controllers/ShiftController.php`
-- Task API proxy: `packages/shift-php/src/Http/Controllers/ShiftTaskController.php`
-- Install/publish commands: `packages/shift-php/src/Commands/InstallShiftCommand.php`, `packages/shift-php/src/Commands/PublishShiftCommand.php`
-- Package config template: `packages/shift-php/config/shift.php`
-
-## JIT Index Hints
-- Find publish tags: `rg -n \"publishes\\(\" packages/shift-php/src`
-- Find /shift routes: `rg -n \"^Route::\" packages/shift-php/routes/shift.php`
-- Find API proxy calls: `rg -n \"Http::withToken\" packages/shift-php/src/Http/Controllers`
-
-## Common Gotchas
-- Dashboard in local dev proxies to the Vite dev server (see `packages/shift-php/src/Http/Controllers/ShiftController.php`); for UI work prefer running `npm run dev:shift`.
-- After changing SDK public assets or config templates, run `php artisan shift:publish --group=all` so the portal app reflects the update.
-- `packages/shift-php/` is a nested git repo; `git status` at repo root won’t show changes inside it.
-
-## Pre-PR Checks
-- `npm run build:shift && php artisan shift:publish --group=public && ./vendor/bin/phpunit`
+## Local and Private Environment Rules
+- Do not break local or private `.test` and LAN flows when touching install, collaborator, or proxy code.
+- The package intentionally supports local and private SHIFT URLs in install-session requests, collaborator lookup, and other local development flows.
