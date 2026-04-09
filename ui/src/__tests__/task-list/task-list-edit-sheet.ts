@@ -163,6 +163,41 @@ describe('TaskList edit sheet', () => {
         wrapper.unmount();
     });
 
+    it('renders html-backed task descriptions without exposing raw tags in the edit surface', async () => {
+        (window as any).shiftConfig = { email: 'someone@example.com' };
+
+        getMock
+            .mockResolvedValueOnce(makeIndexResponse(defaultTasks))
+            .mockResolvedValueOnce({
+                data: {
+                    id: 1,
+                    title: 'Auth issue',
+                    priority: 'high',
+                    status: 'pending',
+                    created_at: '2026-02-10T17:40:00Z',
+                    description: '<p>Saved from rich editor</p>',
+                    submitter: { email: 'someone@example.com' },
+                    attachments: [],
+                },
+            })
+            .mockResolvedValueOnce({ data: { external: [] } });
+
+        const wrapper = mount(TaskList, { global: { stubs } });
+        await flushPromises();
+        await nextTick();
+
+        const firstRow = wrapper.findAll('[data-testid="task-row"]')[0];
+        await firstRow.find('button[title="Edit"]').trigger('click');
+        await flushPromises();
+        await nextTick();
+
+        const previews = wrapper.findAll('[data-testid="stub-editor-preview"]').map((node) => node.text());
+        expect(previews).toContain('Saved from rich editor');
+        expect(previews.some((text) => text.includes('<p>'))).toBe(false);
+
+        wrapper.unmount();
+    });
+
     it('renders markdown list comments as list HTML', async () => {
         getMock
             .mockResolvedValueOnce(makeIndexResponse(defaultTasks))
