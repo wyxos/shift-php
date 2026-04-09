@@ -60,7 +60,7 @@ export const stubs = {
     ShiftEditor: {
         props: ['modelValue'],
         computed: {
-            previewText() {
+            previewText(this: { modelValue?: string | null }) {
                 return String(this.modelValue || '').replace(/<[^>]+>/g, '');
             },
         },
