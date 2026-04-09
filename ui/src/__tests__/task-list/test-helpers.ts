@@ -59,12 +59,18 @@ export const stubs = {
     },
     ShiftEditor: {
         props: ['modelValue'],
+        computed: {
+            previewText() {
+                return String(this.modelValue || '').replace(/<[^>]+>/g, '');
+            },
+        },
         template: `<div v-bind="$attrs">
       <textarea
         data-testid="stub-editor-input"
         :value="modelValue"
         @input="$emit('update:modelValue', $event.target.value)"
       />
+      <div data-testid="stub-editor-preview">{{ previewText }}</div>
       <button
         data-testid="stub-send"
         @click="$emit('send', { html: modelValue || '<p>hello</p>', attachments: [] })"
