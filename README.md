@@ -3,7 +3,7 @@
 [![Latest Version on Packagist](https://img.shields.io/packagist/v/wyxos/shift-php.svg?style=flat-square)](https://packagist.org/packages/wyxos/shift-php)
 [![MIT Licensed](https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-square)](LICENSE.md)
 
-A Laravel package for submitting tasks to the SHIFT Dashboard from within your application. It provides a Vue-based UI component plus API endpoints to send issue reports or feature requests directly to your SHIFT project.
+SHIFT PHP brings the client-facing intake and workflow layer of SHIFT into Laravel apps, so reporting can feel native inside the app while triage, collaboration, and follow-up stay structured in one place.
 
 ## Installation
 
