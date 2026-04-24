@@ -58,16 +58,15 @@ function assignCommentsScrollRef(value: Element | ComponentPublicInstance | null
     <div
         :class="[
             editMobilePane === 'details' ? 'hidden lg:flex' : 'flex',
-            'border-muted-foreground/10 via-background to-background max-h-[70vh] min-h-[28rem] flex-col overflow-hidden rounded-2xl border bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900/5 lg:h-full lg:max-h-none lg:min-h-0',
+            'border-muted-foreground/10 via-background to-background max-h-[70vh] min-h-[28rem] min-w-0 flex-col overflow-hidden rounded-2xl border bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900/5 lg:h-full lg:max-h-none lg:min-h-0',
         ]"
+        data-testid="task-edit-comments-pane"
     >
         <div class="border-muted-foreground/10 flex items-center justify-between border-b px-4 py-3">
             <div>
                 <h3 class="text-foreground text-sm font-semibold">Comments</h3>
             </div>
-            <div class="text-muted-foreground text-xs">
-                {{ threadMessages.length }} message{{ threadMessages.length === 1 ? '' : 's' }}
-            </div>
+            <div class="text-muted-foreground text-xs">{{ threadMessages.length }} message{{ threadMessages.length === 1 ? '' : 's' }}</div>
         </div>
 
         <div :ref="assignCommentsScrollRef" class="flex-1 space-y-3 overflow-auto px-4 py-4" @load.capture="onCommentsMediaLoadCapture">
@@ -120,7 +119,9 @@ function assignCommentsScrollRef(value: Element | ComponentPublicInstance | null
                             </div>
                         </ContextMenuTrigger>
                         <ContextMenuPortal>
-                            <ContextMenuContent class="bg-popover text-popover-foreground z-50 min-w-[10rem] overflow-hidden rounded-md border p-1 shadow-md">
+                            <ContextMenuContent
+                                class="bg-popover text-popover-foreground z-50 min-w-[10rem] overflow-hidden rounded-md border p-1 shadow-md"
+                            >
                                 <ContextMenuItem
                                     v-if="!message.isYou"
                                     class="hover:bg-accent hover:text-accent-foreground relative flex cursor-default items-center rounded-sm px-2 py-1.5 text-sm outline-none select-none"
