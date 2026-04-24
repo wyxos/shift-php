@@ -1,6 +1,7 @@
 import { flushPromises, mount } from '@vue/test-utils';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { nextTick } from 'vue';
+import TaskList from '../../components/TaskList.vue';
 import {
     defaultStatuses,
     defaultTasks,
@@ -12,7 +13,6 @@ import {
     stubs,
     toastMocks,
 } from './test-helpers';
-import TaskList from '../../components/TaskList.vue';
 
 describe('TaskList edit sheet', () => {
     beforeEach(resetTaskListTestState);
@@ -110,11 +110,23 @@ describe('TaskList edit sheet', () => {
 
         const editStatusGroup = wrapper.get('[aria-label="Task status"]');
         const mobilePaneGroup = wrapper.get('[aria-label="Edit task section"]');
+        const sheetContent = wrapper.get('[data-testid="task-edit-sheet-content"]');
+        const sheetLayout = wrapper.get('[data-testid="task-edit-sheet-layout"]');
+        const detailsPane = wrapper.get('[data-testid="task-edit-details-pane"]');
+        const commentsPane = wrapper.get('[data-testid="task-edit-comments-pane"]');
 
         expect(wrapper.get('[data-testid="edit-task-environment"]').text()).toContain('Staging');
         expect(wrapper.find('[data-testid="edit-task-environment-select"]').exists()).toBe(false);
         expect(wrapper.get('[data-testid="edit-task-created-by"]').text()).toContain('Taylor Brown');
         expect(wrapper.get('[data-testid="edit-task-updated-at"]').text()).toContain('Updated');
+        expect(sheetContent.classes()).toContain('w-screen');
+        expect(sheetContent.classes()).toContain('md:w-screen');
+        expect(sheetContent.classes()).toContain('xl:w-[75vw]');
+        expect(sheetContent.classes()).toContain('min-[1921px]:w-[50vw]');
+        expect(sheetLayout.classes()).toContain('min-h-0');
+        expect(sheetLayout.classes()).toContain('lg:grid-cols-2');
+        expect(detailsPane.classes()).toContain('min-w-0');
+        expect(commentsPane.classes()).toContain('min-w-0');
         expect(editStatusGroup.classes()).toContain('grid');
         expect(editStatusGroup.classes()).toContain('grid-cols-2');
         expect(editStatusGroup.classes()).toContain('xl:grid-cols-4');
@@ -403,5 +415,4 @@ describe('TaskList edit sheet', () => {
         wrapper.unmount();
         vi.useRealTimers();
     });
-
 });

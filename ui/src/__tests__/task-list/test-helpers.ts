@@ -97,7 +97,7 @@ export const stubs = {
     </div>`,
     },
     Sheet: { template: '<div><slot /></div>' },
-    SheetContent: { template: '<div><slot /></div>' },
+    SheetContent: { template: '<div v-bind="$attrs"><slot /></div>' },
     SheetHeader: { template: '<div><slot /></div>' },
     SheetTitle: { template: '<div><slot /></div>' },
     SheetDescription: { template: '<div><slot /></div>' },

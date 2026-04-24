@@ -73,7 +73,10 @@ const editTaskEnvironmentLabel = computed(() => getTaskEnvironment(props.editTas
 </script>
 
 <template>
-    <div :class="[editMobilePane === 'comments' ? 'hidden lg:block' : 'block', 'space-y-6 pr-1 lg:min-h-0 lg:overflow-y-auto']">
+    <div
+        :class="[editMobilePane === 'comments' ? 'hidden lg:block' : 'block', 'min-w-0 space-y-6 pr-1 lg:min-h-0 lg:overflow-y-auto']"
+        data-testid="task-edit-details-pane"
+    >
         <div class="border-muted-foreground/20 bg-muted/10 grid gap-2 rounded-lg border p-3 text-xs">
             <div v-if="editTask.created_at" class="text-muted-foreground" data-testid="edit-task-created-at">
                 Created {{ formatThreadTime(editTask.created_at) }}
@@ -119,10 +122,18 @@ const editTaskEnvironmentLabel = computed(() => getTaskEnvironment(props.editTas
         <div class="space-y-2">
             <Label class="text-muted-foreground">Priority</Label>
             <template v-if="isOwner">
-                <ButtonGroup v-model="priorityModel" aria-label="Task priority" test-id-prefix="task-priority" :options="priorityOptions" :columns="3" />
+                <ButtonGroup
+                    v-model="priorityModel"
+                    aria-label="Task priority"
+                    test-id-prefix="task-priority"
+                    :options="priorityOptions"
+                    :columns="3"
+                />
             </template>
             <template v-else>
-                <div class="border-muted-foreground/30 bg-muted/10 text-foreground inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm">
+                <div
+                    class="border-muted-foreground/30 bg-muted/10 text-foreground inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm"
+                >
                     {{ getPriorityLabel(editTask.priority) }}
                 </div>
             </template>

@@ -84,7 +84,12 @@ const mobilePaneOptions = computed<MobilePaneOption[]>(() => [...props.editMobil
 
 <template>
     <Sheet :open="open" @update:open="setOpen">
-        <SheetContent class="flex h-full flex-col p-0" side="right" width-preset="task">
+        <SheetContent
+            class="flex h-full w-screen max-w-none min-w-0 flex-col p-0 min-[1921px]:w-[50vw] md:w-screen xl:w-[75vw]"
+            data-testid="task-edit-sheet-content"
+            side="right"
+            width-preset="task"
+        >
             <form class="flex h-full min-h-0 flex-col" data-testid="edit-form">
                 <SheetHeader class="sr-only">
                     <SheetTitle>Task</SheetTitle>
@@ -104,7 +109,7 @@ const mobilePaneOptions = computed<MobilePaneOption[]>(() => [...props.editMobil
                     <div v-if="editLoading" class="text-muted-foreground py-8 text-center">Loading task...</div>
                     <div v-else-if="editError" class="text-destructive py-8 text-center">{{ editError }}</div>
 
-                    <div v-else-if="editTask" class="grid gap-6 lg:h-full lg:min-h-0 lg:grid-cols-2">
+                    <div v-else-if="editTask" class="grid min-h-0 gap-6 lg:h-full lg:grid-cols-2" data-testid="task-edit-sheet-layout">
                         <TaskEditDetailsPane
                             :edit-task="editTask"
                             :edit-loading="editLoading"
