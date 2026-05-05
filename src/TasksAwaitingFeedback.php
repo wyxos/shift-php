@@ -41,7 +41,8 @@ class TasksAwaitingFeedback extends Notification
             ->subject('Tasks Awaiting Your Feedback')
             ->line("You have {$taskCount} ".($taskCount == 1 ? 'task' : 'tasks').' awaiting your feedback.')
             ->action('View Tasks', $url)
-            ->line('Please do not reply to this email directly.');
+            ->line('Please do not reply to this email directly.')
+            ->markdown('shift::notifications.email');
 
         return $message;
     }

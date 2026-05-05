@@ -10,9 +10,7 @@ class TaskCollaboratorAdded extends Notification
 {
     use Queueable;
 
-    public function __construct(public array $data)
-    {
-    }
+    public function __construct(public array $data) {}
 
     public function via(object $notifiable): array
     {
@@ -28,7 +26,8 @@ class TaskCollaboratorAdded extends Notification
             ->line('You have been added as a collaborator on an existing task.')
             ->line('View the task to see the details.')
             ->action('View Task', $url)
-            ->line('Please do not reply to this email directly.');
+            ->line('Please do not reply to this email directly.')
+            ->markdown('shift::notifications.email');
     }
 
     public function toArray(object $notifiable): array

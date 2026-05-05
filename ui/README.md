@@ -1,5 +1,17 @@
-# Vue 3 + TypeScript + Vite
+# SHIFT Dashboard UI
 
-This template should help get you started developing with Vue 3 and TypeScript in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
+This is the embedded dashboard UI shipped by the `wyxos/shift-php` package.
+
+Build it from `packages/shift-php/ui` with:
+
+```sh
+npm run build
+```
+
+Then publish the generated package assets from the harness root:
+
+```sh
+php artisan shift:publish --group=public
+```
 
 Learn more about the recommended Project Setup and IDE Support in the [Vue Docs TypeScript Guide](https://vuejs.org/guide/typescript/overview.html#project-setup).

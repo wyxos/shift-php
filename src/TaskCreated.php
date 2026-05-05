@@ -41,7 +41,8 @@ class TaskCreated extends Notification
             ->line('A new task has been created and you have been granted access.')
             ->line('View the task to see the details.')
             ->action('View Task', $url)
-            ->line('Please do not reply to this email directly.');
+            ->line('Please do not reply to this email directly.')
+            ->markdown('shift::notifications.email');
     }
 
     /**
