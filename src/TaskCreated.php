@@ -34,20 +34,12 @@ class TaskCreated extends Notification
      */
     public function toMail(object $notifiable): MailMessage
     {
-        $taskTitle = $this->data['task_title'] ?? 'Task #'.$this->data['task_id'];
-        $taskStatus = ucfirst($this->data['task_status'] ?? 'pending');
-        $taskPriority = ucfirst($this->data['task_priority'] ?? 'medium');
         $url = route('shift.dashboard').'/tasks?task='.$this->data['task_id'];
 
         return (new MailMessage)
-            ->subject("New Task Created: {$taskTitle}")
+            ->subject('New SHIFT task created')
             ->line('A new task has been created and you have been granted access.')
-            ->line("Task Title: {$taskTitle}")
-            ->line("Priority: {$taskPriority}")
-            ->line("Status: {$taskStatus}")
-            ->when(! empty($this->data['task_description']), function ($message) {
-                return $message->line('Description: '.$this->data['task_description']);
-            })
+            ->line('View the task to see the details.')
             ->action('View Task', $url)
             ->line('Please do not reply to this email directly.');
     }
