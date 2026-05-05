@@ -25,18 +25,30 @@ function getArgValue(flag) {
 }
 
 async function getCurrentVersion() {
-    const composer = await fs.readJson(COMPOSER_PATH);
-    return composer.version || '0.0.0';
+    const { stdout } = await execa('git', ['tag', '--list', '--merged', 'HEAD'], { cwd: PACKAGE_DIR });
+    const versions = stdout
+        .split(/\r?\n/)
+        .map(tag => tag.replace(/^v/, ''))
+        .filter(version => semver.valid(version))
+        .sort(semver.rcompare);
+
+    return versions[0] || '0.0.0';
 }
 
 function calculateNextPatch(version) {
     return semver.inc(version, 'patch');
 }
 
-async function updateVersionInComposer(version) {
+async function removeVersionFromComposer() {
     const composer = await fs.readJson(COMPOSER_PATH);
-    composer.version = version;
+    delete composer.version;
     await fs.writeJson(COMPOSER_PATH, composer, { spaces: 2 });
+}
+
+async function hasChanges() {
+    const { stdout } = await execa('git', ['status', '--porcelain'], { cwd: PACKAGE_DIR });
+
+    return stdout.trim().length > 0;
 }
 
 async function main() {
@@ -67,8 +79,8 @@ async function main() {
 
         console.log(`🚀 Releasing version ${version}`);
 
-        // Step 1: Update version
-        await updateVersionInComposer(version);
+        // Step 1: Keep package version authority in Git tags.
+        await removeVersionFromComposer();
 
         // Step 2: Build frontend assets
         console.log('📦 Installing and building frontend...');
@@ -79,8 +91,12 @@ async function main() {
         console.log('🔧 Staging files...');
         await git.add('.');
 
-        console.log('✅ Committing release...');
-        await git.commit(`Release v${version}`);
+        if (await hasChanges()) {
+            console.log('✅ Committing release...');
+            await git.commit(`Release v${version}`);
+        } else {
+            console.log('✅ No release file changes to commit. Tagging current HEAD.');
+        }
 
         console.log('🏷️ Tagging...');
         await git.addTag(`v${version}`);
