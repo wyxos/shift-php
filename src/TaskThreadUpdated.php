@@ -2,6 +2,7 @@
 
 namespace Wyxos\Shift;
 
+use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Support\Facades\Route;
 use Shift\Core\Notifications\TaskThreadUpdated as CoreTaskThreadUpdated;
 
@@ -30,5 +31,11 @@ class TaskThreadUpdated extends CoreTaskThreadUpdated
         }
 
         return null;
+    }
+
+    public function toMail(object $notifiable): MailMessage
+    {
+        return parent::toMail($notifiable)
+            ->markdown('shift::notifications.email');
     }
 }

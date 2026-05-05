@@ -19,6 +19,8 @@ class ShiftServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        $this->loadViewsFrom(__DIR__.'/../resources/views', 'shift');
+
         $this->loadRoutesFrom(__DIR__.'/../routes/shift.php');
 
         // Publish public assets separately
