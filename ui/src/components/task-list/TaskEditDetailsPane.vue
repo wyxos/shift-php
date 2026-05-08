@@ -151,6 +151,7 @@ const editTaskEnvironmentLabel = computed(() => getTaskEnvironment(props.editTas
                     :resolve-temp-url="resolveTempUrl"
                     :temp-identifier="editTempIdentifier"
                     :upload-endpoints="taskListUploadEndpoints"
+                    :sendable="false"
                     placeholder="Update the task details and drag files inline."
                     @uploading="setEditUploading"
                 />
