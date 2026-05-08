@@ -58,7 +58,7 @@ export const stubs = {
         template: '<select :value="modelValue" v-bind="$attrs" @change="$emit(\'update:modelValue\', $event.target.value)"><slot /></select>',
     },
     ShiftEditor: {
-        props: ['modelValue'],
+        props: ['modelValue', 'sendable'],
         computed: {
             previewText(this: { modelValue?: string | null }) {
                 return String(this.modelValue || '').replace(/<[^>]+>/g, '');
@@ -72,6 +72,7 @@ export const stubs = {
       />
       <div data-testid="stub-editor-preview">{{ previewText }}</div>
       <button
+        v-if="sendable !== false"
         data-testid="stub-send"
         @click="$emit('send', { html: modelValue || '<p>hello</p>', attachments: [] })"
       >
