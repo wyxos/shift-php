@@ -39,16 +39,20 @@ class ShiftCollaboratorController extends Controller
     {
         $search = trim((string) $request->input('search', '')) ?: null;
 
-        [$internalUsers, $internalAvailable, $internalError] = $this->resolveShiftInternalCollaborators($search);
+        [$internalUsers, $internalAvailable, $internalError, $internalLabel] = $this->resolveShiftInternalCollaborators($search);
         [$externalUsers, $externalAvailable, $externalError] = $this->resolveBrowserExternalCollaborators($search);
 
         return response()->json([
             'internal' => $internalUsers,
             'internal_available' => $internalAvailable,
             'internal_error' => $internalError,
+            'internal_label' => $internalLabel ?? 'Organisation',
+            'internal_description' => 'Users with access in SHIFT.',
             'external' => $externalUsers,
             'external_available' => $externalAvailable,
             'external_error' => $externalError,
+            'external_label' => 'Team',
+            'external_description' => 'Users with access from this portal.',
         ]);
     }
 
@@ -127,7 +131,7 @@ class ShiftCollaboratorController extends Controller
         $baseUrl = rtrim((string) config('shift.url', 'https://shift.wyxos.com'), '/');
 
         if ($token === '' || $project === '') {
-            return [[], false, 'SHIFT configuration missing. Please install Shift package and configure SHIFT_TOKEN and SHIFT_PROJECT in .env'];
+            return [[], false, 'SHIFT configuration missing. Please install Shift package and configure SHIFT_TOKEN and SHIFT_PROJECT in .env', null];
         }
 
         try {
@@ -136,15 +140,16 @@ class ShiftCollaboratorController extends Controller
                 ...(filled($search) ? ['search' => $search] : []),
             ]);
         } catch (ConnectionException) {
-            return [[], false, 'Failed to reach SHIFT for collaborator lookup.'];
+            return [[], false, 'Failed to reach SHIFT for collaborator lookup.', null];
         }
 
         if (! $response->successful()) {
             $message = $response->json('message') ?? $response->json('error') ?? 'Failed to load SHIFT collaborators.';
 
-            return [[], false, (string) $message];
+            return [[], false, (string) $message, null];
         }
 
+        $organisationName = trim((string) ($response->json('organisation_name') ?? ''));
         $users = collect($response->json('users') ?? [])->map(function ($user) {
             if (! is_array($user)) {
                 return null;
@@ -166,10 +171,10 @@ class ShiftCollaboratorController extends Controller
         });
 
         if ($users->contains(null)) {
-            return [[], false, 'SHIFT returned an invalid collaborator payload.'];
+            return [[], false, 'SHIFT returned an invalid collaborator payload.', null];
         }
 
-        return [$users->values()->all(), true, null];
+        return [$users->values()->all(), true, null, $organisationName !== '' ? $organisationName : null];
     }
 
     private function shiftClient(string $token, string $baseUrl): PendingRequest
