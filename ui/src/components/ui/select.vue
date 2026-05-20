@@ -1,36 +1,53 @@
 <script lang="ts" setup>
-import { cn } from '@/lib/utils'
+import { Select as SharedSelect, type SelectOption, type SelectOptionValue } from '@shift/ui/select';
+import type { HTMLAttributes } from 'vue';
 
-const props = defineProps<{
-  modelValue?: string
-  placeholder?: string
-  disabled?: boolean
-  class?: string
-}>()
+defineOptions({
+    inheritAttrs: false,
+});
+
+const props = withDefaults(
+    defineProps<{
+        modelValue?: SelectOptionValue;
+        options?: SelectOption[];
+        placeholder?: string;
+        searchPlaceholder?: string;
+        emptyLabel?: string;
+        disabled?: boolean;
+        searchable?: boolean;
+        align?: 'start' | 'center' | 'end';
+        class?: HTMLAttributes['class'];
+        triggerClass?: HTMLAttributes['class'];
+        contentClass?: HTMLAttributes['class'];
+        testId?: string;
+        ariaLabel?: string;
+    }>(),
+    {
+        options: () => [],
+        placeholder: 'Select an option',
+        searchPlaceholder: 'Search options...',
+        emptyLabel: 'No options found.',
+        disabled: false,
+        searchable: false,
+        align: 'start',
+        class: undefined,
+        triggerClass: undefined,
+        contentClass: undefined,
+        testId: undefined,
+        ariaLabel: undefined,
+        modelValue: undefined,
+    },
+);
 
 const emit = defineEmits<{
-  'update:modelValue': [value: string]
-}>()
-
-function onChange(event: Event) {
-  const target = event.target as HTMLSelectElement
-  emit('update:modelValue', target.value)
-}
+    'update:modelValue': [value: SelectOptionValue];
+}>();
 </script>
 
 <template>
-  <select
-    :value="modelValue"
-    :disabled="disabled"
-    :class="
-      cn(
-        'flex h-9 w-full appearance-none rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50',
-        props.class
-      )
-    "
-    @change="onChange"
-  >
-    <option v-if="placeholder" value="" disabled selected>{{ placeholder }}</option>
-    <slot />
-  </select>
+    <SharedSelect
+        v-bind="{ ...$attrs, ...props }"
+        :model-value="modelValue"
+        @update:modelValue="emit('update:modelValue', $event)"
+    />
 </template>
