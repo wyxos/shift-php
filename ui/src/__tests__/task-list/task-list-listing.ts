@@ -105,7 +105,7 @@ describe('TaskList listing and filters', () => {
         await nextTick();
 
         const firstRow = wrapper.findAll('[data-testid="task-row"]')[0];
-        await firstRow.find('button[title="Edit"]').trigger('click');
+        await firstRow.find('button[title="Open details"]').trigger('click');
         await flushPromises();
         await nextTick();
 
@@ -117,6 +117,41 @@ describe('TaskList listing and filters', () => {
 
         expect(window.location.search).toBe('');
         expect(pushStateSpy.mock.calls.some(([, , next]) => next === '/shift/tasks')).toBe(true);
+        wrapper.unmount();
+        pushStateSpy.mockRestore();
+    });
+
+    it('opens task details from the task title', async () => {
+        const pushStateSpy = vi.spyOn(window.history, 'pushState');
+
+        getMock
+            .mockResolvedValueOnce(makeIndexResponse(defaultTasks))
+            .mockResolvedValueOnce({
+                data: {
+                    id: 1,
+                    title: 'Auth issue',
+                    priority: 'high',
+                    status: 'pending',
+                    created_at: '2026-02-10T17:40:00Z',
+                    description: '',
+                    submitter: { email: 'someone@example.com' },
+                    attachments: [],
+                },
+            })
+            .mockResolvedValueOnce({ data: { external: [] } });
+
+        const wrapper = mount(TaskList, { global: { stubs } });
+        await flushPromises();
+        await nextTick();
+
+        await wrapper.get('[data-testid="task-title-1"]').trigger('click');
+        await flushPromises();
+        await nextTick();
+
+        expect(getMock).toHaveBeenCalledWith('/shift/api/tasks/1');
+        expect(window.location.search).toContain('task=1');
+        expect(pushStateSpy.mock.calls.some(([, , next]) => next === '/shift/tasks?task=1')).toBe(true);
+
         wrapper.unmount();
         pushStateSpy.mockRestore();
     });

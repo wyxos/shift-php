@@ -62,7 +62,7 @@ describe('TaskList edit sheet', () => {
         await nextTick();
 
         const firstRow = wrapper.findAll('[data-testid="task-row"]')[0];
-        await firstRow.find('button[title="Edit"]').trigger('click');
+        await firstRow.find('button[title="Open details"]').trigger('click');
         await flushPromises();
         await nextTick();
 
@@ -104,7 +104,7 @@ describe('TaskList edit sheet', () => {
         await nextTick();
 
         const firstRow = wrapper.findAll('[data-testid="task-row"]')[0];
-        await firstRow.find('button[title="Edit"]').trigger('click');
+        await firstRow.find('button[title="Open details"]').trigger('click');
         await flushPromises();
         await nextTick();
 
@@ -127,10 +127,11 @@ describe('TaskList edit sheet', () => {
         expect(sheetLayout.classes()).toContain('lg:grid-cols-2');
         expect(detailsPane.classes()).toContain('min-w-0');
         expect(commentsPane.classes()).toContain('min-w-0');
-        expect(editStatusGroup.classes()).toContain('grid');
-        expect(editStatusGroup.classes()).toContain('grid-cols-2');
+        expect(editStatusGroup.classes()).toContain('flex');
+        expect(editStatusGroup.classes()).toContain('flex-wrap');
         expect(editStatusGroup.classes()).toContain('xl:grid-cols-4');
-        expect(mobilePaneGroup.classes()).toContain('grid-cols-2');
+        expect(mobilePaneGroup.classes()).toContain('flex');
+        expect(mobilePaneGroup.classes()).toContain('flex-wrap');
         expect(wrapper.get('[data-testid="edit-mobile-pane-details"]').text()).toContain('Details');
         expect(wrapper.get('[data-testid="edit-mobile-pane-comments"]').text()).toContain('Comments');
         expect(wrapper.get('[data-testid="task-status-pending"]').classes()).toContain('bg-amber-100');
@@ -163,13 +164,13 @@ describe('TaskList edit sheet', () => {
         await nextTick();
 
         const firstRow = wrapper.findAll('[data-testid="task-row"]')[0];
-        await firstRow.find('button[title="Edit"]').trigger('click');
+        await firstRow.find('button[title="Open details"]').trigger('click');
         await flushPromises();
         await nextTick();
 
         const editPriorityGroup = wrapper.get('[aria-label="Task priority"]');
-        expect(editPriorityGroup.classes()).toContain('grid');
-        expect(editPriorityGroup.classes()).toContain('grid-cols-3');
+        expect(editPriorityGroup.classes()).toContain('flex');
+        expect(editPriorityGroup.classes()).toContain('flex-wrap');
         expect(wrapper.get('[data-testid="task-priority-high"]').classes()).toContain('bg-rose-100');
 
         wrapper.unmount();
@@ -199,7 +200,7 @@ describe('TaskList edit sheet', () => {
         await nextTick();
 
         const firstRow = wrapper.findAll('[data-testid="task-row"]')[0];
-        await firstRow.find('button[title="Edit"]').trigger('click');
+        await firstRow.find('button[title="Open details"]').trigger('click');
         await flushPromises();
         await nextTick();
 
@@ -245,7 +246,7 @@ describe('TaskList edit sheet', () => {
         await nextTick();
 
         const firstRow = wrapper.findAll('[data-testid="task-row"]')[0];
-        await firstRow.find('button[title="Edit"]').trigger('click');
+        await firstRow.find('button[title="Open details"]').trigger('click');
         await flushPromises();
         await nextTick();
 
@@ -292,7 +293,7 @@ describe('TaskList edit sheet', () => {
         await nextTick();
 
         const firstRow = wrapper.findAll('[data-testid="task-row"]')[0];
-        await firstRow.find('button[title="Edit"]').trigger('click');
+        await firstRow.find('button[title="Open details"]').trigger('click');
         await flushPromises();
         await nextTick();
 
@@ -339,7 +340,7 @@ describe('TaskList edit sheet', () => {
         await nextTick();
 
         const firstRow = wrapper.findAll('[data-testid="task-row"]')[0];
-        await firstRow.find('button[title="Edit"]').trigger('click');
+        await firstRow.find('button[title="Open details"]').trigger('click');
         await flushPromises();
         await nextTick();
 
@@ -391,7 +392,7 @@ describe('TaskList edit sheet', () => {
         await nextTick();
 
         const firstRow = wrapper.findAll('[data-testid="task-row"]')[0];
-        await firstRow.find('button[title="Edit"]').trigger('click');
+        await firstRow.find('button[title="Open details"]').trigger('click');
         await flushPromises();
         await nextTick();
 

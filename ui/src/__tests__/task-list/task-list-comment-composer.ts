@@ -52,7 +52,7 @@ describe('TaskList comment composer', () => {
         await nextTick();
 
         const firstRow = wrapper.findAll('[data-testid="task-row"]')[0];
-        await firstRow.find('button[title="Edit"]').trigger('click');
+        await firstRow.find('button[title="Open details"]').trigger('click');
         await flushPromises();
         await nextTick();
 
@@ -127,7 +127,7 @@ describe('TaskList comment composer', () => {
         await nextTick();
 
         const firstRow = wrapper.findAll('[data-testid="task-row"]')[0];
-        await firstRow.find('button[title="Edit"]').trigger('click');
+        await firstRow.find('button[title="Open details"]').trigger('click');
         await flushPromises();
         await nextTick();
 
@@ -186,7 +186,7 @@ describe('TaskList comment composer', () => {
         await nextTick();
 
         const firstRow = wrapper.findAll('[data-testid="task-row"]')[0];
-        await firstRow.find('button[title="Edit"]').trigger('click');
+        await firstRow.find('button[title="Open details"]').trigger('click');
         await flushPromises();
         await nextTick();
 
