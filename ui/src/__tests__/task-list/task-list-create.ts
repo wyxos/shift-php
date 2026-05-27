@@ -49,8 +49,8 @@ describe('TaskList create flow', () => {
         expect(wrapper.get('[data-testid="create-description-editor"]').find('[data-testid="stub-send"]').exists()).toBe(false);
 
         const createPriorityGroup = wrapper.get('[aria-label="Task priority"]');
-        expect(createPriorityGroup.classes()).toContain('grid');
-        expect(createPriorityGroup.classes()).toContain('grid-cols-3');
+        expect(createPriorityGroup.classes()).toContain('flex');
+        expect(createPriorityGroup.classes()).toContain('flex-wrap');
 
         await wrapper.get('[data-testid="create-task-title"]').setValue('Created from UI');
         await wrapper.get('[data-testid="create-task-priority-high"]').trigger('click');
