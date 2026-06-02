@@ -9,9 +9,19 @@ use Wyxos\Shift\Http\Controllers\ShiftDashboardController;
 use Wyxos\Shift\Http\Controllers\ShiftNotificationController;
 use Wyxos\Shift\Http\Controllers\ShiftTaskController;
 use Wyxos\Shift\Http\Controllers\ShiftTaskThreadController;
+use Wyxos\Shift\Http\Controllers\ShiftWidgetController;
 
 Route::post('/shift/api/notifications', [ShiftNotificationController::class, 'store']);
 Route::get('/shift/api/collaborators/external', [ShiftCollaboratorController::class, 'external']);
+
+Route::middleware(config('shift.widget.routes.middleware', ['web']))
+    ->prefix('/shift/api/widget')
+    ->group(function () {
+        Route::get('/config', [ShiftWidgetController::class, 'config'])->name('shift.widget.config');
+        Route::post('/tasks', [ShiftWidgetController::class, 'store'])->name('shift.widget.tasks.store');
+        Route::get('/session-user', [ShiftWidgetController::class, 'sessionUser'])->name('shift.widget.session-user');
+        Route::post('/login', [ShiftWidgetController::class, 'login'])->name('shift.widget.login');
+    });
 
 Route::middleware(config('shift.routes.middleware'))->group(function () {
     // Task routes

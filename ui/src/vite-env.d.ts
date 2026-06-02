@@ -11,4 +11,17 @@ interface Window {
         aiEnabled: boolean;
         appEnvironment?: string;
     };
+    shiftWidgetConfig?: {
+        endpoints: {
+            config: string;
+            tasks: string;
+            sessionUser: string;
+            login: string;
+        };
+        csrfToken?: string;
+        guestSubmissionsEnabled: boolean;
+        authenticated: boolean;
+        loginCredentialField: string;
+        appName: string;
+    };
 }

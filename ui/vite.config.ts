@@ -132,6 +132,13 @@ export default defineConfig(({ command }) => {
       outDir: path.resolve(__dirname, '../public/shift-assets'),
       assetsDir: 'assets',
       emptyOutDir: true,
+      manifest: true,
+      rollupOptions: {
+        input: {
+          app: path.resolve(__dirname, 'index.html'),
+          widget: path.resolve(__dirname, 'src/widget.ts'),
+        },
+      },
     },
     server: {
       host: process.env.VITE_DEV_HOST || 'shift-sdk-package.test',

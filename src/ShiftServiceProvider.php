@@ -2,11 +2,13 @@
 
 namespace Wyxos\Shift;
 
+use Illuminate\Foundation\Http\Kernel as HttpKernel;
 use Illuminate\Support\ServiceProvider;
 use Wyxos\Shift\Commands\InstallShiftCommand;
 use Wyxos\Shift\Commands\PublishShiftCommand;
 use Wyxos\Shift\Commands\ShiftTestCommand;
 use Wyxos\Shift\Commands\ToggleShiftCommand;
+use Wyxos\Shift\Http\Middleware\InjectShiftWidget;
 
 class ShiftServiceProvider extends ServiceProvider
 {
@@ -15,6 +17,11 @@ class ShiftServiceProvider extends ServiceProvider
         $this->mergeConfigFrom(
             __DIR__.'/../config/shift.php', 'shift'
         );
+
+        $this->callAfterResolving(HttpKernel::class, function (HttpKernel $kernel) {
+            $kernel->appendMiddlewareToGroup('web', InjectShiftWidget::class);
+        });
+
     }
 
     public function boot(): void
