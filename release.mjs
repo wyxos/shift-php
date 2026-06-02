@@ -98,12 +98,14 @@ async function main() {
             console.log('✅ No release file changes to commit. Tagging current HEAD.');
         }
 
+        const tagName = `v${version}`;
+
         console.log('🏷️ Tagging...');
-        await git.addTag(`v${version}`);
+        await git.addTag(tagName);
 
         console.log('📤 Pushing...');
         await git.push('origin', 'HEAD');
-        await git.pushTags();
+        await git.push('origin', `refs/tags/${tagName}`);
 
         console.log('🎉 Release complete!');
     } catch (err) {
