@@ -1,0 +1,30 @@
+{
+  "_x-DIKz01zj.js": {
+    "file": "assets/x-DIKz01zj.js",
+    "name": "x"
+  },
+  "index.html": {
+    "file": "assets/app-DMWlLPsq.js",
+    "name": "app",
+    "src": "index.html",
+    "isEntry": true,
+    "imports": [
+      "_x-DIKz01zj.js"
+    ],
+    "css": [
+      "assets/app-Cr64rv4D.css"
+    ]
+  },
+  "src/widget.ts": {
+    "file": "assets/widget-C2J0pprL.js",
+    "name": "widget",
+    "src": "src/widget.ts",
+    "isEntry": true,
+    "imports": [
+      "_x-DIKz01zj.js"
+    ],
+    "css": [
+      "assets/widget-DFctcN65.css"
+    ]
+  }
+}
