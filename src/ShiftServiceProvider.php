@@ -6,6 +6,7 @@ use Illuminate\Foundation\Http\Kernel as HttpKernel;
 use Illuminate\Support\ServiceProvider;
 use Wyxos\Shift\Commands\InstallShiftCommand;
 use Wyxos\Shift\Commands\PublishShiftCommand;
+use Wyxos\Shift\Commands\ShiftLocalSmokeCommand;
 use Wyxos\Shift\Commands\ShiftTestCommand;
 use Wyxos\Shift\Commands\ToggleShiftCommand;
 use Wyxos\Shift\Http\Middleware\InjectShiftWidget;
@@ -49,6 +50,7 @@ class ShiftServiceProvider extends ServiceProvider
         if ($this->app->runningInConsole()) {
             $this->commands([
                 InstallShiftCommand::class,
+                ShiftLocalSmokeCommand::class,
                 ShiftTestCommand::class,
                 PublishShiftCommand::class,
                 ToggleShiftCommand::class,
