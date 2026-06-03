@@ -138,10 +138,9 @@ class ShiftWidgetController extends Controller
     private function configPayload(array $portalConfig): array
     {
         $user = $this->guard()->user();
-        $widgetEnabled = $portalConfig['widget_enabled'] && ($portalConfig['guest_submissions_enabled'] || $user);
 
         return [
-            'widget_enabled' => (bool) $widgetEnabled,
+            'widget_enabled' => (bool) $portalConfig['widget_enabled'],
             'guest_submissions_enabled' => (bool) $portalConfig['guest_submissions_enabled'],
             'authenticated' => (bool) $user,
             'requires_authentication' => $portalConfig['widget_enabled'] && ! $portalConfig['guest_submissions_enabled'] && ! $user,
