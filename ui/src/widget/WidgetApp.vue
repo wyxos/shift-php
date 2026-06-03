@@ -21,6 +21,7 @@ interface WidgetRuntimeConfig {
     csrfToken?: string;
     guestSubmissionsEnabled: boolean;
     authenticated: boolean;
+    requiresAuthentication?: boolean;
     loginCredentialField: string;
     appName: string;
 }
@@ -47,7 +48,7 @@ const kind = ref<WidgetKind>('task');
 const title = ref('');
 const description = ref('');
 const anonymous = ref(false);
-const identityMode = ref<IdentityMode>(props.config.authenticated ? 'account' : 'anonymous');
+const identityMode = ref<IdentityMode>(props.config.authenticated ? 'account' : props.config.guestSubmissionsEnabled ? 'anonymous' : 'login');
 const sessionUser = ref<WidgetUser | null>(null);
 const guestDetails = reactive({ name: '', email: '' });
 const loginDraft = reactive({ credential: '', password: '' });
@@ -60,6 +61,7 @@ const csrfToken = ref(props.config.csrfToken || null);
 const remoteConfig = reactive({
     widgetEnabled: true,
     guestSubmissionsEnabled: props.config.guestSubmissionsEnabled,
+    requiresAuthentication: Boolean(props.config.requiresAuthentication),
     loginCredentialField: props.config.loginCredentialField || 'email',
 });
 
@@ -79,7 +81,7 @@ const canSubmit = computed(() => {
     return identityMode.value !== 'login' || isAuthenticated.value;
 });
 const shouldRender = computed(() => {
-    return ready.value && remoteConfig.widgetEnabled && (remoteConfig.guestSubmissionsEnabled || isAuthenticated.value);
+    return ready.value && remoteConfig.widgetEnabled;
 });
 const credentialLabel = computed(() => {
     return remoteConfig.loginCredentialField === 'email' ? 'Email' : toTitle(remoteConfig.loginCredentialField);
@@ -96,6 +98,7 @@ async function loadState() {
             apiJson<{
                 widget_enabled: boolean;
                 guest_submissions_enabled: boolean;
+                requires_authentication?: boolean;
                 login_credential_field?: string;
             }>(props.config.endpoints.config),
             apiJson<{ authenticated: boolean; user: WidgetUser | null }>(props.config.endpoints.sessionUser),
@@ -103,9 +106,10 @@ async function loadState() {
 
         remoteConfig.widgetEnabled = configResponse.widget_enabled;
         remoteConfig.guestSubmissionsEnabled = configResponse.guest_submissions_enabled;
+        remoteConfig.requiresAuthentication = Boolean(configResponse.requires_authentication);
         remoteConfig.loginCredentialField = configResponse.login_credential_field || remoteConfig.loginCredentialField;
         sessionUser.value = userResponse.authenticated ? userResponse.user : null;
-        identityMode.value = sessionUser.value ? 'account' : 'anonymous';
+        identityMode.value = sessionUser.value ? 'account' : remoteConfig.guestSubmissionsEnabled ? 'anonymous' : 'login';
     } catch {
         remoteConfig.widgetEnabled = false;
     }
@@ -191,7 +195,7 @@ function resetForm() {
     generalError.value = null;
 
     if (!isAuthenticated.value) {
-        identityMode.value = 'anonymous';
+        identityMode.value = remoteConfig.guestSubmissionsEnabled ? 'anonymous' : 'login';
         guestDetails.name = '';
         guestDetails.email = '';
     }
@@ -319,7 +323,7 @@ function toTitle(value: string): string {
                     </template>
 
                     <template v-else>
-                        <div class="shift-widget__segmented" aria-label="Reporter">
+                        <div v-if="remoteConfig.guestSubmissionsEnabled" class="shift-widget__segmented" aria-label="Reporter">
                             <button type="button" :aria-pressed="identityMode === 'anonymous'" @click="setIdentityMode('anonymous')">
                                 Anonymous
                             </button>
@@ -331,7 +335,12 @@ function toTitle(value: string): string {
                             </button>
                         </div>
 
-                        <div v-if="identityMode === 'details'" class="shift-widget__grid">
+                        <div v-else-if="remoteConfig.requiresAuthentication" class="shift-widget__account">
+                            <span>Log in required</span>
+                            <small>Log in to send this report from {{ props.config.appName }}.</small>
+                        </div>
+
+                        <div v-if="remoteConfig.guestSubmissionsEnabled && identityMode === 'details'" class="shift-widget__grid">
                             <label class="shift-widget__field">
                                 <span>Name</span>
                                 <input v-model="guestDetails.name" type="text" autocomplete="name" />

@@ -100,6 +100,57 @@ describe('WidgetApp.vue', () => {
             }),
         );
     });
+
+    it('renders login mode when widget intake requires authentication', async () => {
+        const fetchMock = vi.fn(async (url: RequestInfo | URL) => {
+            const requestUrl = String(url);
+
+            if (requestUrl === '/shift/api/widget/config') {
+                return jsonResponse({
+                    widget_enabled: true,
+                    guest_submissions_enabled: false,
+                    login_credential_field: 'email',
+                });
+            }
+
+            if (requestUrl === '/shift/api/widget/session-user') {
+                return jsonResponse({
+                    authenticated: false,
+                    user: null,
+                });
+            }
+
+            throw new Error(`Unexpected request: ${requestUrl}`);
+        });
+
+        vi.stubGlobal('fetch', fetchMock);
+
+        const wrapper = mount(WidgetApp, {
+            props: {
+                config: {
+                    appName: 'Consumer App',
+                    authenticated: false,
+                    csrfToken: 'before-login',
+                    guestSubmissionsEnabled: false,
+                    loginCredentialField: 'email',
+                    endpoints: {
+                        config: '/shift/api/widget/config',
+                        tasks: '/shift/api/widget/tasks',
+                        sessionUser: '/shift/api/widget/session-user',
+                        login: '/shift/api/widget/login',
+                    },
+                },
+            },
+        });
+
+        await flushPromises();
+
+        await wrapper.get('button.shift-widget__launcher').trigger('click');
+
+        expect(wrapper.text()).toContain('Log in');
+        expect(wrapper.text()).not.toContain('Anonymous');
+        expect(wrapper.text()).not.toContain('Contact details');
+    });
 });
 
 function jsonResponse(body: unknown): Response {

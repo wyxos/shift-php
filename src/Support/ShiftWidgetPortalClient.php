@@ -24,6 +24,7 @@ class ShiftWidgetPortalClient
 
         $response = $this->client()->get($this->baseUrl().'/api/widget/config', [
             'project' => (string) config('shift.project'),
+            'environment' => (string) config('app.env'),
         ]);
 
         if (! $response->successful()) {

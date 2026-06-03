@@ -40,10 +40,6 @@ class InjectShiftWidget
 
         $user = Auth::guard($this->guardName())->user();
 
-        if (! $portalConfig['guest_submissions_enabled'] && ! $user) {
-            return $response;
-        }
-
         $assetTags = $this->assets->tags();
 
         if ($assetTags === '') {
@@ -113,6 +109,7 @@ class InjectShiftWidget
             'csrfToken' => csrf_token(),
             'guestSubmissionsEnabled' => $portalConfig['guest_submissions_enabled'],
             'authenticated' => $authenticated,
+            'requiresAuthentication' => ! $portalConfig['guest_submissions_enabled'] && ! $authenticated,
             'loginCredentialField' => $this->credentialField(),
             'appName' => (string) config('app.name', 'Application'),
         ];
