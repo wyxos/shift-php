@@ -8,6 +8,16 @@ import { Button } from '@shift/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@shift/ui/card';
 import Badge from './ui/badge.vue';
 import { Label } from '@shift/ui/label';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from '@shift/ui/alert-dialog';
 
 type Task = {
     id: number;
@@ -22,6 +32,8 @@ const tasks = ref<Task[]>([]);
 const loading = ref(true);
 const error = ref<string | null>(null);
 const deleteLoading = ref<number | null>(null);
+const deleteDialogOpen = ref(false);
+const pendingDeleteTask = ref<Task | null>(null);
 
 // Status options, mirrored from app
 const statusOptions = [
@@ -97,10 +109,6 @@ function resetFilters() {
 }
 
 async function deleteTask(taskId: number) {
-    if (!confirm('Are you sure you want to delete this task?')) {
-        return;
-    }
-
     deleteLoading.value = taskId;
     error.value = null;
 
@@ -114,6 +122,27 @@ async function deleteTask(taskId: number) {
         deleteLoading.value = null;
     }
 }
+
+function requestDeleteTask(task: Task) {
+    pendingDeleteTask.value = task;
+    deleteDialogOpen.value = true;
+}
+
+async function confirmDeleteTask() {
+    const task = pendingDeleteTask.value;
+
+    if (!task) return;
+
+    deleteDialogOpen.value = false;
+    pendingDeleteTask.value = null;
+    await deleteTask(task.id);
+}
+
+watch(deleteDialogOpen, (open) => {
+    if (!open) {
+        pendingDeleteTask.value = null;
+    }
+});
 
 function getStatusVariant(status: string) {
     switch (status) {
@@ -192,7 +221,7 @@ onMounted(() => {
                             title="Delete"
                             variant="destructive"
                             :loading="deleteLoading === task.id"
-                            @click="deleteTask(task.id)"
+                            @click="requestDeleteTask(task)"
                         >
                             <Trash2 class="h-4 w-4" />
                         </ActionIconButton>
@@ -201,4 +230,24 @@ onMounted(() => {
             </ul>
         </CardContent>
     </Card>
+
+    <AlertDialog v-model:open="deleteDialogOpen">
+        <AlertDialogContent>
+            <AlertDialogHeader>
+                <AlertDialogTitle>Delete task</AlertDialogTitle>
+                <AlertDialogDescription>
+                    Delete {{ pendingDeleteTask?.title ?? 'this task' }} from SHIFT? This cannot be undone.
+                </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+                <AlertDialogCancel @click="deleteDialogOpen = false">Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                    class="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    @click="confirmDeleteTask"
+                >
+                    Delete task
+                </AlertDialogAction>
+            </AlertDialogFooter>
+        </AlertDialogContent>
+    </AlertDialog>
 </template>

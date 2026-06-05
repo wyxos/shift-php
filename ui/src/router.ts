@@ -18,6 +18,11 @@ const routes: RouteRecordRaw[] = [
         component: TaskList,
     },
     {
+        path: '/requirements',
+        name: 'requirements',
+        component: TaskList,
+    },
+    {
         path: '/tasks-v2',
         name: 'task-list-v2',
         redirect: (to) => ({ path: '/tasks', query: to.query }),

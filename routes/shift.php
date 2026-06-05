@@ -7,6 +7,7 @@ use Wyxos\Shift\Http\Controllers\ShiftCollaboratorController;
 use Wyxos\Shift\Http\Controllers\ShiftController;
 use Wyxos\Shift\Http\Controllers\ShiftDashboardController;
 use Wyxos\Shift\Http\Controllers\ShiftNotificationController;
+use Wyxos\Shift\Http\Controllers\ShiftRequirementController;
 use Wyxos\Shift\Http\Controllers\ShiftTaskController;
 use Wyxos\Shift\Http\Controllers\ShiftTaskThreadController;
 use Wyxos\Shift\Http\Controllers\ShiftWidgetController;
@@ -27,6 +28,8 @@ Route::middleware(config('shift.routes.middleware'))->group(function () {
     // Task routes
     Route::get('/shift/api/dashboard', [ShiftDashboardController::class, 'index'])->name('dashboard.index');
     Route::get('/shift/api/tasks', [ShiftTaskController::class, 'index'])->name('tasks.index');
+    Route::get('/shift/api/requirements', [ShiftRequirementController::class, 'index'])->name('requirements.index');
+    Route::post('/shift/api/requirements/batches', [ShiftRequirementController::class, 'store'])->name('requirements.batches.store');
     Route::get('/shift/api/task-collaborators', [ShiftCollaboratorController::class, 'task'])->name('task-collaborators.index');
     Route::get('/shift/api/tasks/{id}', [ShiftTaskController::class, 'show'])->name('tasks.show');
     Route::post('/shift/api/tasks', [ShiftTaskController::class, 'store'])->name('tasks.store');
