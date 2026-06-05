@@ -2,18 +2,46 @@
 import axios from '@/axios-config';
 import { emptyTaskCollaborators, normalizeTaskCollaborators, type TaskCollaboratorSelection } from '@shared/tasks/collaborators';
 import { getTaskIdFromQuery } from '@shared/tasks/history';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from '@shift/ui/alert-dialog';
 import { ImageLightbox } from '@shift/ui/image-lightbox';
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import { toast } from 'vue-sonner';
 import TaskCreateSheet from './task-list/TaskCreateSheet.vue';
 import TaskDiscardDialog from './task-list/TaskDiscardDialog.vue';
 import TaskEditSheet from './task-list/TaskEditSheet.vue';
 import TaskListOverviewCard from './task-list/TaskListOverviewCard.vue';
+import RequirementPackForm from './task-list/RequirementPackForm.vue';
 import { getCurrentAppEnvironment } from './task-list/editor-config';
 import type { TaskDetail } from './task-list/types';
 import { useTaskListComments } from './task-list/useTaskListComments';
 import { useTaskListEdit } from './task-list/useTaskListEdit';
 import { useTaskListListing } from './task-list/useTaskListListing';
+
+type TaskSurface = 'tasks' | 'requirements';
+
+type RequirementPackPayload = {
+    title: string;
+    items: Array<{
+        title: string;
+        description: string;
+    }>;
+};
+
+const route = useRoute();
+const router = useRouter();
+const activeSurface = ref<TaskSurface>(surfaceFromPath(route.path));
+const isRequirementsMode = computed(() => activeSurface.value === 'requirements');
+const listEndpoint = computed(() => (isRequirementsMode.value ? '/shift/api/requirements' : '/shift/api/tasks'));
 
 const createOpen = ref(false);
 const createLoading = ref(false);
@@ -27,8 +55,14 @@ const createForm = ref({
     collaborators: emptyTaskCollaborators(),
 });
 
+const requirementCreateOpen = ref(false);
+const requirementCreateLoading = ref(false);
+const requirementCreateError = ref<string | null>(null);
+
 const editOpen = ref(false);
 const editTask = ref<TaskDetail | null>(null);
+const deleteDialogOpen = ref(false);
+const pendingDeleteTask = ref<TaskDetail | null>(null);
 const currentAppEnvironment = getCurrentAppEnvironment();
 
 const {
@@ -67,7 +101,39 @@ const {
     goToPage,
     deleteTask,
     getTaskEnvironmentLabel,
-} = useTaskListListing();
+} = useTaskListListing({
+    endpoint: listEndpoint,
+});
+
+function surfaceFromPath(path: string): TaskSurface {
+    return path === '/requirements' ? 'requirements' : 'tasks';
+}
+
+async function setSurface(surface: TaskSurface) {
+    if (activeSurface.value === surface) return;
+    const path = surface === 'requirements' ? '/requirements' : '/tasks';
+
+    await router.push({
+        path,
+        query: route.query,
+    });
+
+    activeSurface.value = surface;
+    currentPage.value = 1;
+    await fetchTasks();
+}
+
+watch(
+    () => route.path,
+    async (path) => {
+        const nextSurface = surfaceFromPath(path);
+        if (activeSurface.value === nextSurface) return;
+
+        activeSurface.value = nextSurface;
+        currentPage.value = 1;
+        await fetchTasks();
+    },
+);
 
 const {
     threadTempIdentifier,
@@ -191,9 +257,41 @@ function setCreateOpen(value: boolean) {
     closeCreate();
 }
 
+function openRequirementCreate() {
+    requirementCreateError.value = null;
+    requirementCreateOpen.value = true;
+}
+
+function closeRequirementCreate() {
+    requirementCreateOpen.value = false;
+    requirementCreateError.value = null;
+}
+
+function requestDeleteTask(taskId: number) {
+    const task = tasks.value.find((item) => item.id === taskId) ?? null;
+    pendingDeleteTask.value = task ? ({ ...task } as TaskDetail) : ({ id: taskId, title: 'this item' } as TaskDetail);
+    deleteDialogOpen.value = true;
+}
+
+async function confirmDeleteTask() {
+    const task = pendingDeleteTask.value;
+
+    if (!task) return;
+
+    deleteDialogOpen.value = false;
+    pendingDeleteTask.value = null;
+    await deleteTask(task.id);
+}
+
 function setConfirmCloseOpen(value: boolean) {
     confirmCloseOpen.value = value;
 }
+
+watch(deleteDialogOpen, (open) => {
+    if (!open) {
+        pendingDeleteTask.value = null;
+    }
+});
 
 async function createTask() {
     createError.value = null;
@@ -230,6 +328,26 @@ async function createTask() {
     }
 }
 
+async function createRequirementPack(payload: RequirementPackPayload) {
+    requirementCreateError.value = null;
+    requirementCreateLoading.value = true;
+
+    try {
+        const response = await axios.post('/shift/api/requirements/batches', payload);
+        const created = response.data?.items ?? response.data?.data ?? [];
+        const createdId = Array.isArray(created) && typeof created[0]?.id === 'number' ? created[0].id : null;
+
+        closeRequirementCreate();
+        await fetchTasks();
+        if (createdId) highlightTask(createdId);
+        toast.success('Requirements submitted', { description: 'Your requirement pack has been added.' });
+    } catch (e: any) {
+        requirementCreateError.value = e.response?.data?.error || e.response?.data?.message || e.message || 'Unknown error';
+    } finally {
+        requirementCreateLoading.value = false;
+    }
+}
+
 defineExpose({
     threadMessages,
     copyEntireMessage,
@@ -254,6 +372,47 @@ onMounted(async () => {
 </script>
 
 <template>
+    <div class="mb-4 flex flex-wrap items-center gap-2" role="tablist" aria-label="SHIFT work area">
+        <button
+            type="button"
+            role="tab"
+            data-testid="tasks-tab"
+            :aria-selected="activeSurface === 'tasks'"
+            :class="[
+                activeSurface === 'tasks'
+                    ? 'bg-primary text-primary-foreground'
+                    : 'border-border bg-background text-muted-foreground hover:bg-muted/60 hover:text-foreground',
+                'rounded-md border px-3 py-2 text-sm font-medium transition-colors',
+            ]"
+            @click="setSurface('tasks')"
+        >
+            Tasks
+        </button>
+        <button
+            type="button"
+            role="tab"
+            data-testid="requirements-tab"
+            :aria-selected="activeSurface === 'requirements'"
+            :class="[
+                activeSurface === 'requirements'
+                    ? 'bg-primary text-primary-foreground'
+                    : 'border-border bg-background text-muted-foreground hover:bg-muted/60 hover:text-foreground',
+                'rounded-md border px-3 py-2 text-sm font-medium transition-colors',
+            ]"
+            @click="setSurface('requirements')"
+        >
+            Requirements
+        </button>
+    </div>
+
+    <RequirementPackForm
+        v-if="isRequirementsMode && requirementCreateOpen"
+        :loading="requirementCreateLoading"
+        :error="requirementCreateError"
+        @submit="createRequirementPack"
+        @cancel="closeRequirementCreate"
+    />
+
     <TaskListOverviewCard
         :tasks="tasks"
         :total-tasks="totalTasks"
@@ -275,6 +434,12 @@ onMounted(async () => {
         :status-options="statusOptions"
         :priority-options="priorityOptions"
         :sort-by-options="sortByOptions"
+        :title="isRequirementsMode ? 'Requirements' : 'Tasks'"
+        :description="isRequirementsMode ? 'Requirement packs stay separate until SHIFT confirms them as active tasks.' : 'Default view hides completed and closed tasks.'"
+        :empty-label="isRequirementsMode ? 'No requirements found' : 'No tasks found'"
+        :item-label="isRequirementsMode ? 'requirements' : 'tasks'"
+        :action-label="isRequirementsMode ? 'New Pack' : 'Create'"
+        :action-test-id="isRequirementsMode ? 'open-requirement-pack' : 'open-create-task'"
         :get-task-environment-label="getTaskEnvironmentLabel"
         :set-filters-open="setFiltersOpen"
         :set-draft-statuses="setDraftStatuses"
@@ -286,9 +451,9 @@ onMounted(async () => {
         :apply-filters="applyFilters"
         :select-all-statuses="selectAllStatuses"
         :select-all-priorities="selectAllPriorities"
-        :open-create="openCreate"
+        :open-create="isRequirementsMode ? openRequirementCreate : openCreate"
         :open-edit="openEdit"
-        :delete-task="deleteTask"
+        :delete-task="requestDeleteTask"
         :go-to-page="goToPage"
     />
 
@@ -358,6 +523,27 @@ onMounted(async () => {
     />
 
     <TaskDiscardDialog :open="confirmCloseOpen" :set-open="setConfirmCloseOpen" :discard="discardChangesAndClose" />
+
+    <AlertDialog v-model:open="deleteDialogOpen">
+        <AlertDialogContent>
+            <AlertDialogHeader>
+                <AlertDialogTitle>Delete {{ isRequirementsMode ? 'requirement' : 'task' }}</AlertDialogTitle>
+                <AlertDialogDescription>
+                    Delete {{ pendingDeleteTask?.title ?? (isRequirementsMode ? 'this requirement' : 'this task') }} from SHIFT? This cannot be undone.
+                </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+                <AlertDialogCancel @click="deleteDialogOpen = false">Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                    class="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    data-testid="confirm-task-delete"
+                    @click="confirmDeleteTask"
+                >
+                    Delete {{ isRequirementsMode ? 'requirement' : 'task' }}
+                </AlertDialogAction>
+            </AlertDialogFooter>
+        </AlertDialogContent>
+    </AlertDialog>
 
     <ImageLightbox v-model:open="lightboxOpen" :alt="lightboxAlt" :src="lightboxSrc" />
 </template>

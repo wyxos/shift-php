@@ -14,6 +14,39 @@ const sonnerMocks = vi.hoisted(() => ({
     toastErrorMock: vi.fn(),
     toastDismissMock: vi.fn(),
 }));
+const routerMocks = vi.hoisted(() => {
+    const routeState: { path: string; query: Record<string, string> } = {} as { path: string; query: Record<string, string> };
+
+    Object.defineProperty(routeState, 'path', {
+        get() {
+            return window.location.pathname.replace(/^\/shift/, '') || '/tasks';
+        },
+    });
+
+    Object.defineProperty(routeState, 'query', {
+        get() {
+            return Object.fromEntries(new URL(window.location.href).searchParams.entries());
+        },
+    });
+
+    function syncFromLocation() {
+        return routeState;
+    }
+
+    const push = vi.fn(async (to: any) => {
+        const path = typeof to === 'string' ? to : (to.path ?? '/tasks');
+        const query = typeof to === 'string' ? {} : (to.query ?? {});
+        const search = new URLSearchParams(query).toString();
+
+        window.history.pushState({}, '', `/shift${path}${search ? `?${search}` : ''}`);
+    });
+
+    return {
+        push,
+        routeState,
+        syncFromLocation,
+    };
+});
 
 export const toastMocks = sonnerMocks;
 
@@ -28,7 +61,8 @@ vi.mock('@/axios-config', () => ({
 }));
 
 vi.mock('vue-router', () => ({
-    useRouter: () => ({ push: vi.fn() }),
+    useRoute: () => routerMocks.routeState,
+    useRouter: () => ({ push: routerMocks.push }),
 }));
 
 vi.mock('vue-sonner', () => ({
@@ -41,6 +75,31 @@ vi.mock('vue-sonner', () => ({
 }));
 
 export const stubs = {
+    AlertDialog: {
+        props: ['open'],
+        template: '<div v-if="open"><slot /></div>',
+    },
+    AlertDialogAction: {
+        template: '<button v-bind="$attrs" type="button"><slot /></button>',
+    },
+    AlertDialogCancel: {
+        template: '<button v-bind="$attrs" type="button"><slot /></button>',
+    },
+    AlertDialogContent: {
+        template: '<div><slot /></div>',
+    },
+    AlertDialogDescription: {
+        template: '<p><slot /></p>',
+    },
+    AlertDialogFooter: {
+        template: '<div><slot /></div>',
+    },
+    AlertDialogHeader: {
+        template: '<div><slot /></div>',
+    },
+    AlertDialogTitle: {
+        template: '<h2><slot /></h2>',
+    },
     Button: { template: '<button v-bind="$attrs"><slot /></button>' },
     Card: { template: '<div><slot /></div>' },
     CardContent: { template: '<div><slot /></div>' },
@@ -147,6 +206,8 @@ export { mountTaskList as mountWithTasks };
 export function resetTaskListTestState() {
     vi.useRealTimers();
     window.history.replaceState({}, '', '/shift/tasks');
+    routerMocks.syncFromLocation();
+    routerMocks.push.mockClear();
     (window as any).shiftConfig = { appEnvironment: 'local' };
     getMock.mockReset();
     deleteMock.mockReset();

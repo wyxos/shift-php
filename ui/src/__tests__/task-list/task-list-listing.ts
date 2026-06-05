@@ -4,6 +4,7 @@ import { nextTick } from 'vue';
 import {
     defaultStatuses,
     defaultTasks,
+    deleteMock,
     getMock,
     makeIndexResponse,
     mountWithTasks,
@@ -154,6 +155,33 @@ describe('TaskList listing and filters', () => {
 
         wrapper.unmount();
         pushStateSpy.mockRestore();
+    });
+
+    it('confirms task deletion in an alert dialog before deleting', async () => {
+        const confirmSpy = vi.fn(() => true);
+        vi.stubGlobal('confirm', confirmSpy);
+        deleteMock.mockResolvedValueOnce({ data: {} });
+
+        const wrapper = await mountWithTasks();
+
+        await wrapper.get('[data-testid="task-delete-1"]').trigger('click');
+        await flushPromises();
+        await nextTick();
+
+        expect(confirmSpy).not.toHaveBeenCalled();
+        expect(deleteMock).not.toHaveBeenCalled();
+        expect(wrapper.text()).toContain('Delete task');
+        expect(wrapper.text()).toContain('Delete Auth issue from SHIFT? This cannot be undone.');
+
+        await wrapper.get('[data-testid="confirm-task-delete"]').trigger('click');
+        await flushPromises();
+        await nextTick();
+
+        expect(deleteMock).toHaveBeenCalledWith('/shift/api/tasks/1');
+        expect(wrapper.text()).not.toContain('Auth issue');
+
+        vi.unstubAllGlobals();
+        wrapper.unmount();
     });
 
     it('auto-opens the edit sheet from task URL query', async () => {

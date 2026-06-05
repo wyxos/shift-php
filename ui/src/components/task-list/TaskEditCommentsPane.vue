@@ -9,6 +9,7 @@ import { aiImproveUrl, getTaskListAiImproveEnabled, removeTempUrl, resolveTempUr
 import type { ThreadMessage } from './types';
 
 interface Props {
+    isRequirement?: boolean;
     editMobilePane: 'details' | 'comments';
     threadLoading: boolean;
     threadError: string | null;
@@ -37,7 +38,9 @@ interface Props {
     handleThreadSend: (payload: { html: string; attachments?: any[] }) => void | Promise<void>;
 }
 
-const props = defineProps<Props>();
+const props = withDefaults(defineProps<Props>(), {
+    isRequirement: false,
+});
 const aiImproveEnabled = getTaskListAiImproveEnabled();
 
 const threadComposerModel = computed({
@@ -64,7 +67,7 @@ function assignCommentsScrollRef(value: Element | ComponentPublicInstance | null
     >
         <div class="border-muted-foreground/10 flex items-center justify-between border-b px-4 py-3">
             <div>
-                <h3 class="text-foreground text-sm font-semibold">Comments</h3>
+                <h3 class="text-foreground text-sm font-semibold">{{ isRequirement ? 'Clarifications' : 'Comments' }}</h3>
             </div>
             <div class="text-muted-foreground text-xs">{{ threadMessages.length }} message{{ threadMessages.length === 1 ? '' : 's' }}</div>
         </div>

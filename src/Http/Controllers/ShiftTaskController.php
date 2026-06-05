@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
+use Wyxos\Shift\Support\ShiftProxyResponse;
 
 class ShiftTaskController extends Controller
 {
@@ -57,7 +58,7 @@ class ShiftTaskController extends Controller
                 return response()->json($response->json());
             }
 
-            return response()->json(['error' => $response->json()['message'] ?? 'Failed to fetch tasks'], 500);
+            return ShiftProxyResponse::error($response, 'Failed to fetch tasks');
         } catch (\Throwable $e) {
             return response()->json(['error' => 'Failed to fetch tasks: '.$e->getMessage()], 500);
         }
@@ -88,7 +89,7 @@ class ShiftTaskController extends Controller
                 return response()->json($response->json());
             }
 
-            return response()->json(['error' => $response->json()['message'] ?? 'Failed to create task'], 422);
+            return ShiftProxyResponse::error($response, 'Failed to create task', 422);
         } catch (\Throwable $e) {
             return response()->json(['error' => 'Failed to create task: '.$e->getMessage()], 500);
         }
@@ -118,7 +119,7 @@ class ShiftTaskController extends Controller
                 return response()->json($response->json());
             }
 
-            return response()->json(['error' => $response->json()['message'] ?? 'Failed to update task'], 422);
+            return ShiftProxyResponse::error($response, 'Failed to update task', 422);
         } catch (\Throwable $e) {
             return response()->json(['error' => 'Failed to update task: '.$e->getMessage()], 500);
         }
@@ -158,7 +159,7 @@ class ShiftTaskController extends Controller
                 return response()->json($response->json());
             }
 
-            return response()->json(['error' => $response->json()['message'] ?? 'Failed to update task collaborators'], 422);
+            return ShiftProxyResponse::error($response, 'Failed to update task collaborators', 422);
         } catch (\Throwable $e) {
             return response()->json(['error' => 'Failed to update task collaborators: '.$e->getMessage()], 500);
         }
@@ -186,7 +187,7 @@ class ShiftTaskController extends Controller
                 return response()->json($response->json());
             }
 
-            return response()->json(['error' => $response->json()['message'] ?? 'Failed to fetch task'], 500);
+            return ShiftProxyResponse::error($response, 'Failed to fetch task');
         } catch (\Throwable $e) {
             return response()->json(['error' => 'Failed to fetch task: '.$e->getMessage()], 500);
         }
@@ -211,7 +212,7 @@ class ShiftTaskController extends Controller
                 return response()->json(['message' => 'Task deleted successfully']);
             }
 
-            return response()->json(['error' => $response->json()['message'] ?? 'Failed to delete task'], 422);
+            return ShiftProxyResponse::error($response, 'Failed to delete task', 422);
         } catch (\Throwable $e) {
             return response()->json(['error' => 'Failed to delete task: '.$e->getMessage()], 500);
         }
@@ -245,7 +246,7 @@ class ShiftTaskController extends Controller
                 return response()->json($response->json());
             }
 
-            return response()->json(['error' => $response->json()['message'] ?? 'Failed to update task status'], 422);
+            return ShiftProxyResponse::error($response, 'Failed to update task status', 422);
         } catch (\Throwable $e) {
             return response()->json(['error' => 'Failed to update task status: '.$e->getMessage()], 500);
         }

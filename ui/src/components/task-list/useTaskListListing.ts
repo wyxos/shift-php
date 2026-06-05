@@ -1,10 +1,14 @@
 import axios from '@/axios-config';
 import { getTaskEnvironment } from '@shared/tasks/metadata';
 import { useTaskFilterState } from '@shared/tasks/useTaskFilterState';
-import { onBeforeUnmount, ref } from 'vue';
+import { onBeforeUnmount, ref, unref, type MaybeRef } from 'vue';
 import type { Task } from './types';
 
-export function useTaskListListing() {
+type UseTaskListListingOptions = {
+    endpoint?: MaybeRef<string>;
+};
+
+export function useTaskListListing(options: UseTaskListListingOptions = {}) {
     const tasks = ref<Task[]>([]);
     const totalTasks = ref(0);
     const loading = ref(true);
@@ -92,7 +96,7 @@ export function useTaskListListing() {
                 params.priority = filters.appliedPriorities.value;
             }
 
-            const response = await axios.get('/shift/api/tasks', {
+            const response = await axios.get(unref(options.endpoint) ?? '/shift/api/tasks', {
                 params,
             });
 
@@ -150,8 +154,6 @@ export function useTaskListListing() {
     }
 
     async function deleteTask(taskId: number) {
-        if (!confirm('Are you sure you want to delete this task?')) return;
-
         deleteLoading.value = taskId;
         error.value = null;
 

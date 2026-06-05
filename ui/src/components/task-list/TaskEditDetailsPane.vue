@@ -35,6 +35,7 @@ interface Props {
     taskAttachments: TaskAttachment[];
     editTempIdentifier: string;
     editMobilePane: 'details' | 'comments';
+    isRequirement?: boolean;
     setEditUploading: (value: boolean) => void;
     setEditTitle: (value: string) => void;
     setEditPriority: (value: string) => void;
@@ -44,7 +45,9 @@ interface Props {
     removeAttachmentFromTask: (attachmentId: number) => void;
 }
 
-const props = defineProps<Props>();
+const props = withDefaults(defineProps<Props>(), {
+    isRequirement: false,
+});
 const aiImproveEnabled = getTaskListAiImproveEnabled();
 
 const titleModel = computed({
@@ -95,7 +98,7 @@ const editTaskEnvironmentLabel = computed(() => getTaskEnvironment(props.editTas
         </div>
 
         <div class="space-y-2">
-            <Label class="text-muted-foreground">Task</Label>
+            <Label class="text-muted-foreground">{{ isRequirement ? 'Requirement' : 'Task' }}</Label>
             <template v-if="isOwner">
                 <Input v-model="titleModel" placeholder="Short, descriptive title" required />
             </template>

@@ -80,6 +80,7 @@ const mobilePaneModel = computed({
 });
 
 const mobilePaneOptions = computed<MobilePaneOption[]>(() => [...props.editMobilePaneOptions]);
+const isRequirement = computed(() => props.editTask?.phase === 'requirement');
 </script>
 
 <template>
@@ -92,7 +93,7 @@ const mobilePaneOptions = computed<MobilePaneOption[]>(() => [...props.editMobil
         >
             <form class="flex h-full min-h-0 flex-col" data-testid="edit-form">
                 <SheetHeader class="sr-only">
-                    <SheetTitle>Task</SheetTitle>
+                    <SheetTitle>{{ isRequirement ? 'Requirement' : 'Task' }}</SheetTitle>
                 </SheetHeader>
 
                 <div v-if="editTask && !editLoading && !editError" class="border-b px-6 py-4 lg:hidden">
@@ -129,9 +130,11 @@ const mobilePaneOptions = computed<MobilePaneOption[]>(() => [...props.editMobil
                             :set-edit-description="setEditDescription"
                             :update-edit-collaborators="updateEditCollaborators"
                             :remove-attachment-from-task="removeAttachmentFromTask"
+                            :is-requirement="isRequirement"
                         />
 
                         <TaskEditCommentsPane
+                            :is-requirement="isRequirement"
                             :edit-mobile-pane="editMobilePane"
                             :thread-loading="threadLoading"
                             :thread-error="threadError"

@@ -5,7 +5,22 @@ export type Task = {
     title: string;
     status: string;
     priority: string;
+    phase?: 'task' | 'requirement' | string | null;
+    finalized?: boolean;
+    batch_id?: number | null;
+    batch_title?: string | null;
+    submitted_title?: string | null;
+    submitted_description?: string | null;
+    finalized_at?: string | null;
     environment?: string | null;
+    batch?: {
+        id: number;
+        title?: string | null;
+        created_at?: string | null;
+        total_items: number;
+        requirement_items: number;
+        finalized_items: number;
+    } | null;
     created_at?: string | null;
     updated_at?: string | null;
 };
