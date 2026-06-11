@@ -114,11 +114,14 @@ describe('TaskList edit sheet', () => {
         const sheetLayout = wrapper.get('[data-testid="task-edit-sheet-layout"]');
         const detailsPane = wrapper.get('[data-testid="task-edit-details-pane"]');
         const commentsPane = wrapper.get('[data-testid="task-edit-comments-pane"]');
+        const metadataGrid = wrapper.get('[data-testid="edit-task-meta"]');
 
         expect(wrapper.get('[data-testid="edit-task-environment"]').text()).toContain('Staging');
         expect(wrapper.find('[data-testid="edit-task-environment-select"]').exists()).toBe(false);
         expect(wrapper.get('[data-testid="edit-task-created-by"]').text()).toContain('Taylor Brown');
         expect(wrapper.get('[data-testid="edit-task-updated-at"]').text()).toContain('Updated');
+        expect(metadataGrid.classes()).toContain('sm:grid-cols-3');
+        expect(metadataGrid.classes()).not.toContain('rounded-lg');
         expect(sheetContent.classes()).toContain('w-screen');
         expect(sheetContent.classes()).toContain('md:w-screen');
         expect(sheetContent.classes()).toContain('xl:w-[75vw]');

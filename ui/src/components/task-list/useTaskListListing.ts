@@ -1,7 +1,8 @@
 import axios from '@/axios-config';
 import { getTaskEnvironment } from '@shared/tasks/metadata';
+import { getRequirementStatusOptions } from '@shared/tasks/presentation';
 import { useTaskFilterState } from '@shared/tasks/useTaskFilterState';
-import { onBeforeUnmount, ref, unref, type MaybeRef } from 'vue';
+import { computed, onBeforeUnmount, ref, unref, type MaybeRef } from 'vue';
 import type { Task } from './types';
 
 type UseTaskListListingOptions = {
@@ -20,10 +21,25 @@ export function useTaskListListing(options: UseTaskListListingOptions = {}) {
     const to = ref(0);
     const highlightedTaskId = ref<number | null>(null);
 
-    const filters = useTaskFilterState({
+    const taskFilters = useTaskFilterState({
         includeClosed: true,
         completedStatuses: ['completed', 'closed'],
     });
+    const requirementFilters = useTaskFilterState({
+        statusOptions: getRequirementStatusOptions(),
+        completedStatuses: [],
+    });
+    const isRequirementsEndpoint = computed(() => (unref(options.endpoint) ?? '/shift/api/tasks').includes('/requirements'));
+    const activeFilters = computed(() => (isRequirementsEndpoint.value ? requirementFilters : taskFilters));
+    const activeFilterCount = computed(() => activeFilters.value.activeFilterCount.value);
+    const draftStatuses = computed(() => activeFilters.value.draftStatuses.value);
+    const draftPriorities = computed(() => activeFilters.value.draftPriorities.value);
+    const draftSearchTerm = computed(() => activeFilters.value.draftSearchTerm.value);
+    const draftEnvironmentTerm = computed(() => activeFilters.value.draftEnvironmentTerm.value);
+    const draftSortBy = computed(() => activeFilters.value.draftSortBy.value);
+    const statusOptions = computed(() => activeFilters.value.statusOptions);
+    const priorityOptions = computed(() => activeFilters.value.priorityOptions);
+    const sortByOptions = computed(() => activeFilters.value.sortByOptions);
 
     let highlightTimer: number | null = null;
 
@@ -34,27 +50,27 @@ export function useTaskListListing(options: UseTaskListListingOptions = {}) {
     });
 
     function setFiltersOpen(value: boolean) {
-        filters.filtersOpen.value = value;
+        activeFilters.value.filtersOpen.value = value;
     }
 
     function setDraftStatuses(value: string[]) {
-        filters.draftStatuses.value = value;
+        activeFilters.value.draftStatuses.value = value;
     }
 
     function setDraftPriorities(value: string[]) {
-        filters.draftPriorities.value = value;
+        activeFilters.value.draftPriorities.value = value;
     }
 
     function setDraftSearchTerm(value: string) {
-        filters.draftSearchTerm.value = value;
+        activeFilters.value.draftSearchTerm.value = value;
     }
 
     function setDraftEnvironmentTerm(value: string) {
-        filters.draftEnvironmentTerm.value = value;
+        activeFilters.value.draftEnvironmentTerm.value = value;
     }
 
     function setDraftSortBy(value: string) {
-        filters.draftSortBy.value = value;
+        activeFilters.value.draftSortBy.value = value;
     }
 
     function highlightTask(taskId: number) {
@@ -73,6 +89,7 @@ export function useTaskListListing(options: UseTaskListListingOptions = {}) {
         error.value = null;
 
         try {
+            const filters = activeFilters.value;
             const params: Record<string, any> = {
                 page: currentPage.value,
                 sort_by: filters.appliedSortBy.value,
@@ -134,16 +151,16 @@ export function useTaskListListing(options: UseTaskListListingOptions = {}) {
     }
 
     function resetFilters() {
-        filters.resetFilters();
+        activeFilters.value.resetFilters();
         currentPage.value = 1;
         void fetchTasks();
     }
 
     function applyFilters() {
-        filters.applyDraftToApplied();
+        activeFilters.value.applyDraftToApplied();
         currentPage.value = 1;
         void fetchTasks();
-        filters.filtersOpen.value = false;
+        activeFilters.value.filtersOpen.value = false;
     }
 
     function goToPage(page: number) {
@@ -173,19 +190,19 @@ export function useTaskListListing(options: UseTaskListListingOptions = {}) {
     }
 
     return {
-        activeFilterCount: filters.activeFilterCount,
+        activeFilterCount,
         applyFilters,
         currentPage,
         deleteLoading,
         deleteTask,
-        draftEnvironmentTerm: filters.draftEnvironmentTerm,
-        draftPriorities: filters.draftPriorities,
-        draftSearchTerm: filters.draftSearchTerm,
-        draftSortBy: filters.draftSortBy,
-        draftStatuses: filters.draftStatuses,
+        draftEnvironmentTerm,
+        draftPriorities,
+        draftSearchTerm,
+        draftSortBy,
+        draftStatuses,
         error,
         fetchTasks,
-        filtersOpen: filters.filtersOpen,
+        filtersOpen: computed(() => activeFilters.value.filtersOpen.value),
         from,
         getTaskEnvironmentLabel,
         goToPage,
@@ -193,18 +210,18 @@ export function useTaskListListing(options: UseTaskListListingOptions = {}) {
         highlightTask,
         lastPage,
         loading,
-        priorityOptions: filters.priorityOptions,
+        priorityOptions,
         resetFilters,
-        selectAllPriorities: filters.selectAllPriorities,
-        selectAllStatuses: filters.selectAllStatuses,
+        selectAllPriorities: () => activeFilters.value.selectAllPriorities(),
+        selectAllStatuses: () => activeFilters.value.selectAllStatuses(),
         setDraftEnvironmentTerm,
         setDraftPriorities,
         setDraftSearchTerm,
         setDraftSortBy,
         setDraftStatuses,
         setFiltersOpen,
-        sortByOptions: filters.sortByOptions,
-        statusOptions: filters.statusOptions,
+        sortByOptions,
+        statusOptions,
         tasks,
         to,
         totalTasks,

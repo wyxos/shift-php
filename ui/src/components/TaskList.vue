@@ -6,13 +6,13 @@ import { ImageLightbox } from '@shift/ui/image-lightbox';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { toast } from 'vue-sonner';
+import RequirementPackForm from './task-list/RequirementPackForm.vue';
 import TaskCreateSheet from './task-list/TaskCreateSheet.vue';
 import TaskDeleteConfirmDialog from './task-list/TaskDeleteConfirmDialog.vue';
 import TaskDiscardDialog from './task-list/TaskDiscardDialog.vue';
 import TaskEditSheet from './task-list/TaskEditSheet.vue';
 import TaskListOverviewCard from './task-list/TaskListOverviewCard.vue';
 import TaskSurfaceTabs from './task-list/TaskSurfaceTabs.vue';
-import RequirementPackForm from './task-list/RequirementPackForm.vue';
 import { getCurrentAppEnvironment } from './task-list/editor-config';
 import type { TaskDetail } from './task-list/types';
 import { useTaskListComments } from './task-list/useTaskListComments';
@@ -21,12 +21,24 @@ import { useTaskListListing } from './task-list/useTaskListListing';
 
 type TaskSurface = 'tasks' | 'requirements';
 
-type RequirementPackPayload = {
-    title: string;
-    items: Array<{
-        title: string;
-        description: string;
+type RequirementCollaboratorPayload = {
+    internal_collaborator_ids?: number[];
+    external_collaborators?: Array<{
+        id: string | number;
+        name: string;
+        email: string;
     }>;
+};
+
+type RequirementPackPayload = RequirementCollaboratorPayload & {
+    title: string;
+    items: Array<
+        RequirementCollaboratorPayload & {
+            title: string;
+            description: string;
+            temp_identifier: string;
+        }
+    >;
 };
 
 const route = useRoute();
@@ -183,6 +195,7 @@ const {
     setEditTitle,
     setEditPriority,
     setEditStatus,
+    setEditRequirementStatus,
     setEditDescription,
     discardChangesAndClose,
     onEditOpenChange,
@@ -332,7 +345,7 @@ async function createRequirementPack(payload: RequirementPackPayload) {
         closeRequirementCreate();
         await fetchTasks();
         if (createdId) highlightTask(createdId);
-        toast.success('Requirements submitted', { description: 'Your requirement pack has been added.' });
+        toast.success('Requirements submitted', { description: 'Your requirements have been submitted.' });
     } catch (e: any) {
         requirementCreateError.value = e.response?.data?.error || e.response?.data?.message || e.message || 'Unknown error';
     } finally {
@@ -368,6 +381,7 @@ onMounted(async () => {
 
     <RequirementPackForm
         v-if="isRequirementsMode && requirementCreateOpen"
+        :open="requirementCreateOpen"
         :loading="requirementCreateLoading"
         :error="requirementCreateError"
         @submit="createRequirementPack"
@@ -396,10 +410,15 @@ onMounted(async () => {
         :priority-options="priorityOptions"
         :sort-by-options="sortByOptions"
         :title="isRequirementsMode ? 'Requirements' : 'Tasks'"
-        :description="isRequirementsMode ? 'Requirement packs stay separate until SHIFT confirms them as active tasks.' : 'Default view hides completed and closed tasks.'"
+        :description="
+            isRequirementsMode
+                ? 'Submitted requirements stay separate until SHIFT confirms them as active tasks.'
+                : 'Default view hides completed and closed tasks.'
+        "
         :empty-label="isRequirementsMode ? 'No requirements found' : 'No tasks found'"
         :item-label="isRequirementsMode ? 'requirements' : 'tasks'"
-        :action-label="isRequirementsMode ? 'New Pack' : 'Create'"
+        :status-label="isRequirementsMode ? 'State' : 'Status'"
+        :action-label="isRequirementsMode ? 'New Requirements' : 'Create'"
         :action-test-id="isRequirementsMode ? 'open-requirement-pack' : 'open-create-task'"
         :get-task-environment-label="getTaskEnvironmentLabel"
         :set-filters-open="setFiltersOpen"
@@ -460,6 +479,7 @@ onMounted(async () => {
         :set-edit-title="setEditTitle"
         :set-edit-priority="setEditPriority"
         :set-edit-status="setEditStatus"
+        :set-edit-requirement-status="setEditRequirementStatus"
         :set-edit-description="setEditDescription"
         :set-edit-mobile-pane="setEditMobilePane"
         :set-thread-composer-html="setThreadComposerHtml"

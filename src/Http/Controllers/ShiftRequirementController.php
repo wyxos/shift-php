@@ -27,7 +27,7 @@ class ShiftRequirementController extends Controller
                 ...$this->basePayload(),
             ];
 
-            foreach (['status', 'priority', 'search', 'environment', 'sort_by'] as $filter) {
+            foreach (['status', 'lifecycle', 'priority', 'search', 'environment', 'sort_by'] as $filter) {
                 if ($request->filled($filter)) {
                     $params[$filter] = $request->input($filter);
                 }
@@ -62,9 +62,22 @@ class ShiftRequirementController extends Controller
 
         $attributes = $request->validate([
             'title' => 'nullable|string|max:255',
+            'internal_collaborator_ids' => 'nullable|array',
+            'internal_collaborator_ids.*' => 'integer',
+            'external_collaborators' => 'nullable|array',
+            'external_collaborators.*.id' => 'required',
+            'external_collaborators.*.name' => 'required|string|max:255',
+            'external_collaborators.*.email' => 'required|email',
             'items' => 'required|array|min:1|max:50',
             'items.*.title' => 'required|string|max:255',
             'items.*.description' => 'required|string',
+            'items.*.temp_identifier' => 'nullable|string',
+            'items.*.internal_collaborator_ids' => 'nullable|array',
+            'items.*.internal_collaborator_ids.*' => 'integer',
+            'items.*.external_collaborators' => 'nullable|array',
+            'items.*.external_collaborators.*.id' => 'required',
+            'items.*.external_collaborators.*.name' => 'required|string|max:255',
+            'items.*.external_collaborators.*.email' => 'required|email',
         ]);
 
         try {

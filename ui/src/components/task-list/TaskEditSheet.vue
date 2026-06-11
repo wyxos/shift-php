@@ -12,6 +12,7 @@ interface EditFormModel {
     title: string;
     priority: string;
     status: string;
+    requirement_status: string;
     description: string;
     collaborators: TaskCollaboratorSelection;
 }
@@ -49,6 +50,7 @@ interface Props {
     setEditTitle: (value: string) => void;
     setEditPriority: (value: string) => void;
     setEditStatus: (value: string) => void;
+    setEditRequirementStatus: (value: string) => void;
     setEditDescription: (value: string) => void;
     setEditMobilePane: (value: 'details' | 'comments') => void;
     setThreadComposerHtml: (value: string) => void;
@@ -127,6 +129,7 @@ const isRequirement = computed(() => props.editTask?.phase === 'requirement');
                             :set-edit-title="setEditTitle"
                             :set-edit-priority="setEditPriority"
                             :set-edit-status="setEditStatus"
+                            :set-edit-requirement-status="setEditRequirementStatus"
                             :set-edit-description="setEditDescription"
                             :update-edit-collaborators="updateEditCollaborators"
                             :remove-attachment-from-task="removeAttachmentFromTask"

@@ -4,7 +4,7 @@ import ShiftEditor from '@shared/components/ShiftEditor.vue';
 import TaskCollaboratorField from '@shared/components/TaskCollaboratorField.vue';
 import type { TaskCollaboratorSelection } from '@shared/tasks/collaborators';
 import { getTaskCreatorEmail, getTaskCreatorName, getTaskEnvironment } from '@shared/tasks/metadata';
-import { getPriorityLabel, type TaskFilterOption } from '@shared/tasks/presentation';
+import { getPriorityLabel, getRequirementStatusOptions, type TaskFilterOption } from '@shared/tasks/presentation';
 import { renderRichContent } from '@shared/tasks/rich-content';
 import { formatThreadTime } from '@shared/tasks/thread';
 import { Button } from '@shift/ui/button';
@@ -19,6 +19,7 @@ interface EditFormModel {
     title: string;
     priority: string;
     status: string;
+    requirement_status: string;
     description: string;
     collaborators: TaskCollaboratorSelection;
 }
@@ -40,6 +41,7 @@ interface Props {
     setEditTitle: (value: string) => void;
     setEditPriority: (value: string) => void;
     setEditStatus: (value: string) => void;
+    setEditRequirementStatus: (value: string) => void;
     setEditDescription: (value: string) => void;
     updateEditCollaborators: (value: TaskCollaboratorSelection) => void;
     removeAttachmentFromTask: (attachmentId: number) => void;
@@ -60,6 +62,11 @@ const statusModel = computed({
     set: (value: string) => props.setEditStatus(value),
 });
 
+const requirementStatusModel = computed({
+    get: () => props.editForm.requirement_status,
+    set: (value: string) => props.setEditRequirementStatus(value),
+});
+
 const priorityModel = computed({
     get: () => props.editForm.priority,
     set: (value: string) => props.setEditPriority(value),
@@ -71,6 +78,7 @@ const descriptionModel = computed({
 });
 
 const visibleStatusOptions = computed(() => props.statusOptions.filter((option) => option.value !== 'closed'));
+const requirementStatusOptions = computed(() => getRequirementStatusOptions());
 const editTaskCreatorLabel = computed(() => getTaskCreatorName(props.editTask) ?? getTaskCreatorEmail(props.editTask) ?? 'Unknown');
 const editTaskEnvironmentLabel = computed(() => getTaskEnvironment(props.editTask) ?? 'Unknown');
 </script>
@@ -80,20 +88,22 @@ const editTaskEnvironmentLabel = computed(() => getTaskEnvironment(props.editTas
         :class="[editMobilePane === 'comments' ? 'hidden lg:block' : 'block', 'min-w-0 space-y-6 pr-1 lg:min-h-0 lg:overflow-y-auto']"
         data-testid="task-edit-details-pane"
     >
-        <div class="border-muted-foreground/20 bg-muted/10 grid gap-2 rounded-lg border p-3 text-xs">
-            <div v-if="editTask.created_at" class="text-muted-foreground" data-testid="edit-task-created-at">
-                Created {{ formatThreadTime(editTask.created_at) }}
+        <div class="grid gap-4 sm:grid-cols-3" data-testid="edit-task-meta">
+            <div class="space-y-1">
+                <div class="text-muted-foreground text-xs tracking-wide uppercase">Created by</div>
+                <div class="text-foreground text-sm font-medium" data-testid="edit-task-created-by">{{ editTaskCreatorLabel }}</div>
             </div>
-            <div v-if="editTask.updated_at" class="text-muted-foreground" data-testid="edit-task-updated-at">
-                Updated {{ formatThreadTime(editTask.updated_at) }}
+            <div class="space-y-1">
+                <div class="text-muted-foreground text-xs tracking-wide uppercase">Created</div>
+                <div class="text-foreground text-sm font-medium" data-testid="edit-task-created-at">
+                    {{ editTask.created_at ? formatThreadTime(editTask.created_at) : 'Unknown' }}
+                </div>
             </div>
-            <div class="flex items-center justify-between gap-2">
-                <span class="text-muted-foreground">Environment</span>
-                <span class="text-foreground font-medium" data-testid="edit-task-environment">{{ editTaskEnvironmentLabel }}</span>
-            </div>
-            <div class="flex items-center justify-between gap-2">
-                <span class="text-muted-foreground">Created by</span>
-                <span class="text-foreground font-medium" data-testid="edit-task-created-by">{{ editTaskCreatorLabel }}</span>
+            <div class="space-y-1">
+                <div class="text-muted-foreground text-xs tracking-wide uppercase">Updated</div>
+                <div class="text-foreground text-sm font-medium" data-testid="edit-task-updated-at">
+                    Updated {{ editTask.updated_at ? formatThreadTime(editTask.updated_at) : 'Unknown' }}
+                </div>
             </div>
         </div>
 
@@ -109,7 +119,7 @@ const editTaskEnvironmentLabel = computed(() => getTaskEnvironment(props.editTas
             </template>
         </div>
 
-        <div class="space-y-2">
+        <div v-if="!isRequirement" class="space-y-2">
             <Label class="text-muted-foreground">Status</Label>
             <ButtonGroup
                 v-model="statusModel"
@@ -119,6 +129,19 @@ const editTaskEnvironmentLabel = computed(() => getTaskEnvironment(props.editTas
                 :options="visibleStatusOptions"
                 :columns="2"
                 class="xl:grid-cols-4"
+            />
+        </div>
+
+        <div v-else class="space-y-2">
+            <Label class="text-muted-foreground">Requirement state</Label>
+            <ButtonGroup
+                v-model="requirementStatusModel"
+                aria-label="Requirement state"
+                test-id-prefix="requirement-status"
+                :disabled="editLoading || editUploading"
+                :options="requirementStatusOptions"
+                :columns="2"
+                class="xl:grid-cols-3"
             />
         </div>
 
@@ -184,6 +207,16 @@ const editTaskEnvironmentLabel = computed(() => getTaskEnvironment(props.editTas
                 :read-only="!canManageCollaborators"
                 @update:model-value="updateEditCollaborators"
             />
+        </div>
+
+        <div class="space-y-2">
+            <Label class="text-muted-foreground">Environment</Label>
+            <div
+                class="border-muted-foreground/30 bg-muted/10 text-foreground rounded-md border border-dashed p-3 text-sm"
+                data-testid="edit-task-environment"
+            >
+                {{ editTaskEnvironmentLabel }}
+            </div>
         </div>
 
         <div class="space-y-2">
