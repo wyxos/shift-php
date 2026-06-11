@@ -2,24 +2,16 @@
 import axios from '@/axios-config';
 import { emptyTaskCollaborators, normalizeTaskCollaborators, type TaskCollaboratorSelection } from '@shared/tasks/collaborators';
 import { getTaskIdFromQuery } from '@shared/tasks/history';
-import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-} from '@shift/ui/alert-dialog';
 import { ImageLightbox } from '@shift/ui/image-lightbox';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { toast } from 'vue-sonner';
 import TaskCreateSheet from './task-list/TaskCreateSheet.vue';
+import TaskDeleteConfirmDialog from './task-list/TaskDeleteConfirmDialog.vue';
 import TaskDiscardDialog from './task-list/TaskDiscardDialog.vue';
 import TaskEditSheet from './task-list/TaskEditSheet.vue';
 import TaskListOverviewCard from './task-list/TaskListOverviewCard.vue';
+import TaskSurfaceTabs from './task-list/TaskSurfaceTabs.vue';
 import RequirementPackForm from './task-list/RequirementPackForm.vue';
 import { getCurrentAppEnvironment } from './task-list/editor-config';
 import type { TaskDetail } from './task-list/types';
@@ -372,38 +364,7 @@ onMounted(async () => {
 </script>
 
 <template>
-    <div class="mb-4 flex flex-wrap items-center gap-2" role="tablist" aria-label="SHIFT work area">
-        <button
-            type="button"
-            role="tab"
-            data-testid="tasks-tab"
-            :aria-selected="activeSurface === 'tasks'"
-            :class="[
-                activeSurface === 'tasks'
-                    ? 'bg-primary text-primary-foreground'
-                    : 'border-border bg-background text-muted-foreground hover:bg-muted/60 hover:text-foreground',
-                'rounded-md border px-3 py-2 text-sm font-medium transition-colors',
-            ]"
-            @click="setSurface('tasks')"
-        >
-            Tasks
-        </button>
-        <button
-            type="button"
-            role="tab"
-            data-testid="requirements-tab"
-            :aria-selected="activeSurface === 'requirements'"
-            :class="[
-                activeSurface === 'requirements'
-                    ? 'bg-primary text-primary-foreground'
-                    : 'border-border bg-background text-muted-foreground hover:bg-muted/60 hover:text-foreground',
-                'rounded-md border px-3 py-2 text-sm font-medium transition-colors',
-            ]"
-            @click="setSurface('requirements')"
-        >
-            Requirements
-        </button>
-    </div>
+    <TaskSurfaceTabs :active-surface="activeSurface" @set-surface="setSurface" />
 
     <RequirementPackForm
         v-if="isRequirementsMode && requirementCreateOpen"
@@ -524,26 +485,12 @@ onMounted(async () => {
 
     <TaskDiscardDialog :open="confirmCloseOpen" :set-open="setConfirmCloseOpen" :discard="discardChangesAndClose" />
 
-    <AlertDialog v-model:open="deleteDialogOpen">
-        <AlertDialogContent>
-            <AlertDialogHeader>
-                <AlertDialogTitle>Delete {{ isRequirementsMode ? 'requirement' : 'task' }}</AlertDialogTitle>
-                <AlertDialogDescription>
-                    Delete {{ pendingDeleteTask?.title ?? (isRequirementsMode ? 'this requirement' : 'this task') }} from SHIFT? This cannot be undone.
-                </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-                <AlertDialogCancel @click="deleteDialogOpen = false">Cancel</AlertDialogCancel>
-                <AlertDialogAction
-                    class="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                    data-testid="confirm-task-delete"
-                    @click="confirmDeleteTask"
-                >
-                    Delete {{ isRequirementsMode ? 'requirement' : 'task' }}
-                </AlertDialogAction>
-            </AlertDialogFooter>
-        </AlertDialogContent>
-    </AlertDialog>
+    <TaskDeleteConfirmDialog
+        v-model:open="deleteDialogOpen"
+        :surface="activeSurface"
+        :task-title="pendingDeleteTask?.title"
+        @confirm="confirmDeleteTask"
+    />
 
     <ImageLightbox v-model:open="lightboxOpen" :alt="lightboxAlt" :src="lightboxSrc" />
 </template>

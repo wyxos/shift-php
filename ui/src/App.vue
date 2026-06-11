@@ -23,5 +23,5 @@ const loginUrl = window.shiftConfig.loginRoute;
 
     <AuthErrorModal :redirect-url="loginUrl" />
 
-    <Toaster rich-colors />
+    <Toaster rich-colors position="bottom-center" />
 </template>
