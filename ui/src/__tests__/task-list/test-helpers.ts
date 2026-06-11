@@ -172,9 +172,11 @@ export const seedTasks = [
     { id: 3, title: 'Docs update', status: 'awaiting-feedback', priority: 'low', environment: null, can_delete: true },
     { id: 4, title: 'Legacy cleanup', status: 'completed', priority: 'low', environment: 'production', can_delete: true },
     { id: 5, title: 'Close out', status: 'closed', priority: 'medium', environment: null, can_delete: true },
+    { id: 6, title: 'Deployment paused', status: 'on-hold', priority: 'medium', environment: 'production', can_delete: true },
 ];
 
-export const defaultStatuses = ['pending', 'in-progress', 'awaiting-feedback'];
+export const defaultStatuses = ['pending', 'in-progress', 'awaiting-feedback', 'on-hold'];
+export const defaultRequirementStatuses = ['submitted', 'in-review', 'awaiting-feedback', 'ready-to-finalize', 'parked', 'declined'];
 export const defaultTasks = seedTasks.filter((t) => defaultStatuses.includes(t.status));
 
 export function makeIndexResponse(tasks: any[]) {

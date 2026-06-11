@@ -4,6 +4,7 @@ export type Task = {
     id: number;
     title: string;
     status: string;
+    requirement_status?: string | null;
     priority: string;
     phase?: 'task' | 'requirement' | string | null;
     finalized?: boolean | null;
@@ -20,6 +21,7 @@ export type Task = {
         created_at?: string | null;
         total_items: number;
         requirement_items: number;
+        ready_items?: number;
         finalized_items: number;
     } | null;
     created_at?: string | null;

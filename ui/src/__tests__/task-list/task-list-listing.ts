@@ -25,10 +25,11 @@ describe('TaskList listing and filters', () => {
         });
 
         const rows = wrapper.findAll('[data-testid="task-row"]');
-        expect(rows.length).toBe(3);
+        expect(rows.length).toBe(4);
         const text = rows.map((row) => row.text()).join(' ');
         expect(text).not.toContain('completed');
         expect(text).not.toContain('closed');
+        expect(text).toContain('Deployment paused');
 
         wrapper.unmount();
     });
@@ -47,6 +48,7 @@ describe('TaskList listing and filters', () => {
         expect(wrapper.get('[data-testid="task-status-badge-3"]').classes()).toContain('bg-indigo-100');
         expect(wrapper.get('[data-testid="task-status-badge-4"]').classes()).toContain('bg-emerald-100');
         expect(wrapper.get('[data-testid="task-status-badge-5"]').classes()).toContain('bg-slate-100');
+        expect(wrapper.get('[data-testid="task-status-badge-6"]').classes()).toContain('bg-orange-100');
 
         wrapper.unmount();
     });
@@ -280,7 +282,7 @@ describe('TaskList listing and filters', () => {
         await nextTick();
 
         // Draft changes should not apply until the user clicks Apply.
-        expect(wrapper.findAll('[data-testid="task-row"]').length).toBe(3);
+        expect(wrapper.findAll('[data-testid="task-row"]').length).toBe(4);
 
         await wrapper.get('[data-testid="filters-apply"]').trigger('click');
         await flushPromises();

@@ -36,6 +36,7 @@ interface Props {
     itemLabel?: string;
     actionLabel?: string;
     actionTestId?: string;
+    statusLabel?: string;
     getTaskEnvironmentLabel: (task: Task) => string;
     setFiltersOpen: (value: boolean) => void;
     setDraftStatuses: (value: string[]) => void;
@@ -60,6 +61,7 @@ const props = withDefaults(defineProps<Props>(), {
     itemLabel: 'tasks',
     actionLabel: 'Create',
     actionTestId: 'open-create-task',
+    statusLabel: 'Status',
 });
 </script>
 
@@ -89,6 +91,7 @@ const props = withDefaults(defineProps<Props>(), {
         :description="props.description"
         :empty-label="props.emptyLabel"
         :item-label="props.itemLabel"
+        :status-label="props.statusLabel"
         :get-task-environment-label="props.getTaskEnvironmentLabel"
         :set-filters-open="props.setFiltersOpen"
         :set-draft-statuses="props.setDraftStatuses"
