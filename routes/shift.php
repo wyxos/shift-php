@@ -6,6 +6,7 @@ use Wyxos\Shift\Http\Controllers\ShiftAttachmentController;
 use Wyxos\Shift\Http\Controllers\ShiftCollaboratorController;
 use Wyxos\Shift\Http\Controllers\ShiftController;
 use Wyxos\Shift\Http\Controllers\ShiftDashboardController;
+use Wyxos\Shift\Http\Controllers\ShiftExternalRoleController;
 use Wyxos\Shift\Http\Controllers\ShiftNotificationController;
 use Wyxos\Shift\Http\Controllers\ShiftRequirementController;
 use Wyxos\Shift\Http\Controllers\ShiftTaskController;
@@ -30,6 +31,9 @@ Route::middleware(config('shift.routes.middleware'))->group(function () {
     Route::get('/shift/api/tasks', [ShiftTaskController::class, 'index'])->name('tasks.index');
     Route::get('/shift/api/requirements', [ShiftRequirementController::class, 'index'])->name('requirements.index');
     Route::post('/shift/api/requirements/batches', [ShiftRequirementController::class, 'store'])->name('requirements.batches.store');
+    Route::get('/shift/api/external-roles/capabilities', [ShiftExternalRoleController::class, 'capabilities'])->name('external-roles.capabilities');
+    Route::get('/shift/api/external-roles', [ShiftExternalRoleController::class, 'index'])->name('external-roles.index');
+    Route::put('/shift/api/external-roles', [ShiftExternalRoleController::class, 'update'])->name('external-roles.update');
     Route::get('/shift/api/task-collaborators', [ShiftCollaboratorController::class, 'task'])->name('task-collaborators.index');
     Route::get('/shift/api/tasks/{id}', [ShiftTaskController::class, 'show'])->name('tasks.show');
     Route::post('/shift/api/tasks', [ShiftTaskController::class, 'store'])->name('tasks.store');

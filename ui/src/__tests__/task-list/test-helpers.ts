@@ -167,11 +167,11 @@ export const stubs = {
 };
 
 export const seedTasks = [
-    { id: 1, title: 'Auth issue', status: 'pending', priority: 'high', environment: 'staging' },
-    { id: 2, title: 'UI polish', status: 'in-progress', priority: 'medium', environment: 'production' },
-    { id: 3, title: 'Docs update', status: 'awaiting-feedback', priority: 'low', environment: null },
-    { id: 4, title: 'Legacy cleanup', status: 'completed', priority: 'low', environment: 'production' },
-    { id: 5, title: 'Close out', status: 'closed', priority: 'medium', environment: null },
+    { id: 1, title: 'Auth issue', status: 'pending', priority: 'high', environment: 'staging', can_delete: true },
+    { id: 2, title: 'UI polish', status: 'in-progress', priority: 'medium', environment: 'production', can_delete: true },
+    { id: 3, title: 'Docs update', status: 'awaiting-feedback', priority: 'low', environment: null, can_delete: true },
+    { id: 4, title: 'Legacy cleanup', status: 'completed', priority: 'low', environment: 'production', can_delete: true },
+    { id: 5, title: 'Close out', status: 'closed', priority: 'medium', environment: null, can_delete: true },
 ];
 
 export const defaultStatuses = ['pending', 'in-progress', 'awaiting-feedback'];

@@ -184,6 +184,24 @@ describe('TaskList listing and filters', () => {
         wrapper.unmount();
     });
 
+    it('hides task deletion when SHIFT denies that capability', async () => {
+        getMock.mockResolvedValueOnce(makeIndexResponse([
+            {
+                ...defaultTasks[0],
+                can_delete: false,
+            },
+        ]));
+
+        const wrapper = mount(TaskList, {
+            global: { stubs },
+        });
+        await flushPromises();
+        await nextTick();
+
+        expect(wrapper.find('[data-testid="task-delete-1"]').exists()).toBe(false);
+        wrapper.unmount();
+    });
+
     it('auto-opens the edit sheet from task URL query', async () => {
         window.history.replaceState({}, '', '/shift/tasks?task=1');
 

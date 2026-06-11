@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router';
 import Dashboard from './components/Dashboard.vue';
+import ExternalRoleSettings from './components/ExternalRoleSettings.vue';
 import TaskList from './components/TaskList.vue';
 
 const routes: RouteRecordRaw[] = [
@@ -21,6 +22,11 @@ const routes: RouteRecordRaw[] = [
         path: '/requirements',
         name: 'requirements',
         component: TaskList,
+    },
+    {
+        path: '/settings',
+        name: 'settings',
+        component: ExternalRoleSettings,
     },
     {
         path: '/tasks-v2',

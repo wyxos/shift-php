@@ -6,13 +6,14 @@ export type Task = {
     status: string;
     priority: string;
     phase?: 'task' | 'requirement' | string | null;
-    finalized?: boolean;
+    finalized?: boolean | null;
     batch_id?: number | null;
     batch_title?: string | null;
     submitted_title?: string | null;
     submitted_description?: string | null;
     finalized_at?: string | null;
     environment?: string | null;
+    can_delete?: boolean;
     batch?: {
         id: number;
         title?: string | null;
