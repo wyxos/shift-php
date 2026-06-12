@@ -41,9 +41,42 @@ const routerMocks = vi.hoisted(() => {
         window.history.pushState({}, '', `/shift${path}${search ? `?${search}` : ''}`);
     });
 
+    const RouterLink = {
+        props: ['to', 'custom'],
+        computed: {
+            href(this: { to: string | { path?: string; query?: Record<string, string> } }) {
+                if (typeof this.to === 'string') {
+                    return `/shift${this.to}`;
+                }
+
+                const path = this.to.path ?? '/tasks';
+                const search = new URLSearchParams(this.to.query ?? {}).toString();
+
+                return `/shift${path}${search ? `?${search}` : ''}`;
+            },
+        },
+        methods: {
+            navigate(this: { to: string | { path?: string; query?: Record<string, string> } }, event?: Event) {
+                event?.preventDefault();
+                void push(this.to);
+            },
+        },
+        template: `
+            <slot
+                v-if="custom"
+                :href="href"
+                :navigate="navigate"
+                :is-active="false"
+                :is-exact-active="false"
+            />
+            <a v-else :href="href" @click.prevent="navigate"><slot /></a>
+        `,
+    };
+
     return {
         push,
         routeState,
+        RouterLink,
         syncFromLocation,
     };
 });
@@ -61,6 +94,7 @@ vi.mock('@/axios-config', () => ({
 }));
 
 vi.mock('vue-router', () => ({
+    RouterLink: routerMocks.RouterLink,
     useRoute: () => routerMocks.routeState,
     useRouter: () => ({ push: routerMocks.push }),
 }));
@@ -75,6 +109,8 @@ vi.mock('vue-sonner', () => ({
 }));
 
 export const stubs = {
+    RouterLink: routerMocks.RouterLink,
+    'router-link': routerMocks.RouterLink,
     AlertDialog: {
         props: ['open'],
         template: '<div v-if="open"><slot /></div>',

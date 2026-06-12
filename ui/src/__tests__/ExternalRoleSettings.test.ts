@@ -44,6 +44,8 @@ describe('ExternalRoleSettings.vue', () => {
         expect(wrapper.text()).toContain('Client Owner');
         expect(wrapper.text()).toContain('owner@example.com');
         expect(wrapper.text()).toContain('Owner');
+        expect(wrapper.get('[data-testid="external-role-manager"]').find('table[data-slot="table"]').exists()).toBe(true);
+        expect(wrapper.get('[data-testid="external-role-row-client-1"]').element.tagName).toBe('TR');
     });
 
     it('accepts labeled role options from SHIFT', async () => {
@@ -70,7 +72,7 @@ describe('ExternalRoleSettings.vue', () => {
         const wrapper = mount(ExternalRoleSettings);
         await flushPromises();
 
-        const options = wrapper.findAll('option');
+        const options = wrapper.get('[data-testid="external-role-row-client-1"]').findAll('option');
         expect(options.map((option) => option.attributes('value'))).toEqual(['owner', 'shift_developer']);
         expect(wrapper.text()).toContain('SHIFT Developer');
     });
