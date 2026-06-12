@@ -171,9 +171,7 @@ function submit() {
                 <SheetHeader class="p-0">
                     <div class="px-6 pt-6 pb-3">
                         <SheetTitle>New requirements</SheetTitle>
-                        <SheetDescription class="text-muted-foreground mt-1 text-sm">
-                            Submit requirement drafts for SHIFT review.
-                        </SheetDescription>
+                        <SheetDescription class="text-muted-foreground mt-1 text-sm"> Submit requirement drafts for SHIFT review. </SheetDescription>
                     </div>
                 </SheetHeader>
 
@@ -199,8 +197,9 @@ function submit() {
                             type="button"
                             role="switch"
                             :aria-checked="collaboratorsApplyPerRequirement"
-                            class="border-input bg-background focus-visible:border-ring focus-visible:ring-ring/50 inline-flex h-9 items-center gap-2 rounded-md border px-3 text-sm shadow-xs outline-none transition-colors focus-visible:ring-[3px]"
+                            class="border-input bg-background focus:border-ring focus-visible:border-ring inline-flex h-9 items-center gap-2 rounded-md border px-3 text-sm transition-colors outline-none"
                             data-testid="requirement-collaborator-mode-toggle"
+                            data-shift-field-control
                             @click="toggleCollaboratorMode"
                         >
                             <span

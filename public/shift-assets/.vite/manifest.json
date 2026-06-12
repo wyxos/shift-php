@@ -4,7 +4,7 @@
     "name": "x"
   },
   "index.html": {
-    "file": "assets/app-BLUzCdGI.js",
+    "file": "assets/app-Cy78vqEA.js",
     "name": "app",
     "src": "index.html",
     "isEntry": true,
@@ -12,11 +12,11 @@
       "_x-BtSI6LDS.js"
     ],
     "css": [
-      "assets/app-B-EsP6Gc.css"
+      "assets/app-DlNj9mzC.css"
     ]
   },
   "src/widget.ts": {
-    "file": "assets/widget-CM8KinDr.js",
+    "file": "assets/widget-PG60KSOc.js",
     "name": "widget",
     "src": "src/widget.ts",
     "isEntry": true,
@@ -24,7 +24,7 @@
       "_x-BtSI6LDS.js"
     ],
     "css": [
-      "assets/widget-DFctcN65.css"
+      "assets/widget-TZ3y7txb.css"
     ]
   }
 }

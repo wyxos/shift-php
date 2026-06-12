@@ -165,6 +165,11 @@ describe('TaskList requirements flow', () => {
         await flushPromises();
         await nextTick();
 
+        expect(wrapper.get('[data-testid="tasks-tab"]').element.tagName).toBe('A');
+        expect(wrapper.get('[data-testid="tasks-tab"]').attributes('href')).toBe('/shift/tasks');
+        expect(wrapper.get('[data-testid="requirements-tab"]').element.tagName).toBe('A');
+        expect(wrapper.get('[data-testid="requirements-tab"]').attributes('href')).toBe('/shift/requirements');
+
         await wrapper.get('[data-testid="requirements-tab"]').trigger('click');
         await flushPromises();
         await nextTick();
@@ -408,6 +413,7 @@ describe('TaskList requirements flow', () => {
 
         expect(getMock).toHaveBeenCalledWith('/shift/api/tasks/20');
         expect(getMock).toHaveBeenCalledWith('/shift/api/tasks/20/threads');
+        expect(wrapper.get('[data-testid="task-edit-sheet-title"]').text()).toBe('Portal reporting');
         expect(wrapper.text()).toContain('Clarifications');
         expect(wrapper.text()).toContain('Requirement state');
         expect(wrapper.get('[data-testid="requirement-status-submitted"]').classes()).toContain('bg-slate-100');

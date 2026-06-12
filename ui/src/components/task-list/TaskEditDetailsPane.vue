@@ -9,7 +9,6 @@ import { renderRichContent } from '@shared/tasks/rich-content';
 import { formatThreadTime } from '@shared/tasks/thread';
 import { Button } from '@shift/ui/button';
 import { ButtonGroup } from '@shift/ui/button-group';
-import { Input } from '@shift/ui/input';
 import { Label } from '@shift/ui/label';
 import { computed } from 'vue';
 import { aiImproveUrl, getTaskListAiImproveEnabled, removeTempUrl, resolveTempUrl, taskListUploadEndpoints } from './editor-config';
@@ -38,7 +37,6 @@ interface Props {
     editMobilePane: 'details' | 'comments';
     isRequirement?: boolean;
     setEditUploading: (value: boolean) => void;
-    setEditTitle: (value: string) => void;
     setEditPriority: (value: string) => void;
     setEditStatus: (value: string) => void;
     setEditRequirementStatus: (value: string) => void;
@@ -51,11 +49,6 @@ const props = withDefaults(defineProps<Props>(), {
     isRequirement: false,
 });
 const aiImproveEnabled = getTaskListAiImproveEnabled();
-
-const titleModel = computed({
-    get: () => props.editForm.title,
-    set: (value: string) => props.setEditTitle(value),
-});
 
 const statusModel = computed({
     get: () => props.editForm.status,
@@ -88,35 +81,29 @@ const editTaskEnvironmentLabel = computed(() => getTaskEnvironment(props.editTas
         :class="[editMobilePane === 'comments' ? 'hidden lg:block' : 'block', 'min-w-0 space-y-6 pr-1 lg:min-h-0 lg:overflow-y-auto']"
         data-testid="task-edit-details-pane"
     >
-        <div class="grid gap-4 sm:grid-cols-3" data-testid="edit-task-meta">
+        <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4" data-testid="edit-task-meta">
             <div class="space-y-1">
-                <div class="text-muted-foreground text-xs tracking-wide uppercase">Created by</div>
+                <div class="text-muted-foreground text-[11px] leading-4" data-testid="edit-task-meta-label">Created by</div>
                 <div class="text-foreground text-sm font-medium" data-testid="edit-task-created-by">{{ editTaskCreatorLabel }}</div>
             </div>
             <div class="space-y-1">
-                <div class="text-muted-foreground text-xs tracking-wide uppercase">Created</div>
+                <div class="text-muted-foreground text-[11px] leading-4" data-testid="edit-task-meta-label">Created</div>
                 <div class="text-foreground text-sm font-medium" data-testid="edit-task-created-at">
                     {{ editTask.created_at ? formatThreadTime(editTask.created_at) : 'Unknown' }}
                 </div>
             </div>
             <div class="space-y-1">
-                <div class="text-muted-foreground text-xs tracking-wide uppercase">Updated</div>
+                <div class="text-muted-foreground text-[11px] leading-4" data-testid="edit-task-meta-label">Updated</div>
                 <div class="text-foreground text-sm font-medium" data-testid="edit-task-updated-at">
-                    Updated {{ editTask.updated_at ? formatThreadTime(editTask.updated_at) : 'Unknown' }}
+                    {{ editTask.updated_at ? formatThreadTime(editTask.updated_at) : 'Unknown' }}
                 </div>
             </div>
-        </div>
-
-        <div class="space-y-2">
-            <Label class="text-muted-foreground">{{ isRequirement ? 'Requirement' : 'Task' }}</Label>
-            <template v-if="isOwner">
-                <Input v-model="titleModel" placeholder="Short, descriptive title" required />
-            </template>
-            <template v-else>
-                <div class="border-muted-foreground/30 bg-muted/10 text-foreground rounded-md border border-dashed p-3 text-sm">
-                    {{ editTask.title }}
+            <div class="space-y-1">
+                <div class="text-muted-foreground text-[11px] leading-4" data-testid="edit-task-meta-label">Environment</div>
+                <div class="text-foreground text-sm font-medium" data-testid="edit-task-environment">
+                    {{ editTaskEnvironmentLabel }}
                 </div>
-            </template>
+            </div>
         </div>
 
         <div v-if="!isRequirement" class="space-y-2">
@@ -209,19 +196,9 @@ const editTaskEnvironmentLabel = computed(() => getTaskEnvironment(props.editTas
             />
         </div>
 
-        <div class="space-y-2">
-            <Label class="text-muted-foreground">Environment</Label>
-            <div
-                class="border-muted-foreground/30 bg-muted/10 text-foreground rounded-md border border-dashed p-3 text-sm"
-                data-testid="edit-task-environment"
-            >
-                {{ editTaskEnvironmentLabel }}
-            </div>
-        </div>
-
-        <div class="space-y-2">
+        <div v-if="taskAttachments.length" class="space-y-2" data-testid="task-edit-attachments">
             <Label class="text-muted-foreground">Attachments</Label>
-            <div v-if="taskAttachments.length" class="space-y-2">
+            <div class="space-y-2">
                 <div
                     v-for="attachment in taskAttachments"
                     :key="attachment.id"
@@ -234,9 +211,6 @@ const editTaskEnvironmentLabel = computed(() => getTaskEnvironment(props.editTas
                         Remove
                     </Button>
                 </div>
-            </div>
-            <div v-else class="border-muted-foreground/30 bg-muted/10 text-muted-foreground rounded-md border border-dashed p-3 text-sm">
-                No attachments available
             </div>
         </div>
     </div>

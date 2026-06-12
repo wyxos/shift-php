@@ -3,6 +3,7 @@ import axios from '@/axios-config';
 import { Badge } from '@shift/ui/badge';
 import { Button } from '@shift/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@shift/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@shift/ui/table';
 import { Check, RefreshCw, Shield } from 'lucide-vue-next';
 import { computed, onMounted, ref } from 'vue';
 import { toast } from 'vue-sonner';
@@ -30,14 +31,7 @@ interface ExternalRoleResponse {
     users?: ExternalUserRole[];
 }
 
-const fallbackRoles: ExternalRole[] = [
-    'owner',
-    'client_developer',
-    'shift_lead_developer',
-    'shift_developer',
-    'user',
-    'guest',
-];
+const fallbackRoles: ExternalRole[] = ['owner', 'client_developer', 'shift_lead_developer', 'shift_developer', 'user', 'guest'];
 
 const loading = ref(true);
 const error = ref<string | null>(null);
@@ -66,9 +60,7 @@ async function fetchExternalRoles() {
             ? payload.roles.map((role) => normalizeRoleOption(role))
             : fallbackRoles.map((role) => normalizeRoleOption(role));
         users.value = Array.isArray(payload.users) ? payload.users : [];
-        roleDrafts.value = Object.fromEntries(
-            users.value.map((user) => [userKey(user), String(user.role || 'guest')]),
-        );
+        roleDrafts.value = Object.fromEntries(users.value.map((user) => [userKey(user), String(user.role || 'guest')]));
     } catch (exception: any) {
         error.value = exception?.response?.data?.error || exception?.response?.data?.message || 'Unable to load external roles.';
         canManageExternalRoles.value = false;
@@ -96,9 +88,7 @@ async function saveRole(user: ExternalUserRole) {
         });
 
         const updatedRole = response.data?.user?.role || role;
-        users.value = users.value.map((candidate) => (
-            userKey(candidate) === key ? { ...candidate, role: updatedRole } : candidate
-        ));
+        users.value = users.value.map((candidate) => (userKey(candidate) === key ? { ...candidate, role: updatedRole } : candidate));
         roleDrafts.value[key] = updatedRole;
         toast.success('External role updated.');
     } catch (exception: any) {
@@ -172,52 +162,101 @@ function hasChanged(user: ExternalUserRole): boolean {
             </CardHeader>
         </Card>
 
-        <Card v-else data-testid="external-role-manager">
-            <CardHeader>
+        <section v-else class="rounded-md border" data-testid="external-role-manager">
+            <div class="border-b px-4 py-4">
                 <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                        <CardTitle>External Roles</CardTitle>
-                        <CardDescription>Roles are stored in SHIFT for users discovered from this app.</CardDescription>
+                        <h2 class="text-lg font-semibold">External Roles</h2>
+                        <p class="text-muted-foreground text-sm">Roles are stored in SHIFT for users discovered from this app.</p>
                     </div>
                     <Badge variant="secondary">
                         <Shield />
                         {{ visibleUsers.length }} users
                     </Badge>
                 </div>
-            </CardHeader>
-            <CardContent>
-                <div v-if="visibleUsers.length === 0" class="text-muted-foreground py-8 text-center text-sm">No external users available.</div>
-                <div v-else class="flex flex-col gap-3">
+            </div>
+
+            <div v-if="visibleUsers.length === 0" class="text-muted-foreground py-8 text-center text-sm">No external users available.</div>
+            <template v-else>
+                <div class="hidden md:block">
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>User</TableHead>
+                                <TableHead>Current role</TableHead>
+                                <TableHead>Role</TableHead>
+                                <TableHead class="text-right">Actions</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            <TableRow v-for="user in visibleUsers" :key="userKey(user)" :data-testid="`external-role-row-${userKey(user)}`">
+                                <TableCell class="min-w-[16rem] whitespace-normal">
+                                    <div class="min-w-0">
+                                        <div class="truncate font-medium">{{ user.name }}</div>
+                                        <div class="text-muted-foreground truncate text-sm">{{ user.email }}</div>
+                                    </div>
+                                </TableCell>
+                                <TableCell>
+                                    <Badge variant="outline">{{ roleLabel(user.role) }}</Badge>
+                                </TableCell>
+                                <TableCell class="w-[15rem]">
+                                    <select
+                                        v-model="roleDrafts[userKey(user)]"
+                                        class="border-input bg-background focus:border-ring focus-visible:border-ring h-9 w-full rounded-md border px-3 text-sm transition-colors focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+                                        :aria-label="`External role for ${user.name}`"
+                                        :disabled="savingUserId === userKey(user)"
+                                        data-shift-field-control
+                                    >
+                                        <option v-for="role in roles" :key="role.value" :value="role.value">
+                                            {{ role.label }}
+                                        </option>
+                                    </select>
+                                </TableCell>
+                                <TableCell>
+                                    <div class="flex justify-end">
+                                        <Button size="sm" :disabled="savingUserId === userKey(user) || !hasChanged(user)" @click="saveRole(user)">
+                                            <Check />
+                                            Save
+                                        </Button>
+                                    </div>
+                                </TableCell>
+                            </TableRow>
+                        </TableBody>
+                    </Table>
+                </div>
+
+                <div class="divide-y md:hidden">
                     <div
                         v-for="user in visibleUsers"
                         :key="userKey(user)"
-                        class="grid gap-3 rounded-md border p-3 md:grid-cols-[minmax(0,1fr)_220px_auto] md:items-center"
+                        class="grid gap-3 p-4"
+                        :data-testid="`external-role-mobile-row-${userKey(user)}`"
                     >
-                        <div class="min-w-0">
-                            <div class="truncate text-sm font-medium">{{ user.name }}</div>
-                            <div class="text-muted-foreground truncate text-xs">{{ user.email }}</div>
+                        <div class="min-w-0 space-y-2">
+                            <div>
+                                <div class="truncate text-sm font-medium">{{ user.name }}</div>
+                                <div class="text-muted-foreground truncate text-xs">{{ user.email }}</div>
+                            </div>
+                            <Badge variant="outline">{{ roleLabel(user.role) }}</Badge>
                         </div>
                         <select
                             v-model="roleDrafts[userKey(user)]"
-                            class="border-input bg-background ring-offset-background focus-visible:ring-ring h-9 rounded-md border px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                            class="border-input bg-background focus:border-ring focus-visible:border-ring h-9 rounded-md border px-3 text-sm transition-colors focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                             :aria-label="`External role for ${user.name}`"
                             :disabled="savingUserId === userKey(user)"
+                            data-shift-field-control
                         >
                             <option v-for="role in roles" :key="role.value" :value="role.value">
                                 {{ role.label }}
                             </option>
                         </select>
-                        <Button
-                            class="w-full md:w-auto"
-                            :disabled="savingUserId === userKey(user) || !hasChanged(user)"
-                            @click="saveRole(user)"
-                        >
+                        <Button class="w-full" :disabled="savingUserId === userKey(user) || !hasChanged(user)" @click="saveRole(user)">
                             <Check />
                             Save
                         </Button>
                     </div>
                 </div>
-            </CardContent>
-        </Card>
+            </template>
+        </section>
     </div>
 </template>
