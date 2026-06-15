@@ -14,6 +14,72 @@ const sonnerMocks = vi.hoisted(() => ({
     toastErrorMock: vi.fn(),
     toastDismissMock: vi.fn(),
 }));
+const routerMocks = vi.hoisted(() => {
+    const routeState: { path: string; query: Record<string, string> } = {} as { path: string; query: Record<string, string> };
+
+    Object.defineProperty(routeState, 'path', {
+        get() {
+            return window.location.pathname.replace(/^\/shift/, '') || '/tasks';
+        },
+    });
+
+    Object.defineProperty(routeState, 'query', {
+        get() {
+            return Object.fromEntries(new URL(window.location.href).searchParams.entries());
+        },
+    });
+
+    function syncFromLocation() {
+        return routeState;
+    }
+
+    const push = vi.fn(async (to: any) => {
+        const path = typeof to === 'string' ? to : (to.path ?? '/tasks');
+        const query = typeof to === 'string' ? {} : (to.query ?? {});
+        const search = new URLSearchParams(query).toString();
+
+        window.history.pushState({}, '', `/shift${path}${search ? `?${search}` : ''}`);
+    });
+
+    const RouterLink = {
+        props: ['to', 'custom'],
+        computed: {
+            href(this: { to: string | { path?: string; query?: Record<string, string> } }) {
+                if (typeof this.to === 'string') {
+                    return `/shift${this.to}`;
+                }
+
+                const path = this.to.path ?? '/tasks';
+                const search = new URLSearchParams(this.to.query ?? {}).toString();
+
+                return `/shift${path}${search ? `?${search}` : ''}`;
+            },
+        },
+        methods: {
+            navigate(this: { to: string | { path?: string; query?: Record<string, string> } }, event?: Event) {
+                event?.preventDefault();
+                void push(this.to);
+            },
+        },
+        template: `
+            <slot
+                v-if="custom"
+                :href="href"
+                :navigate="navigate"
+                :is-active="false"
+                :is-exact-active="false"
+            />
+            <a v-else :href="href" @click.prevent="navigate"><slot /></a>
+        `,
+    };
+
+    return {
+        push,
+        routeState,
+        RouterLink,
+        syncFromLocation,
+    };
+});
 
 export const toastMocks = sonnerMocks;
 
@@ -28,7 +94,9 @@ vi.mock('@/axios-config', () => ({
 }));
 
 vi.mock('vue-router', () => ({
-    useRouter: () => ({ push: vi.fn() }),
+    RouterLink: routerMocks.RouterLink,
+    useRoute: () => routerMocks.routeState,
+    useRouter: () => ({ push: routerMocks.push }),
 }));
 
 vi.mock('vue-sonner', () => ({
@@ -41,6 +109,33 @@ vi.mock('vue-sonner', () => ({
 }));
 
 export const stubs = {
+    RouterLink: routerMocks.RouterLink,
+    'router-link': routerMocks.RouterLink,
+    AlertDialog: {
+        props: ['open'],
+        template: '<div v-if="open"><slot /></div>',
+    },
+    AlertDialogAction: {
+        template: '<button v-bind="$attrs" type="button"><slot /></button>',
+    },
+    AlertDialogCancel: {
+        template: '<button v-bind="$attrs" type="button"><slot /></button>',
+    },
+    AlertDialogContent: {
+        template: '<div><slot /></div>',
+    },
+    AlertDialogDescription: {
+        template: '<p><slot /></p>',
+    },
+    AlertDialogFooter: {
+        template: '<div><slot /></div>',
+    },
+    AlertDialogHeader: {
+        template: '<div><slot /></div>',
+    },
+    AlertDialogTitle: {
+        template: '<h2><slot /></h2>',
+    },
     Button: { template: '<button v-bind="$attrs"><slot /></button>' },
     Card: { template: '<div><slot /></div>' },
     CardContent: { template: '<div><slot /></div>' },
@@ -108,14 +203,16 @@ export const stubs = {
 };
 
 export const seedTasks = [
-    { id: 1, title: 'Auth issue', status: 'pending', priority: 'high', environment: 'staging' },
-    { id: 2, title: 'UI polish', status: 'in-progress', priority: 'medium', environment: 'production' },
-    { id: 3, title: 'Docs update', status: 'awaiting-feedback', priority: 'low', environment: null },
-    { id: 4, title: 'Legacy cleanup', status: 'completed', priority: 'low', environment: 'production' },
-    { id: 5, title: 'Close out', status: 'closed', priority: 'medium', environment: null },
+    { id: 1, title: 'Auth issue', status: 'pending', priority: 'high', environment: 'staging', can_delete: true },
+    { id: 2, title: 'UI polish', status: 'in-progress', priority: 'medium', environment: 'production', can_delete: true },
+    { id: 3, title: 'Docs update', status: 'awaiting-feedback', priority: 'low', environment: null, can_delete: true },
+    { id: 4, title: 'Legacy cleanup', status: 'completed', priority: 'low', environment: 'production', can_delete: true },
+    { id: 5, title: 'Close out', status: 'closed', priority: 'medium', environment: null, can_delete: true },
+    { id: 6, title: 'Deployment paused', status: 'on-hold', priority: 'medium', environment: 'production', can_delete: true },
 ];
 
-export const defaultStatuses = ['pending', 'in-progress', 'awaiting-feedback'];
+export const defaultStatuses = ['pending', 'in-progress', 'awaiting-feedback', 'on-hold'];
+export const defaultRequirementStatuses = ['submitted', 'in-review', 'awaiting-feedback', 'ready-to-finalize', 'parked', 'declined'];
 export const defaultTasks = seedTasks.filter((t) => defaultStatuses.includes(t.status));
 
 export function makeIndexResponse(tasks: any[]) {
@@ -147,6 +244,8 @@ export { mountTaskList as mountWithTasks };
 export function resetTaskListTestState() {
     vi.useRealTimers();
     window.history.replaceState({}, '', '/shift/tasks');
+    routerMocks.syncFromLocation();
+    routerMocks.push.mockClear();
     (window as any).shiftConfig = { appEnvironment: 'local' };
     getMock.mockReset();
     deleteMock.mockReset();

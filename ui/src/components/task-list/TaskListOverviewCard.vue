@@ -30,6 +30,13 @@ interface Props {
     statusOptions: Option[];
     priorityOptions: Option[];
     sortByOptions: Option[];
+    title?: string;
+    description?: string;
+    emptyLabel?: string;
+    itemLabel?: string;
+    actionLabel?: string;
+    actionTestId?: string;
+    statusLabel?: string;
     getTaskEnvironmentLabel: (task: Task) => string;
     setFiltersOpen: (value: boolean) => void;
     setDraftStatuses: (value: string[]) => void;
@@ -47,7 +54,15 @@ interface Props {
     goToPage: (page: number) => void;
 }
 
-const props = defineProps<Props>();
+const props = withDefaults(defineProps<Props>(), {
+    title: 'Tasks',
+    description: 'Default view hides completed and closed tasks.',
+    emptyLabel: 'No tasks found',
+    itemLabel: 'tasks',
+    actionLabel: 'Create',
+    actionTestId: 'open-create-task',
+    statusLabel: 'Status',
+});
 </script>
 
 <template>
@@ -72,6 +87,11 @@ const props = defineProps<Props>();
         :status-options="props.statusOptions"
         :priority-options="props.priorityOptions"
         :sort-by-options="props.sortByOptions"
+        :title="props.title"
+        :description="props.description"
+        :empty-label="props.emptyLabel"
+        :item-label="props.itemLabel"
+        :status-label="props.statusLabel"
         :get-task-environment-label="props.getTaskEnvironmentLabel"
         :set-filters-open="props.setFiltersOpen"
         :set-draft-statuses="props.setDraftStatuses"
@@ -88,9 +108,9 @@ const props = defineProps<Props>();
         :go-to-page="props.goToPage"
     >
         <template #actions>
-            <Button data-testid="open-create-task" size="sm" variant="default" @click="props.openCreate">
+            <Button :data-testid="props.actionTestId" size="sm" variant="default" @click="props.openCreate">
                 <Plus class="mr-2 h-4 w-4" />
-                Create
+                {{ props.actionLabel }}
             </Button>
         </template>
     </TaskListOverviewPanel>

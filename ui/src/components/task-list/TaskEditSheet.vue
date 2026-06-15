@@ -12,6 +12,7 @@ interface EditFormModel {
     title: string;
     priority: string;
     status: string;
+    requirement_status: string;
     description: string;
     collaborators: TaskCollaboratorSelection;
 }
@@ -49,6 +50,7 @@ interface Props {
     setEditTitle: (value: string) => void;
     setEditPriority: (value: string) => void;
     setEditStatus: (value: string) => void;
+    setEditRequirementStatus: (value: string) => void;
     setEditDescription: (value: string) => void;
     setEditMobilePane: (value: 'details' | 'comments') => void;
     setThreadComposerHtml: (value: string) => void;
@@ -80,6 +82,13 @@ const mobilePaneModel = computed({
 });
 
 const mobilePaneOptions = computed<MobilePaneOption[]>(() => [...props.editMobilePaneOptions]);
+const isRequirement = computed(() => props.editTask?.phase === 'requirement');
+const sheetTitle = computed(() => props.editTask?.title || (isRequirement.value ? 'Requirement details' : 'Task details'));
+const titleInputLabel = computed(() => (isRequirement.value ? 'Requirement title' : 'Task title'));
+const titleModel = computed({
+    get: () => props.editForm.title,
+    set: (value: string) => props.setEditTitle(value),
+});
 </script>
 
 <template>
@@ -91,8 +100,20 @@ const mobilePaneOptions = computed<MobilePaneOption[]>(() => [...props.editMobil
             width-preset="task"
         >
             <form class="flex h-full min-h-0 flex-col" data-testid="edit-form">
-                <SheetHeader class="sr-only">
-                    <SheetTitle>Task</SheetTitle>
+                <SheetHeader class="shrink-0 border-b px-6 py-5">
+                    <SheetTitle class="min-w-0" data-testid="task-edit-sheet-title">
+                        <input
+                            v-if="editTask && isOwner"
+                            v-model="titleModel"
+                            :aria-label="titleInputLabel"
+                            class="border-input bg-background text-foreground placeholder:text-muted-foreground focus:border-ring focus-visible:border-ring block h-9 w-full min-w-0 rounded-md border px-3 py-1 text-lg font-semibold shadow-none transition-colors outline-none disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-100"
+                            data-shift-field-control
+                            data-testid="task-edit-title"
+                            required
+                            type="text"
+                        />
+                        <span v-else class="block truncate">{{ sheetTitle }}</span>
+                    </SheetTitle>
                 </SheetHeader>
 
                 <div v-if="editTask && !editLoading && !editError" class="border-b px-6 py-4 lg:hidden">
@@ -123,15 +144,17 @@ const mobilePaneOptions = computed<MobilePaneOption[]>(() => [...props.editMobil
                             :edit-temp-identifier="editTempIdentifier"
                             :edit-mobile-pane="editMobilePane"
                             :set-edit-uploading="setEditUploading"
-                            :set-edit-title="setEditTitle"
                             :set-edit-priority="setEditPriority"
                             :set-edit-status="setEditStatus"
+                            :set-edit-requirement-status="setEditRequirementStatus"
                             :set-edit-description="setEditDescription"
                             :update-edit-collaborators="updateEditCollaborators"
                             :remove-attachment-from-task="removeAttachmentFromTask"
+                            :is-requirement="isRequirement"
                         />
 
                         <TaskEditCommentsPane
+                            :is-requirement="isRequirement"
                             :edit-mobile-pane="editMobilePane"
                             :thread-loading="threadLoading"
                             :thread-error="threadError"
