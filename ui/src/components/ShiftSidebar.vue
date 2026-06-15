@@ -10,16 +10,19 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@shift/ui/sidebar';
+import axios from '@/axios-config';
 import { useRoute } from 'vue-router';
-import { Home, Inbox } from 'lucide-vue-next';
+import { computed, onMounted, ref } from 'vue';
+import { Home, Inbox, Settings } from 'lucide-vue-next';
 import AppLogo from '@shift/components/AppLogo.vue';
 
 const appUrl = window.shiftConfig.baseUrl;
 const username = window.shiftConfig.username;
 const userEmail = window.shiftConfig.email;
 const route = useRoute();
+const canManageExternalRoles = ref(false);
 
-const mainNavItems = [
+const baseNavItems = [
     {
         title: 'Dashboard',
         href: '/dashboard',
@@ -31,6 +34,28 @@ const mainNavItems = [
         icon: Inbox,
     },
 ];
+
+const mainNavItems = computed(() => [
+    ...baseNavItems,
+    ...(canManageExternalRoles.value
+        ? [
+              {
+                  title: 'Settings',
+                  href: '/settings',
+                  icon: Settings,
+              },
+          ]
+        : []),
+]);
+
+onMounted(async () => {
+    try {
+        const response = await axios.get('/shift/api/external-roles/capabilities');
+        canManageExternalRoles.value = response.data?.capabilities?.can_manage_external_roles === true;
+    } catch {
+        canManageExternalRoles.value = false;
+    }
+});
 </script>
 
 <template>

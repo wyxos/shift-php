@@ -1,10 +1,5 @@
 import axios from '@/axios-config';
-import {
-    collaboratorsEqual,
-    emptyTaskCollaborators,
-    normalizeTaskCollaborators,
-    type TaskCollaboratorSelection,
-} from '@shared/tasks/collaborators';
+import { collaboratorsEqual, emptyTaskCollaborators, normalizeTaskCollaborators, type TaskCollaboratorSelection } from '@shared/tasks/collaborators';
 import { getTaskIdFromQuery, syncTaskQuery } from '@shared/tasks/history';
 import { getTaskCreatorEmail } from '@shared/tasks/metadata';
 import { computed, onBeforeUnmount, onMounted, ref, watch, type Ref } from 'vue';
@@ -25,6 +20,7 @@ type EditSnapshot = {
     title: string;
     priority: string;
     status: string;
+    requirement_status: string;
     description: string;
     collaborators: TaskCollaboratorSelection;
 };
@@ -41,6 +37,7 @@ function createEmptyEditForm() {
         title: '',
         priority: 'medium',
         status: 'pending',
+        requirement_status: 'submitted',
         description: '',
         collaborators: emptyTaskCollaborators(),
     };
@@ -98,6 +95,7 @@ export function useTaskListEdit({
             editForm.value.title,
             editForm.value.priority,
             editForm.value.status,
+            editForm.value.requirement_status,
             editForm.value.description,
             JSON.stringify(editForm.value.collaborators),
             deletedAttachmentIds.value.join(','),
@@ -138,6 +136,12 @@ export function useTaskListEdit({
         editForm.value = {
             ...editForm.value,
             status: value,
+        };
+    }
+    function setEditRequirementStatus(value: string) {
+        editForm.value = {
+            ...editForm.value,
+            requirement_status: value,
         };
     }
     function setEditDescription(value: string) {
@@ -208,6 +212,7 @@ export function useTaskListEdit({
                 title: data?.title ?? '',
                 priority: data?.priority ?? 'medium',
                 status: data?.status ?? 'pending',
+                requirement_status: data?.requirement_status ?? 'submitted',
                 description: data?.description ?? '',
                 collaborators: normalizeTaskCollaborators({
                     internal: data?.internal_collaborators ?? [],
@@ -255,6 +260,7 @@ export function useTaskListEdit({
         if (editForm.value.title !== snapshot.title) return true;
         if (editForm.value.priority !== snapshot.priority) return true;
         if (editForm.value.status !== snapshot.status) return true;
+        if (editForm.value.requirement_status !== snapshot.requirement_status) return true;
         if ((editForm.value.description ?? '') !== (snapshot.description ?? '')) return true;
         if (!collaboratorsEqual(editForm.value.collaborators, snapshot.collaborators)) return true;
         return deletedAttachmentIds.value.length > 0;
@@ -264,6 +270,7 @@ export function useTaskListEdit({
             title: editForm.value.title,
             priority: editForm.value.priority,
             status: editForm.value.status,
+            requirement_status: editForm.value.requirement_status,
             description: editForm.value.description,
             collaborators: normalizeTaskCollaborators(editForm.value.collaborators),
         };
@@ -280,6 +287,9 @@ export function useTaskListEdit({
             ...task,
             attachments: Array.isArray(task.attachments) ? task.attachments : editTask.value.attachments,
         };
+        if (typeof task.requirement_status === 'string') {
+            editForm.value.requirement_status = task.requirement_status;
+        }
         if (task.internal_collaborators || task.external_collaborators) {
             editForm.value.collaborators = normalizeTaskCollaborators({
                 internal: Array.isArray(task.internal_collaborators) ? task.internal_collaborators : editForm.value.collaborators.internal,
@@ -300,6 +310,7 @@ export function useTaskListEdit({
                       ...task,
                       title: editForm.value.title,
                       status: editForm.value.status,
+                      requirement_status: editForm.value.requirement_status,
                       priority: editForm.value.priority,
                   }
                 : task,
@@ -347,14 +358,18 @@ export function useTaskListEdit({
         const snapshot = initialEditSnapshot.value;
         if (!snapshot) return;
         const taskId = editTask.value.id;
+        const isRequirementPhase = editTask.value.phase === 'requirement';
         const needsCollaboratorUpdate = canManageCollaborators.value && hasCollaboratorManagementChanges();
         const needsCoreUpdate = isOwner.value
             ? editForm.value.title !== snapshot.title ||
               editForm.value.priority !== snapshot.priority ||
-              editForm.value.status !== snapshot.status ||
+              (!isRequirementPhase && editForm.value.status !== snapshot.status) ||
+              (isRequirementPhase && editForm.value.requirement_status !== snapshot.requirement_status) ||
               (editForm.value.description ?? '') !== (snapshot.description ?? '') ||
               deletedAttachmentIds.value.length > 0
-            : editForm.value.status !== snapshot.status;
+            : isRequirementPhase
+              ? editForm.value.requirement_status !== snapshot.requirement_status
+              : editForm.value.status !== snapshot.status;
         if (!needsCoreUpdate && !needsCollaboratorUpdate) return;
         const collaboratorPayload = needsCollaboratorUpdate
             ? {
@@ -377,13 +392,17 @@ export function useTaskListEdit({
                           title: editForm.value.title,
                           description: editForm.value.description,
                           priority: editForm.value.priority,
-                          status: editForm.value.status,
+                          ...(isRequirementPhase ? { requirement_status: editForm.value.requirement_status } : { status: editForm.value.status }),
                           temp_identifier: editTempIdentifier.value,
                           deleted_attachment_ids: deletedAttachmentIds.value.length ? deletedAttachmentIds.value : undefined,
                       }
-                    : {
-                          status: editForm.value.status,
-                      };
+                    : isRequirementPhase
+                      ? {
+                            requirement_status: editForm.value.requirement_status,
+                        }
+                      : {
+                            status: editForm.value.status,
+                        };
                 const response = await axios.put(`/shift/api/tasks/${taskId}`, payload);
                 const data = response.data?.data ?? response.data;
                 mergeEditedTask(data?.task ?? data ?? null);
@@ -423,6 +442,7 @@ export function useTaskListEdit({
         setEditTitle,
         setEditPriority,
         setEditStatus,
+        setEditRequirementStatus,
         setEditDescription,
         attemptCloseEdit,
         discardChangesAndClose,

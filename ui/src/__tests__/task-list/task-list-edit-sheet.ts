@@ -111,14 +111,27 @@ describe('TaskList edit sheet', () => {
         const editStatusGroup = wrapper.get('[aria-label="Task status"]');
         const mobilePaneGroup = wrapper.get('[aria-label="Edit task section"]');
         const sheetContent = wrapper.get('[data-testid="task-edit-sheet-content"]');
+        const sheetTitle = wrapper.get('[data-testid="task-edit-sheet-title"]');
         const sheetLayout = wrapper.get('[data-testid="task-edit-sheet-layout"]');
         const detailsPane = wrapper.get('[data-testid="task-edit-details-pane"]');
         const commentsPane = wrapper.get('[data-testid="task-edit-comments-pane"]');
+        const metadataGrid = wrapper.get('[data-testid="edit-task-meta"]');
+        const metadataLabels = metadataGrid.findAll('[data-testid="edit-task-meta-label"]');
 
-        expect(wrapper.get('[data-testid="edit-task-environment"]').text()).toContain('Staging');
+        expect(sheetTitle.text()).toBe('Auth issue');
+        expect(metadataGrid.get('[data-testid="edit-task-environment"]').text()).toContain('Staging');
+        expect(metadataLabels.map((label) => label.text())).toEqual(['Created by', 'Created', 'Updated', 'Environment']);
+        metadataLabels.forEach((label) => {
+            expect(label.classes()).not.toContain('uppercase');
+            expect(label.classes()).toContain('text-[11px]');
+        });
         expect(wrapper.find('[data-testid="edit-task-environment-select"]').exists()).toBe(false);
         expect(wrapper.get('[data-testid="edit-task-created-by"]').text()).toContain('Taylor Brown');
-        expect(wrapper.get('[data-testid="edit-task-updated-at"]').text()).toContain('Updated');
+        expect(wrapper.get('[data-testid="edit-task-updated-at"]').text()).toBe('21:55');
+        expect(wrapper.text()).not.toContain('No attachments available');
+        expect(metadataGrid.classes()).toContain('sm:grid-cols-2');
+        expect(metadataGrid.classes()).toContain('xl:grid-cols-4');
+        expect(metadataGrid.classes()).not.toContain('rounded-lg');
         expect(sheetContent.classes()).toContain('w-screen');
         expect(sheetContent.classes()).toContain('md:w-screen');
         expect(sheetContent.classes()).toContain('xl:w-[75vw]');
@@ -169,6 +182,16 @@ describe('TaskList edit sheet', () => {
         await nextTick();
 
         const editPriorityGroup = wrapper.get('[aria-label="Task priority"]');
+        const titleInput = wrapper.get<HTMLInputElement>('[data-testid="task-edit-title"]');
+
+        expect(titleInput.element.value).toBe('Auth issue');
+        expect(wrapper.find('[data-testid="task-edit-details-pane"] [data-testid="task-edit-title"]').exists()).toBe(false);
+        expect(
+            wrapper
+                .get('[data-testid="task-edit-details-pane"]')
+                .findAll('label')
+                .map((label) => label.text()),
+        ).not.toContain('Task');
         expect(editPriorityGroup.classes()).toContain('flex');
         expect(editPriorityGroup.classes()).toContain('flex-wrap');
         expect(wrapper.get('[data-testid="task-priority-high"]').classes()).toContain('bg-rose-100');
@@ -347,6 +370,53 @@ describe('TaskList edit sheet', () => {
         const commentHtml = wrapper.get('[data-testid="comment-bubble-11"]').html();
         expect(commentHtml).toContain('<code>');
         expect(commentHtml).toContain('this quote');
+
+        wrapper.unmount();
+    });
+
+    it('syntax-highlights fenced code comments after rendering markdown', async () => {
+        getMock
+            .mockResolvedValueOnce(makeIndexResponse(defaultTasks))
+            .mockResolvedValueOnce({
+                data: {
+                    id: 1,
+                    title: 'Auth issue',
+                    priority: 'high',
+                    status: 'pending',
+                    created_at: '2026-02-10T17:40:00Z',
+                    description: '',
+                    submitter: { email: 'someone@example.com' },
+                    attachments: [],
+                },
+            })
+            .mockResolvedValueOnce({
+                data: {
+                    external: [
+                        {
+                            id: 11,
+                            sender_name: 'You',
+                            is_current_user: true,
+                            content: "```js\nfunction demo(){\n  console.log('test')\n}\n```",
+                            created_at: '2026-02-09T12:01:00Z',
+                            attachments: [],
+                        },
+                    ],
+                },
+            });
+
+        const wrapper = mount(TaskList, { global: { stubs } });
+        await flushPromises();
+        await nextTick();
+
+        const firstRow = wrapper.findAll('[data-testid="task-row"]')[0];
+        await firstRow.find('button[title="Open details"]').trigger('click');
+        await flushPromises();
+        await nextTick();
+
+        const code = wrapper.get('[data-testid="comment-bubble-11"] pre code');
+        expect(code.classes()).toContain('hljs');
+        expect(code.html()).toContain('hljs-keyword');
+        expect(code.text()).toContain("console.log('test')");
 
         wrapper.unmount();
     });

@@ -4,6 +4,7 @@ import { nextTick } from 'vue';
 import {
     defaultStatuses,
     defaultTasks,
+    deleteMock,
     getMock,
     makeIndexResponse,
     mountWithTasks,
@@ -24,10 +25,11 @@ describe('TaskList listing and filters', () => {
         });
 
         const rows = wrapper.findAll('[data-testid="task-row"]');
-        expect(rows.length).toBe(3);
+        expect(rows.length).toBe(4);
         const text = rows.map((row) => row.text()).join(' ');
         expect(text).not.toContain('completed');
         expect(text).not.toContain('closed');
+        expect(text).toContain('Deployment paused');
 
         wrapper.unmount();
     });
@@ -46,6 +48,7 @@ describe('TaskList listing and filters', () => {
         expect(wrapper.get('[data-testid="task-status-badge-3"]').classes()).toContain('bg-indigo-100');
         expect(wrapper.get('[data-testid="task-status-badge-4"]').classes()).toContain('bg-emerald-100');
         expect(wrapper.get('[data-testid="task-status-badge-5"]').classes()).toContain('bg-slate-100');
+        expect(wrapper.get('[data-testid="task-status-badge-6"]').classes()).toContain('bg-orange-100');
 
         wrapper.unmount();
     });
@@ -156,6 +159,51 @@ describe('TaskList listing and filters', () => {
         pushStateSpy.mockRestore();
     });
 
+    it('confirms task deletion in an alert dialog before deleting', async () => {
+        const confirmSpy = vi.fn(() => true);
+        vi.stubGlobal('confirm', confirmSpy);
+        deleteMock.mockResolvedValueOnce({ data: {} });
+
+        const wrapper = await mountWithTasks();
+
+        await wrapper.get('[data-testid="task-delete-1"]').trigger('click');
+        await flushPromises();
+        await nextTick();
+
+        expect(confirmSpy).not.toHaveBeenCalled();
+        expect(deleteMock).not.toHaveBeenCalled();
+        expect(wrapper.text()).toContain('Delete task');
+        expect(wrapper.text()).toContain('Delete Auth issue from SHIFT? This cannot be undone.');
+
+        await wrapper.get('[data-testid="confirm-task-delete"]').trigger('click');
+        await flushPromises();
+        await nextTick();
+
+        expect(deleteMock).toHaveBeenCalledWith('/shift/api/tasks/1');
+        expect(wrapper.text()).not.toContain('Auth issue');
+
+        vi.unstubAllGlobals();
+        wrapper.unmount();
+    });
+
+    it('hides task deletion when SHIFT denies that capability', async () => {
+        getMock.mockResolvedValueOnce(makeIndexResponse([
+            {
+                ...defaultTasks[0],
+                can_delete: false,
+            },
+        ]));
+
+        const wrapper = mount(TaskList, {
+            global: { stubs },
+        });
+        await flushPromises();
+        await nextTick();
+
+        expect(wrapper.find('[data-testid="task-delete-1"]').exists()).toBe(false);
+        wrapper.unmount();
+    });
+
     it('auto-opens the edit sheet from task URL query', async () => {
         window.history.replaceState({}, '', '/shift/tasks?task=1');
 
@@ -234,7 +282,7 @@ describe('TaskList listing and filters', () => {
         await nextTick();
 
         // Draft changes should not apply until the user clicks Apply.
-        expect(wrapper.findAll('[data-testid="task-row"]').length).toBe(3);
+        expect(wrapper.findAll('[data-testid="task-row"]').length).toBe(4);
 
         await wrapper.get('[data-testid="filters-apply"]').trigger('click');
         await flushPromises();

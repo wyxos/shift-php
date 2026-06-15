@@ -5,6 +5,7 @@ namespace Wyxos\Shift\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Http;
+use Wyxos\Shift\Support\ShiftProxyResponse;
 
 class ShiftTaskThreadController extends Controller
 {
@@ -56,7 +57,7 @@ class ShiftTaskThreadController extends Controller
                 return response()->json($response->json());
             }
 
-            return response()->json(['error' => $response->json()['message'] ?? 'Failed to fetch threads'], 500);
+            return ShiftProxyResponse::error($response, 'Failed to fetch threads');
         } catch (\Throwable $e) {
             return response()->json(['error' => 'Failed to fetch threads: '.$e->getMessage()], 500);
         }
@@ -117,7 +118,7 @@ class ShiftTaskThreadController extends Controller
                 return response()->json($response->json(), 201);
             }
 
-            return response()->json(['error' => $response->json()['message'] ?? 'Failed to create thread'], 422);
+            return ShiftProxyResponse::error($response, 'Failed to create thread', 422);
         } catch (\Throwable $e) {
             return response()->json(['error' => 'Failed to create thread: '.$e->getMessage()], 500);
         }
@@ -164,7 +165,7 @@ class ShiftTaskThreadController extends Controller
                 return response()->json($response->json());
             }
 
-            return response()->json(['error' => $response->json()['message'] ?? 'Failed to fetch thread'], 500);
+            return ShiftProxyResponse::error($response, 'Failed to fetch thread');
         } catch (\Throwable $e) {
             return response()->json(['error' => 'Failed to fetch thread: '.$e->getMessage()], 500);
         }
@@ -228,12 +229,7 @@ class ShiftTaskThreadController extends Controller
                 return response()->json($response->json(), $response->status() ?: 200);
             }
 
-            $status = $response->status();
-            if ($status < 400) {
-                $status = 500;
-            }
-
-            return response()->json(['error' => $response->json()['message'] ?? 'Failed to update thread'], $status);
+            return ShiftProxyResponse::error($response, 'Failed to update thread');
         } catch (\Throwable $e) {
             return response()->json(['error' => 'Failed to update thread: '.$e->getMessage()], 500);
         }
@@ -285,12 +281,7 @@ class ShiftTaskThreadController extends Controller
                 return response()->json($response->json(), $response->status() ?: 200);
             }
 
-            $status = $response->status();
-            if ($status < 400) {
-                $status = 500;
-            }
-
-            return response()->json(['error' => $response->json()['message'] ?? 'Failed to delete thread'], $status);
+            return ShiftProxyResponse::error($response, 'Failed to delete thread');
         } catch (\Throwable $e) {
             return response()->json(['error' => 'Failed to delete thread: '.$e->getMessage()], 500);
         }
