@@ -374,6 +374,53 @@ describe('TaskList edit sheet', () => {
         wrapper.unmount();
     });
 
+    it('syntax-highlights fenced code comments after rendering markdown', async () => {
+        getMock
+            .mockResolvedValueOnce(makeIndexResponse(defaultTasks))
+            .mockResolvedValueOnce({
+                data: {
+                    id: 1,
+                    title: 'Auth issue',
+                    priority: 'high',
+                    status: 'pending',
+                    created_at: '2026-02-10T17:40:00Z',
+                    description: '',
+                    submitter: { email: 'someone@example.com' },
+                    attachments: [],
+                },
+            })
+            .mockResolvedValueOnce({
+                data: {
+                    external: [
+                        {
+                            id: 11,
+                            sender_name: 'You',
+                            is_current_user: true,
+                            content: "```js\nfunction demo(){\n  console.log('test')\n}\n```",
+                            created_at: '2026-02-09T12:01:00Z',
+                            attachments: [],
+                        },
+                    ],
+                },
+            });
+
+        const wrapper = mount(TaskList, { global: { stubs } });
+        await flushPromises();
+        await nextTick();
+
+        const firstRow = wrapper.findAll('[data-testid="task-row"]')[0];
+        await firstRow.find('button[title="Open details"]').trigger('click');
+        await flushPromises();
+        await nextTick();
+
+        const code = wrapper.get('[data-testid="comment-bubble-11"] pre code');
+        expect(code.classes()).toContain('hljs');
+        expect(code.html()).toContain('hljs-keyword');
+        expect(code.text()).toContain("console.log('test')");
+
+        wrapper.unmount();
+    });
+
     it('allows any user to change task status from the edit sheet', async () => {
         vi.useFakeTimers();
         vi.setSystemTime(new Date('2026-02-10T18:00:00Z'));

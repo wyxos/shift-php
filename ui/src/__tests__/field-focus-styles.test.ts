@@ -73,4 +73,21 @@ describe('field focus styles', () => {
         expect(fieldFocusRule).not.toMatch(/outline:\s*2px/);
         expect(fieldFocusRule).not.toMatch(/box-shadow/);
     });
+
+    it('keeps editor and rendered rich content paragraph spacing aligned', () => {
+        const source = readFileSync(join(process.cwd(), 'src/style.css'), 'utf8');
+
+        expect(source).toMatch(/\.ProseMirror > p \+ p,\s*\.shift-rich > p \+ p\s*\{[\s\S]*?margin-top:\s*0\.75rem;/);
+    });
+
+    it('keeps editor and rendered rich content code blocks aligned', () => {
+        const source = readFileSync(join(process.cwd(), 'src/style.css'), 'utf8');
+
+        expect(source).toMatch(/\.ProseMirror pre,\s*\.shift-rich pre\s*\{[\s\S]*?padding:\s*0\.5rem 0\.625rem;/);
+        expect(source).toMatch(/\.ProseMirror pre,\s*\.shift-rich pre\s*\{[\s\S]*?border-radius:\s*0\.25rem;/);
+        expect(source).toMatch(/\.ProseMirror pre,\s*\.shift-rich pre\s*\{[\s\S]*?overflow-x:\s*auto;/);
+        expect(source).toMatch(/\.ProseMirror pre,\s*\.shift-rich pre\s*\{[\s\S]*?background:\s*#e5e7eb;/);
+        expect(source).toMatch(/\.ProseMirror pre code,\s*\.shift-rich pre code\s*\{[\s\S]*?white-space:\s*pre;/);
+        expect(source).toMatch(/\.ProseMirror pre code\.hljs,\s*\.shift-rich pre code\.hljs\s*\{[\s\S]*?padding:\s*0;/);
+    });
 });
