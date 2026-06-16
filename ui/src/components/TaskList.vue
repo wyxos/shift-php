@@ -62,6 +62,7 @@ const editOpen = ref(false);
 const editTask = ref<TaskDetail | null>(null);
 const deleteDialogOpen = ref(false);
 const pendingDeleteTask = ref<TaskDetail | null>(null);
+const deleteDialogError = ref<string | null>(null);
 const currentAppEnvironment = getCurrentAppEnvironment();
 
 const {
@@ -255,16 +256,33 @@ function closeRequirementCreate() {
 }
 function requestDeleteTask(taskId: number) {
     const task = tasks.value.find((item) => item.id === taskId) ?? null;
+    deleteLoading.value = null;
+    deleteDialogError.value = null;
     pendingDeleteTask.value = task ? ({ ...task } as TaskDetail) : ({ id: taskId, title: 'this item' } as TaskDetail);
     deleteDialogOpen.value = true;
+}
+function requestErrorMessage(requestError: unknown, fallback: string) {
+    return requestError instanceof Error && requestError.message ? requestError.message : fallback;
 }
 async function confirmDeleteTask() {
     const task = pendingDeleteTask.value;
 
     if (!task) return;
+    let deleted;
+    try {
+        deleted = await deleteTask(task.id);
+    } catch (requestError) {
+        deleteDialogError.value = error.value || requestErrorMessage(requestError, 'Unable to delete this task right now.');
+        deleteLoading.value = null;
+        return;
+    }
+    if (deleted === false) {
+        deleteDialogError.value = error.value || 'Unable to delete this task right now.';
+        return;
+    }
+
     deleteDialogOpen.value = false;
     pendingDeleteTask.value = null;
-    await deleteTask(task.id);
 }
 function setConfirmCloseOpen(value: boolean) {
     confirmCloseOpen.value = value;
@@ -469,6 +487,8 @@ onMounted(async () => {
     <TaskDiscardDialog :open="confirmCloseOpen" :set-open="setConfirmCloseOpen" :discard="discardChangesAndClose" />
     <TaskDeleteConfirmDialog
         v-model:open="deleteDialogOpen"
+        :error="deleteDialogError"
+        :loading="deleteLoading === pendingDeleteTask?.id"
         :surface="activeSurface"
         :task-title="pendingDeleteTask?.title"
         @confirm="confirmDeleteTask"

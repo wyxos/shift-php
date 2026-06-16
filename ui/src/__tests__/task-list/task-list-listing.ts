@@ -1,6 +1,7 @@
 import { flushPromises, mount } from '@vue/test-utils';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { nextTick } from 'vue';
+import TaskList from '../../components/TaskList.vue';
 import {
     defaultStatuses,
     defaultTasks,
@@ -12,7 +13,6 @@ import {
     seedTasks,
     stubs,
 } from './test-helpers';
-import TaskList from '../../components/TaskList.vue';
 
 describe('TaskList listing and filters', () => {
     beforeEach(resetTaskListTestState);
@@ -186,13 +186,78 @@ describe('TaskList listing and filters', () => {
         wrapper.unmount();
     });
 
-    it('hides task deletion when SHIFT denies that capability', async () => {
-        getMock.mockResolvedValueOnce(makeIndexResponse([
-            {
-                ...defaultTasks[0],
-                can_delete: false,
+    it('keeps the delete dialog open with a busy confirm action while deletion is pending', async () => {
+        let resolveDelete!: () => void;
+        deleteMock.mockImplementationOnce(
+            () =>
+                new Promise((resolve) => {
+                    resolveDelete = () => resolve({ data: {} });
+                }),
+        );
+
+        const wrapper = await mountWithTasks();
+
+        await wrapper.get('[data-testid="task-delete-1"]').trigger('click');
+        await flushPromises();
+        await nextTick();
+
+        await wrapper.get('[data-testid="confirm-task-delete"]').trigger('click');
+        await flushPromises();
+        await nextTick();
+
+        const confirm = wrapper.get('[data-testid="confirm-task-delete"]');
+        expect(deleteMock).toHaveBeenCalledWith('/shift/api/tasks/1');
+        expect(confirm.attributes('disabled')).toBeDefined();
+        expect(confirm.attributes('aria-busy')).toBe('true');
+        expect(confirm.text()).toContain('Deleting...');
+        expect(wrapper.text()).toContain('Delete Auth issue from SHIFT? This cannot be undone.');
+
+        resolveDelete();
+        await flushPromises();
+        await nextTick();
+
+        expect(wrapper.find('[data-testid="confirm-task-delete"]').exists()).toBe(false);
+
+        wrapper.unmount();
+    });
+
+    it('removes the busy state and renders an inline error when deletion fails', async () => {
+        deleteMock.mockRejectedValueOnce({
+            response: {
+                data: {
+                    error: 'Server refused the delete.',
+                },
             },
-        ]));
+        });
+
+        const wrapper = await mountWithTasks();
+
+        await wrapper.get('[data-testid="task-delete-1"]').trigger('click');
+        await flushPromises();
+        await nextTick();
+
+        await wrapper.get('[data-testid="confirm-task-delete"]').trigger('click');
+        await flushPromises();
+        await nextTick();
+
+        const confirm = wrapper.get('[data-testid="confirm-task-delete"]');
+        expect(confirm.attributes('disabled')).toBeUndefined();
+        expect(confirm.attributes('aria-busy')).toBeUndefined();
+        expect(wrapper.get('[data-testid="confirm-request-error"]').text()).toContain('Server refused the delete.');
+        expect(wrapper.text()).toContain('Delete Auth issue from SHIFT? This cannot be undone.');
+
+        wrapper.unmount();
+    });
+
+    it('hides task deletion when SHIFT denies that capability', async () => {
+        getMock.mockResolvedValueOnce(
+            makeIndexResponse([
+                {
+                    ...defaultTasks[0],
+                    can_delete: false,
+                },
+            ]),
+        );
 
         const wrapper = mount(TaskList, {
             global: { stubs },
@@ -365,5 +430,4 @@ describe('TaskList listing and filters', () => {
 
         wrapper.unmount();
     });
-
 });
