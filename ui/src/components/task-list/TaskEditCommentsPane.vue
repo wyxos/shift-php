@@ -33,7 +33,7 @@ interface Props {
     startThreadEdit: (message: ThreadMessage) => void;
     onMessageDblClick: (message: ThreadMessage, event: MouseEvent) => void;
     onMessageTouchEnd: (message: ThreadMessage, event: TouchEvent) => void;
-    deleteThreadMessage: (message: ThreadMessage) => void | Promise<void>;
+    deleteThreadMessage: (message: ThreadMessage) => boolean | Promise<boolean>;
     cancelThreadEdit: () => void;
     handleThreadSend: (payload: { html: string; attachments?: any[] }) => void | Promise<void>;
 }

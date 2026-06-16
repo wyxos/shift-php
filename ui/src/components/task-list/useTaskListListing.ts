@@ -178,10 +178,11 @@ export function useTaskListListing(options: UseTaskListListingOptions = {}) {
             await axios.delete(`/shift/api/tasks/${taskId}`);
             tasks.value = tasks.value.filter((task) => task.id !== taskId);
             totalTasks.value = Math.max(totalTasks.value - 1, 0);
+            return true;
         } catch (e: any) {
             error.value = e.response?.data?.error || e.message || 'Failed to delete task';
-        } finally {
             deleteLoading.value = null;
+            return false;
         }
     }
 
