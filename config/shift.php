@@ -13,6 +13,13 @@ return [
     'token' => env('SHIFT_TOKEN'),
     'project' => env('SHIFT_PROJECT'),
     'url' => env('SHIFT_URL', 'https://shift.wyxos.com'),
+    'errors' => [
+        'enabled' => env('SHIFT_ERROR_REPORTING_ENABLED', true),
+        'endpoint' => env('SHIFT_ERROR_REPORTING_ENDPOINT', '/api/errors'),
+        'release' => env('SHIFT_RELEASE'),
+        'revision' => env('SHIFT_GIT_SHA') ?: env('HERD_DEPLOYMENT_COMMIT') ?: env('SOURCE_VERSION'),
+        'timeout' => env('SHIFT_ERROR_REPORTING_TIMEOUT', 3),
+    ],
     'ai' => [
         'enabled' => env('SHIFT_AI_ENABLED', false),
     ],

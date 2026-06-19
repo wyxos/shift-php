@@ -1,27 +1,27 @@
 {
-  "_x-BtSI6LDS.js": {
-    "file": "assets/x-BtSI6LDS.js",
+  "_x-anQPqF_K.js": {
+    "file": "assets/x-anQPqF_K.js",
     "name": "x"
   },
   "index.html": {
-    "file": "assets/app-Cv4is0Jo.js",
+    "file": "assets/app-B3pDaA4C.js",
     "name": "app",
     "src": "index.html",
     "isEntry": true,
     "imports": [
-      "_x-BtSI6LDS.js"
+      "_x-anQPqF_K.js"
     ],
     "css": [
-      "assets/app-BtsCso37.css"
+      "assets/app-6Y6OJAxB.css"
     ]
   },
   "src/widget.ts": {
-    "file": "assets/widget-PG60KSOc.js",
+    "file": "assets/widget-Dfw6u19U.js",
     "name": "widget",
     "src": "src/widget.ts",
     "isEntry": true,
     "imports": [
-      "_x-BtSI6LDS.js"
+      "_x-anQPqF_K.js"
     ],
     "css": [
       "assets/widget-TZ3y7txb.css"

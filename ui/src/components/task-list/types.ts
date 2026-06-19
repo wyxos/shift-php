@@ -2,7 +2,14 @@ import type { CollaboratorOption } from '@shared/tasks/collaborators';
 
 export type Task = {
     id: number;
+    project_id?: number | null;
+    project?: {
+        id: number;
+        name: string;
+    } | null;
     title: string;
+    type?: 'task' | 'app_error' | string | null;
+    type_label?: string | null;
     status: string;
     requirement_status?: string | null;
     priority: string;
@@ -36,7 +43,6 @@ export type TaskAttachment = {
 };
 
 export type TaskDetail = Task & {
-    project_id?: number;
     description?: string;
     created_at?: string;
     submitter?: { name?: string; email?: string };
