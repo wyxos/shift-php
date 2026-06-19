@@ -144,7 +144,7 @@ export function useTaskListListing(options: UseTaskListListingOptions = {}) {
             from.value = 0;
             to.value = 0;
         } catch (e: any) {
-            error.value = e.response?.data?.error || e.message || 'Unknown error';
+            error.value = taskListRequestErrorMessage(e, 'Unable to load tasks from SHIFT.');
         } finally {
             loading.value = false;
         }
@@ -227,4 +227,18 @@ export function useTaskListListing(options: UseTaskListListingOptions = {}) {
         to,
         totalTasks,
     };
+}
+
+function taskListRequestErrorMessage(error: any, fallback: string): string {
+    const upstreamMessage = error?.response?.data?.error || error?.response?.data?.message;
+
+    if (typeof upstreamMessage === 'string' && upstreamMessage.trim() !== '') {
+        return upstreamMessage;
+    }
+
+    if (error?.message === 'Network Error' || error?.code === 'ERR_NETWORK') {
+        return 'Unable to reach SHIFT from this embedded client. Check SHIFT_URL, the local site certificate, and that the SHIFT portal is reachable from this app.';
+    }
+
+    return typeof error?.message === 'string' && error.message.trim() !== '' ? error.message : fallback;
 }

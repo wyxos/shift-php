@@ -1,16 +1,7 @@
-import { flushPromises, mount } from '@vue/test-utils';
+import { flushPromises } from '@vue/test-utils';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { nextTick } from 'vue';
-import {
-    defaultStatuses,
-    defaultTasks,
-    getMock,
-    makeIndexResponse,
-    postMock,
-    resetTaskListTestState,
-    stubs,
-} from './test-helpers';
-import TaskList from '../../components/TaskList.vue';
+import { defaultStatuses, defaultTasks, getMock, makeIndexResponse, mountTaskListBare, postMock, resetTaskListTestState } from './test-helpers';
 
 describe('TaskList create flow', () => {
     beforeEach(resetTaskListTestState);
@@ -39,7 +30,7 @@ describe('TaskList create flow', () => {
             },
         });
 
-        const wrapper = mount(TaskList, { global: { stubs } });
+        const wrapper = mountTaskListBare();
         await flushPromises();
         await nextTick();
 
@@ -89,7 +80,7 @@ describe('TaskList create flow', () => {
             },
         });
 
-        const wrapper = mount(TaskList, { global: { stubs } });
+        const wrapper = mountTaskListBare();
         await flushPromises();
         await nextTick();
 
@@ -99,6 +90,7 @@ describe('TaskList create flow', () => {
         const createCollaboratorStub = wrapper.findAll('[data-testid="stub-task-collaborators"]')[0];
         await createCollaboratorStub.get('[data-testid="stub-add-internal-collaborator"]').trigger('click');
         await createCollaboratorStub.get('[data-testid="stub-add-external-collaborator"]').trigger('click');
+        expect(wrapper.text()).toContain('On create, the submitter and selected collaborators are notified.');
         await wrapper.get('[data-testid="create-task-title"]').setValue('Created with collaborators');
         await wrapper.get('[data-testid="create-task-form"]').trigger('submit');
         await flushPromises();
@@ -122,5 +114,4 @@ describe('TaskList create flow', () => {
 
         wrapper.unmount();
     });
-
 });

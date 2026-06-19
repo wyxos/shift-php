@@ -1,8 +1,8 @@
-import { createApp } from 'vue';
 import { initializeTheme } from '@shift/composables/useAppearance';
-import './style.css';
+import { createApp } from 'vue';
 import App from './App.vue';
 import router from './router';
+import './style.css';
 
 initializeTheme();
 

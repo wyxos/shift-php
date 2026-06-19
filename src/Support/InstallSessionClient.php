@@ -290,6 +290,7 @@ class InstallSessionClient
                 'data.interval',
                 'interval',
             ]) ?? 3,
+            'realtime' => $this->normalizeRealtime($payload),
             'status_url' => $this->normalizeUrl($this->stringValue($payload, [
                 'data.status_url',
                 'data.poll_url',
@@ -324,6 +325,39 @@ class InstallSessionClient
                 'links.finalize',
                 'urls.finalize',
             ])),
+        ], static fn ($value) => $value !== null && $value !== '');
+    }
+
+    private function normalizeRealtime(array $payload): ?array
+    {
+        $metadata = $this->pathValue($payload, 'data.realtime');
+
+        if (! is_array($metadata)) {
+            $metadata = $this->pathValue($payload, 'realtime');
+        }
+
+        if (! is_array($metadata)) {
+            return null;
+        }
+
+        $key = $this->stringValue($metadata, ['key', 'app_key']);
+        $host = $this->stringValue($metadata, ['ws_host', 'host']);
+        $channel = $this->stringValue($metadata, ['channel']);
+        $event = $this->stringValue($metadata, ['event']);
+
+        if ($key === null || $host === null || $channel === null || $event === null) {
+            return null;
+        }
+
+        return array_filter([
+            'broadcaster' => $this->stringValue($metadata, ['broadcaster']) ?? 'reverb',
+            'key' => $key,
+            'ws_host' => $host,
+            'ws_port' => $this->intValue($metadata, ['ws_port', 'port']) ?? 443,
+            'scheme' => $this->stringValue($metadata, ['scheme', 'ws_scheme']) ?? 'https',
+            'path' => $this->stringValue($metadata, ['path']),
+            'channel' => $channel,
+            'event' => $event,
         ], static fn ($value) => $value !== null && $value !== '');
     }
 

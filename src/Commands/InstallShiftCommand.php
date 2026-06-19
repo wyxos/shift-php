@@ -10,7 +10,9 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use RuntimeException;
 use Symfony\Component\Console\Formatter\OutputFormatterStyle;
+use Wyxos\Shift\Support\InstallSessionApprovalListener;
 use Wyxos\Shift\Support\InstallSessionClient;
+use Wyxos\Shift\Support\InstallSessionRealtimeWaiter;
 
 class InstallShiftCommand extends Command
 {
@@ -20,10 +22,12 @@ class InstallShiftCommand extends Command
 
     private bool $usedBrowserVerification = false;
 
+    private ?string $installSessionRealtimeWarning = null;
+
     protected $signature = 'install:shift
         {--manual : Prompt for raw SHIFT credentials instead of using browser verification.}';
 
-    protected $description = 'Install and configure SHIFT SDK.';
+    protected $description = 'Install and configure SHIFT SDK with browser verification.';
 
     public function handle(): int
     {
@@ -87,7 +91,7 @@ class InstallShiftCommand extends Command
         $this->newLine();
         $this->components->info('SHIFT installation complete.');
 
-        if ($this->confirm('Run a test task now?', false)) {
+        if ($this->confirm('Create a QA task in the linked SHIFT project now?', false)) {
             $this->newLine();
             $this->call('shift:test');
         }
@@ -227,10 +231,16 @@ class InstallShiftCommand extends Command
             $this->line("Session expires at: <info>{$session['expires_at']}</info>");
         }
 
-        $this->newLine();
-        $this->line('Waiting for SHIFT approval...');
+        $approvalListener = $this->startInstallSessionApprovalListener($session);
 
-        $session = $this->waitForInstallSessionApproval($client, $session);
+        $this->newLine();
+        $this->line($approvalListener === null ? 'Waiting for SHIFT approval...' : 'Waiting for SHIFT approval via Reverb...');
+
+        if ($this->installSessionRealtimeWarning !== null) {
+            $this->components->warn('Realtime approval unavailable; falling back to polling. '.$this->installSessionRealtimeWarning);
+        }
+
+        $session = $this->waitForInstallSessionApproval($client, $session, $approvalListener);
         $projects = $client->projects($session);
         $selectedProject = $this->chooseOrCreateInstallableProject($client, $session, $projects);
         $credentials = $client->finalize($session, $selectedProject);
@@ -241,10 +251,50 @@ class InstallShiftCommand extends Command
         return [$credentials['token'], $credentials['project']];
     }
 
-    private function waitForInstallSessionApproval(InstallSessionClient $client, array $session): array
+    private function startInstallSessionApprovalListener(array $session): ?InstallSessionApprovalListener
     {
-        $startedAt = time();
-        $deadline = $this->installSessionDeadline($session);
+        if ($this->isApprovedInstallSessionStatus($session['status'] ?? null)) {
+            return null;
+        }
+
+        if ($this->isFailedInstallSessionStatus($session['status'] ?? null)) {
+            return null;
+        }
+
+        if (! is_array($session['realtime'] ?? null)) {
+            return null;
+        }
+
+        try {
+            return app(InstallSessionRealtimeWaiter::class)->listen($session, $this->installSessionDeadline($session));
+        } catch (RuntimeException $exception) {
+            $this->installSessionRealtimeWarning = $exception->getMessage();
+
+            return null;
+        }
+    }
+
+    private function waitForInstallSessionApproval(InstallSessionClient $client, array $session, ?InstallSessionApprovalListener $approvalListener): array
+    {
+        if ($this->isApprovedInstallSessionStatus($session['status'] ?? null)) {
+            return $session;
+        }
+
+        if ($this->isFailedInstallSessionStatus($session['status'] ?? null)) {
+            throw new RuntimeException($this->installSessionFailureMessage($session['status'] ?? null));
+        }
+
+        if ($approvalListener !== null) {
+            try {
+                $event = $approvalListener->wait();
+                $status = $event['state'] ?? $event['status'] ?? null;
+                $session = array_replace($session, [
+                    'status' => is_string($status) && $status !== '' ? Str::lower($status) : 'approved',
+                ]);
+            } catch (RuntimeException $exception) {
+                $this->components->warn('Realtime approval unavailable; falling back to polling. '.$exception->getMessage());
+            }
+        }
 
         if ($this->isApprovedInstallSessionStatus($session['status'] ?? null)) {
             return $session;
@@ -254,6 +304,14 @@ class InstallShiftCommand extends Command
             throw new RuntimeException($this->installSessionFailureMessage($session['status'] ?? null));
         }
 
+        return $this->pollForInstallSessionApproval($client, $session);
+    }
+
+    private function pollForInstallSessionApproval(InstallSessionClient $client, array $session): array
+    {
+        $startedAt = time();
+        $deadline = $this->installSessionDeadline($session);
+
         while (true) {
             if ($deadline !== null && time() >= $deadline) {
                 throw new RuntimeException('The SHIFT install session expired before it was approved.');
@@ -262,8 +320,6 @@ class InstallShiftCommand extends Command
             if ($deadline === null && (time() - $startedAt) >= self::DEFAULT_INSTALL_SESSION_TIMEOUT_SECONDS) {
                 throw new RuntimeException('Timed out waiting for the SHIFT install session to be approved.');
             }
-
-            sleep(max(1, (int) ($session['poll_interval'] ?? 3)));
 
             $session = $client->poll($session);
             $deadline = $this->installSessionDeadline($session) ?? $deadline;
@@ -275,6 +331,8 @@ class InstallShiftCommand extends Command
             if ($this->isFailedInstallSessionStatus($session['status'] ?? null)) {
                 throw new RuntimeException($this->installSessionFailureMessage($session['status'] ?? null));
             }
+
+            sleep(max(1, (int) ($session['poll_interval'] ?? 3)));
         }
     }
 

@@ -1,16 +1,7 @@
-import { flushPromises, mount } from '@vue/test-utils';
+import { flushPromises } from '@vue/test-utils';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { nextTick } from 'vue';
-import {
-    defaultTasks,
-    getMock,
-    makeIndexResponse,
-    patchMock,
-    putMock,
-    resetTaskListTestState,
-    stubs,
-} from './test-helpers';
-import TaskList from '../../components/TaskList.vue';
+import { defaultTasks, getMock, makeIndexResponse, mountTaskListBare, patchMock, putMock, resetTaskListTestState } from './test-helpers';
 
 describe('TaskList collaborators', () => {
     beforeEach(resetTaskListTestState);
@@ -61,7 +52,7 @@ describe('TaskList collaborators', () => {
             },
         });
 
-        const wrapper = mount(TaskList, { global: { stubs } });
+        const wrapper = mountTaskListBare();
         await flushPromises();
         await nextTick();
 
@@ -71,6 +62,7 @@ describe('TaskList collaborators', () => {
 
         const editCollaboratorStub = wrapper.findAll('[data-testid="stub-task-collaborators"]').at(-1);
         expect(editCollaboratorStub?.attributes('data-read-only')).toBe('false');
+        expect(wrapper.text()).toContain('Adding collaborators here sends access notifications to newly added collaborators only.');
         await editCollaboratorStub!.get('[data-testid="stub-add-external-collaborator"]').trigger('click');
         await nextTick();
         await vi.advanceTimersByTimeAsync(700);
@@ -114,7 +106,7 @@ describe('TaskList collaborators', () => {
             })
             .mockResolvedValueOnce({ data: { external: [] } });
 
-        const wrapper = mount(TaskList, { global: { stubs } });
+        const wrapper = mountTaskListBare();
         await flushPromises();
         await nextTick();
 

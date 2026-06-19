@@ -229,11 +229,15 @@ export function makeIndexResponse(tasks: any[]) {
     };
 }
 
-export async function mountTaskList() {
-    getMock.mockResolvedValueOnce(makeIndexResponse(defaultTasks));
-    const wrapper = mount(TaskList, {
+export function mountTaskListBare() {
+    return mount(TaskList, {
         global: { stubs },
     });
+}
+
+export async function mountTaskList() {
+    getMock.mockResolvedValueOnce(makeIndexResponse(defaultTasks));
+    const wrapper = mountTaskListBare();
     await flushPromises();
     await nextTick();
     return wrapper;

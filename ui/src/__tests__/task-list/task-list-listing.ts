@@ -34,6 +34,24 @@ describe('TaskList listing and filters', () => {
         wrapper.unmount();
     });
 
+    it('shows a useful setup message when the embedded task list cannot reach shift', async () => {
+        const networkError = new Error('Network Error');
+        (networkError as any).code = 'ERR_NETWORK';
+        getMock.mockRejectedValueOnce(networkError);
+
+        const wrapper = mount(TaskList, {
+            global: { stubs },
+        });
+        await flushPromises();
+        await nextTick();
+
+        expect(wrapper.text()).toContain('Unable to reach SHIFT from this embedded client.');
+        expect(wrapper.text()).toContain('Check SHIFT_URL');
+        expect(wrapper.text()).not.toContain('Network Error');
+
+        wrapper.unmount();
+    });
+
     it('uses distinct status badge colors for each status', async () => {
         getMock.mockResolvedValueOnce(makeIndexResponse(seedTasks));
 
@@ -80,6 +98,37 @@ describe('TaskList listing and filters', () => {
 
         expect(wrapper.get('[data-testid="task-environment-badge-1"]').text()).toContain('Staging');
         expect(wrapper.get('[data-testid="task-environment-badge-3"]').text()).toContain('Unknown');
+
+        wrapper.unmount();
+    });
+
+    it('renders app error and project badges from the external task metadata', async () => {
+        getMock.mockResolvedValueOnce(
+            makeIndexResponse([
+                {
+                    ...seedTasks[0],
+                    id: 10,
+                    title: 'Backend error: Checkout failed',
+                    type: 'app_error',
+                    type_label: 'App error',
+                    project: {
+                        id: 9,
+                        name: 'Requirement Pack QA',
+                    },
+                },
+            ]),
+        );
+
+        const wrapper = mount(TaskList, {
+            global: { stubs },
+        });
+        await flushPromises();
+        await nextTick();
+
+        expect(wrapper.get('[data-testid="task-type-badge-10"]').text()).toBe('error');
+        expect(wrapper.get('[data-testid="task-project-badge-10"]').text()).toBe('Pack QA');
+        expect(wrapper.text()).not.toContain('App error');
+        expect(wrapper.text()).not.toContain('Requirement Pack QA');
 
         wrapper.unmount();
     });

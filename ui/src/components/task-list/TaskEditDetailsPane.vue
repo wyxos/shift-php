@@ -194,6 +194,9 @@ const editTaskEnvironmentLabel = computed(() => getTaskEnvironment(props.editTas
                 :read-only="!canManageCollaborators"
                 @update:model-value="updateEditCollaborators"
             />
+            <p v-if="canManageCollaborators" class="text-muted-foreground text-xs">
+                Adding collaborators here sends access notifications to newly added collaborators only.
+            </p>
         </div>
 
         <div v-if="taskAttachments.length" class="space-y-2" data-testid="task-edit-attachments">
