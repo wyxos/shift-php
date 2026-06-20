@@ -12,6 +12,7 @@ class ShiftErrorReporter
     public function __construct(
         private readonly ShiftActorContext $context,
         private readonly ShiftErrorScrubber $scrubber,
+        private readonly ShiftReleaseMetadata $releaseMetadata,
     ) {}
 
     public function reportThrowable(Throwable $exception): bool
@@ -50,8 +51,8 @@ class ShiftErrorReporter
             'project' => (string) config('shift.project'),
             'environment' => config('app.env'),
             'url' => config('app.url'),
-            'release' => config('shift.errors.release'),
-            'git_sha' => config('shift.errors.revision'),
+            'release' => $this->releaseMetadata->release(),
+            'git_sha' => $this->releaseMetadata->revision(),
             ...$payload,
         ]);
 

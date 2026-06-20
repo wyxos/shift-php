@@ -45,8 +45,6 @@ SHIFT_PROJECT=your-shift-project-token
 SHIFT_COLLABORATORS_RESOLVER=App\Services\ShiftCollaboratorResolver
 
 SHIFT_ERROR_REPORTING_ENABLED=true
-SHIFT_RELEASE=
-SHIFT_GIT_SHA=
 ```
 
 Hosted portal:
@@ -92,8 +90,6 @@ return [
     'errors' => [
         'enabled' => env('SHIFT_ERROR_REPORTING_ENABLED', true),
         'endpoint' => env('SHIFT_ERROR_REPORTING_ENDPOINT', '/api/errors'),
-        'release' => env('SHIFT_RELEASE'),
-        'revision' => env('SHIFT_GIT_SHA') ?: env('HERD_DEPLOYMENT_COMMIT') ?: env('SOURCE_VERSION'),
         'timeout' => env('SHIFT_ERROR_REPORTING_TIMEOUT', 3),
     ],
 ];
@@ -155,12 +151,7 @@ When `SHIFT_ERROR_REPORTING_ENABLED=true`, the package registers a Laravel excep
 
 Error reporting is best-effort. Missing credentials, disabled reporting, connection failures, timeouts, or non-success portal responses are ignored by the reporter.
 
-Set release metadata in deployed environments when you want error reports tied to a build:
-
-```env
-SHIFT_RELEASE=2026.06.20
-SHIFT_GIT_SHA=your-deploy-commit
-```
+The package detects the revision from deployment commit metadata or the app Git checkout. If the checkout has an exact tag for that revision, the tag is sent as the release.
 
 ## Data Sent
 
