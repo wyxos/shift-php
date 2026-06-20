@@ -16,8 +16,6 @@ return [
     'errors' => [
         'enabled' => env('SHIFT_ERROR_REPORTING_ENABLED', true),
         'endpoint' => env('SHIFT_ERROR_REPORTING_ENDPOINT', '/api/errors'),
-        'release' => env('SHIFT_RELEASE'),
-        'revision' => env('SHIFT_GIT_SHA') ?: env('HERD_DEPLOYMENT_COMMIT') ?: env('SOURCE_VERSION'),
         'timeout' => env('SHIFT_ERROR_REPORTING_TIMEOUT', 3),
     ],
     'ai' => [
