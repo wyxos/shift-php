@@ -194,40 +194,12 @@ The error scrubber removes common sensitive fields such as password, token, auth
 
 ## Local Testing Path
 
-For a consumer Laravel app:
-
 ```bash
 php artisan config:clear
 php artisan shift:test
 ```
 
 `shift:test` creates a QA task in the configured project. Use a local or self-hosted portal unless you intentionally want that task in a hosted project.
-
-For package development in the Mac SDK harness:
-
-```bash
-cd /Users/joeyj/Developer/wyxos/php/shift-sdk-package
-npm run shift:local-smoke
-```
-
-That local smoke path builds and publishes the package UI, targets `https://shift-sdk-package.test` against local `https://shift.test`, submits a widget task, verifies the task metadata in the local portal database, deletes the smoke task, and restores widget settings.
-
-When editing the dashboard UI directly:
-
-```bash
-cd /Users/joeyj/Developer/wyxos/php/shift-sdk-package/packages/shift-php/ui
-npm run build
-
-cd /Users/joeyj/Developer/wyxos/php/shift-sdk-package
-npm run build:shift
-php artisan shift:publish --group=public
-```
-
-Then check the local embedded dashboard at:
-
-```text
-https://shift-sdk-package.test/shift
-```
 
 ## Troubleshooting
 
@@ -260,14 +232,6 @@ In a consuming Laravel app, publish the current package assets:
 php artisan shift:publish --group=public
 ```
 
-In the SDK harness source checkout, rebuild and publish the package UI:
-
-```bash
-cd /Users/joeyj/Developer/wyxos/php/shift-sdk-package
-npm run build:shift
-php artisan shift:publish --group=public
-```
-
 ### Widget returns `401` or `403`
 
 Check whether the portal project has widget intake enabled and whether guest submissions are allowed. If guest submissions are disabled, the app user must be authenticated through the configured widget guard.
@@ -290,13 +254,6 @@ php artisan tinker
 ```
 
 The reporter is intentionally silent on network failures and non-success portal responses so it does not interfere with application error handling.
-
-## Commands
-
-- `php artisan install:shift` - Interactive browser-verification install.
-- `php artisan install:shift --manual` - Manual token/project install.
-- `php artisan shift:test` - Submit a QA task to verify configuration.
-- `php artisan shift:publish` - Publish package assets and config.
 
 ## License
 
