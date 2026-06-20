@@ -3,9 +3,9 @@
 [![Latest Version on Packagist](https://img.shields.io/packagist/v/wyxos/shift-php.svg?style=flat-square)](https://packagist.org/packages/wyxos/shift-php)
 [![MIT Licensed](https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-square)](LICENSE.md)
 
-`wyxos/shift-php` embeds SHIFT issue intake and task follow-up inside a Laravel application. It ships the `/shift` dashboard, an optional in-app report widget, task and thread proxy endpoints, external collaborator lookup, install-session onboarding, and scrubbed backend error reporting.
+`wyxos/shift-php` embeds issue intake and task follow-up inside a Laravel application. It ships the `/shift` dashboard, an optional in-app report widget, task and thread proxy endpoints, external collaborator lookup, install-session onboarding, and scrubbed backend error reporting.
 
-The intended workflow is narrow and practical: a Laravel app user reports an issue from the app page where it happened, the package sends useful app context to SHIFT, and the developer follows up on the resulting task.
+A Laravel app user reports an issue from the page where it happened, the package sends useful app context to the portal, and the developer follows up on the resulting task.
 
 ## Installation
 
@@ -14,15 +14,15 @@ composer require wyxos/shift-php
 php artisan install:shift
 ```
 
-The default installer uses SHIFT browser verification:
+The default installer uses browser verification:
 
 - Reads `APP_ENV` and `APP_URL` from the Laravel app.
-- Creates a SHIFT install session.
+- Creates an install session in the portal.
 - Prints a verification URL and short code for browser approval.
 - Waits for approval through Reverb when available, with polling fallback.
-- Lets you choose an installable SHIFT project or create a standalone project when the account has no available project.
+- Lets you choose an installable project or create a standalone one when the account has no available option.
 - Writes `SHIFT_TOKEN` and `SHIFT_PROJECT` to the app `.env`.
-- Registers the current app environment and URL with SHIFT.
+- Registers the current app environment and URL.
 - Scaffolds `App\Services\ShiftCollaboratorResolver` when the app does not already have one.
 - Publishes config and frontend assets.
 
@@ -49,19 +49,19 @@ SHIFT_RELEASE=
 SHIFT_GIT_SHA=
 ```
 
-Hosted SHIFT uses:
+Hosted portal:
 
 ```env
 SHIFT_URL=https://shift.wyxos.com
 ```
 
-Local or self-hosted SHIFT can use a private URL:
+Local or self-hosted portal:
 
 ```env
 SHIFT_URL=https://shift.test
 ```
 
-Local, `.test`, `.local`, localhost, and private IP SHIFT URLs are treated as local/private by the package client, so SSL verification is skipped for package-to-portal requests. The active SHIFT instance still needs network access to the app URL when it calls the app for collaborator lookup.
+Local, `.test`, `.local`, localhost, and private IP portal URLs are treated as private by the package client, so SSL verification is skipped for package-to-portal requests. The active portal still needs network access to the app URL when it calls the app for collaborator lookup.
 
 Publish the config when you need to customize middleware, widget behavior, or error-reporting settings:
 
@@ -107,7 +107,7 @@ After installation, the embedded dashboard is available at:
 /shift
 ```
 
-It uses the configured route middleware, which defaults to `web` and `auth`. Authenticated users can create tasks, edit task details, comment in task threads, upload attachments, and manage collaborators for the linked SHIFT project.
+It uses the configured route middleware, which defaults to `web` and `auth`. Authenticated users can create tasks, edit task details, comment in threads, upload attachments, and manage collaborators for the linked project.
 
 For a lightweight report form inside the host app, use the widget endpoint:
 
@@ -151,7 +151,7 @@ For the authenticated dashboard/task surface, the package proxies:
 
 ## Backend Error Intake
 
-When `SHIFT_ERROR_REPORTING_ENABLED=true`, the package registers a Laravel exception reporter. It sends scrubbed backend exception payloads to the configured SHIFT portal without blocking the app's normal exception handling.
+When `SHIFT_ERROR_REPORTING_ENABLED=true`, the package registers a Laravel exception reporter. It sends scrubbed backend exception payloads to the configured portal without blocking the app's normal exception handling.
 
 Error reporting is best-effort. Missing credentials, disabled reporting, connection failures, timeouts, or non-success portal responses are ignored by the reporter.
 
@@ -162,11 +162,11 @@ SHIFT_RELEASE=2026.06.20
 SHIFT_GIT_SHA=your-deploy-commit
 ```
 
-## What Data Is Sent
+## Data Sent
 
 Task and dashboard proxy requests include:
 
-- SHIFT project token.
+- Project token.
 - Authenticated app user name, email, and ID when available.
 - App environment from `APP_ENV`.
 - App URL from `APP_URL`.
@@ -182,7 +182,7 @@ Widget submissions include:
 
 Backend error reports include:
 
-- SHIFT project token.
+- Project token.
 - App environment, app URL, release, and revision.
 - Exception class and scrubbed message.
 - Normalized stack frames and limited source context for in-app files.
@@ -201,7 +201,7 @@ php artisan config:clear
 php artisan shift:test
 ```
 
-`shift:test` creates a real QA task in the configured SHIFT project. Use a local/self-hosted SHIFT project unless you intentionally want to create a QA task in a hosted project.
+`shift:test` creates a QA task in the configured project. Use a local or self-hosted portal unless you intentionally want that task in a hosted project.
 
 For package development in the Mac SDK harness:
 
@@ -242,7 +242,7 @@ php artisan config:clear
 
 ### Browser verification cannot run
 
-The default installer needs an interactive terminal. In CI or non-interactive setup, obtain a SHIFT API token and project token first, then run:
+The default installer needs an interactive terminal. In CI or non-interactive setup, obtain an API token and project token first, then run:
 
 ```bash
 php artisan install:shift --manual
@@ -250,7 +250,7 @@ php artisan install:shift --manual
 
 ### Local or private URL warning
 
-The installer warns when `APP_URL` is local or private. Task submission still works when the package can reach the SHIFT portal, but external collaborator lookup requires the SHIFT portal to reach the app's `/shift/api/collaborators/external` endpoint.
+The installer warns when `APP_URL` is local or private. Task submission still works when the package can reach the portal, but external collaborator lookup requires that portal to reach the app's `/shift/api/collaborators/external` endpoint.
 
 ### `/shift` loads old assets or a blank UI
 
@@ -274,7 +274,7 @@ Check whether the portal project has widget intake enabled and whether guest sub
 
 ### Task creation returns `422`
 
-Check the validation response from SHIFT. Common causes are missing title/description, an invalid project token, or a portal-side project configuration that does not allow the requested intake path.
+Check the validation response from the portal. Common causes are missing title/description, an invalid project token, or project configuration that does not allow the requested intake path.
 
 ### Error reports do not appear
 
