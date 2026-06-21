@@ -3,9 +3,9 @@
 [![Latest Version on Packagist](https://img.shields.io/packagist/v/wyxos/shift-php.svg?style=flat-square)](https://packagist.org/packages/wyxos/shift-php)
 [![MIT Licensed](https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-square)](LICENSE.md)
 
-`wyxos/shift-php` embeds issue intake and task follow-up inside a Laravel application. It ships the `/shift` dashboard, an optional in-app report widget, task and thread proxy endpoints, external collaborator lookup, install-session onboarding, and scrubbed backend error reporting.
+`wyxos/shift-php` adds issue reporting and task follow-up inside a Laravel application. It ships the `/shift` dashboard, an optional in-app report widget, task and thread routes, external collaborator lookup, browser-based installation, and cleaned backend error reporting.
 
-A Laravel app user reports an issue from the page where it happened, the package sends useful app context to the portal, and the developer follows up on the resulting task.
+A Laravel app user reports an issue from the page where it happened, the package sends the page URL, route, environment, and user details to the portal, and the developer follows up on the resulting task.
 
 ## Installation
 
@@ -20,7 +20,7 @@ The default installer uses browser verification:
 - Creates an install session in the portal.
 - Prints a verification URL and short code for browser approval.
 - Waits for approval through Reverb when available, with polling fallback.
-- Lets you choose an installable project or create a standalone one when the account has no available option.
+- Lets you choose a project or create one when the account has no available option.
 - Writes `SHIFT_TOKEN` and `SHIFT_PROJECT` to the app `.env`.
 - Registers the current app environment and URL.
 - Scaffolds `App\Services\ShiftCollaboratorResolver` when the app does not already have one.
@@ -28,7 +28,7 @@ The default installer uses browser verification:
 
 If `SHIFT_TOKEN` and `SHIFT_PROJECT` already exist, the installer keeps those values and skips browser verification.
 
-For a raw-token install, run:
+For manual token setup, run:
 
 ```bash
 php artisan install:shift --manual
@@ -97,7 +97,7 @@ return [
 
 ## Task Creation From A Laravel App
 
-After installation, the embedded dashboard is available at:
+After installation, the dashboard is available at:
 
 ```text
 /shift
@@ -135,7 +135,7 @@ await fetch('/shift/api/widget/tasks', {
 });
 ```
 
-For the authenticated dashboard/task surface, the package proxies:
+For the authenticated dashboard and task routes, the package passes these requests through to SHIFT:
 
 - `GET /shift/api/tasks`
 - `POST /shift/api/tasks`
@@ -145,17 +145,17 @@ For the authenticated dashboard/task surface, the package proxies:
 - `GET /shift/api/tasks/{taskId}/threads`
 - `POST /shift/api/tasks/{taskId}/threads`
 
-## Backend Error Intake
+## Backend Error Reports
 
-When `SHIFT_ERROR_REPORTING_ENABLED=true`, the package registers a Laravel exception reporter. It sends scrubbed backend exception payloads to the configured portal without blocking the app's normal exception handling.
+When `SHIFT_ERROR_REPORTING_ENABLED=true`, the package registers a Laravel exception reporter. It sends cleaned backend exception details to the configured portal without blocking the app's normal exception handling.
 
-Error reporting is best-effort. Missing credentials, disabled reporting, connection failures, timeouts, or non-success portal responses are ignored by the reporter.
+The reporter never blocks the app. Missing credentials, disabled reporting, connection failures, timeouts, or failed portal responses are ignored.
 
 The package detects the revision from deployment commit metadata or the app Git checkout. If the checkout has an exact tag for that revision, the tag is sent as the release.
 
 ## Data Sent
 
-Task and dashboard proxy requests include:
+Task and dashboard requests include:
 
 - Project token.
 - Authenticated app user name, email, and ID when available.
@@ -167,21 +167,21 @@ Widget submissions include:
 
 - Report kind, title, and description.
 - Anonymous flag.
-- Page metadata supplied by the widget, such as current page URL, page title, and referrer.
+- Page details supplied by the widget, such as current page URL, page title, and referrer.
 - Authenticated app user details, or guest name/email when guest details are submitted and anonymous mode is not used.
-- Consumer app name, environment, and URL.
+- Linked app name, environment, and URL.
 
 Backend error reports include:
 
 - Project token.
 - App environment, app URL, release, and revision.
-- Exception class and scrubbed message.
-- Normalized stack frames and limited source context for in-app files.
+- Exception class and cleaned message.
+- Stack frames and limited source code for in-app files.
 - Request method, URL, path, referrer, IP, user agent, query, and body after scrubbing.
 - PHP and Laravel versions.
-- Authenticated user context when available.
+- Authenticated user details when available.
 
-The error scrubber removes common sensitive fields such as password, token, authorization, and cookie values. You should still avoid adding secrets or sensitive customer data to task descriptions, widget metadata, or exception messages.
+The error cleaner removes common sensitive fields such as password, token, authorization, and cookie values. You should still avoid adding secrets or sensitive customer data to task descriptions, widget details, or exception messages.
 
 ## Local Testing Path
 
@@ -225,11 +225,11 @@ php artisan shift:publish --group=public
 
 ### Widget returns `401` or `403`
 
-Check whether the portal project has widget intake enabled and whether guest submissions are allowed. If guest submissions are disabled, the app user must be authenticated through the configured widget guard.
+Check whether the portal project allows widget reports and whether guest submissions are allowed. If guest submissions are disabled, the app user must be authenticated through the configured widget guard.
 
 ### Task creation returns `422`
 
-Check the validation response from the portal. Common causes are missing title/description, an invalid project token, or project configuration that does not allow the requested intake path.
+Check the validation response from the portal. Common causes are missing title/description, an invalid project token, or project configuration that does not allow the requested report path.
 
 ### Error reports do not appear
 
@@ -244,7 +244,7 @@ php artisan tinker
 >>> filled(config('shift.project'))
 ```
 
-The reporter is intentionally silent on network failures and non-success portal responses so it does not interfere with application error handling.
+The reporter is intentionally silent on network failures and failed portal responses so it does not interfere with application error handling.
 
 ## License
 
