@@ -6,6 +6,7 @@ use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Wyxos\Shift\Support\ShiftActorContext;
+use Wyxos\Shift\Support\ShiftAttachmentProxyContext;
 use Wyxos\Shift\Support\ShiftProxyResponse;
 
 class ShiftTaskController extends Controller
@@ -91,6 +92,47 @@ class ShiftTaskController extends Controller
             return ShiftProxyResponse::error($response, 'Failed to create task', 422);
         } catch (\Throwable $e) {
             return response()->json(['error' => 'Failed to create task: '.$e->getMessage()], 500);
+        }
+    }
+
+    public function emailImport(Request $request)
+    {
+        $configurationError = $this->configurationErrorResponse();
+        if ($configurationError) {
+            return $configurationError;
+        }
+
+        $user = auth()->user();
+        if (! $user) {
+            return response()->json(['error' => 'Unauthenticated'], 401);
+        }
+
+        $request->validate([
+            'email' => 'required|file|max:20480',
+        ]);
+
+        try {
+            $file = $request->file('email');
+            $context = new ShiftAttachmentProxyContext(
+                (string) config('shift.token'),
+                (string) config('shift.project'),
+                $this->baseUrl(),
+                $user,
+            );
+
+            $response = $this->shiftClient()
+                ->asMultipart()
+                ->post($this->baseUrl().'/api/tasks/email-import', $context->multipartPayload([
+                    $context->multipartFile('email', $file->getPathname(), $file->getClientOriginalName()),
+                ]));
+
+            if ($response->successful()) {
+                return response()->json($response->json());
+            }
+
+            return ShiftProxyResponse::error($response, 'Failed to import email', 422);
+        } catch (\Throwable $e) {
+            return response()->json(['error' => 'Failed to import email: '.$e->getMessage()], 500);
         }
     }
 
