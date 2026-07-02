@@ -114,4 +114,70 @@ describe('TaskList create flow', () => {
 
         wrapper.unmount();
     });
+
+    it('hides the email import dropzone when AI is disabled', async () => {
+        getMock.mockResolvedValueOnce(makeIndexResponse(defaultTasks));
+
+        const wrapper = mountTaskListBare();
+        await flushPromises();
+        await nextTick();
+
+        await wrapper.get('[data-testid="open-create-task"]').trigger('click');
+        await nextTick();
+
+        expect(wrapper.find('[data-testid="task-email-import-dropzone"]').exists()).toBe(false);
+
+        wrapper.unmount();
+    });
+
+    it('imports a dropped eml file into the create draft without creating the task when AI is enabled', async () => {
+        (window as any).shiftConfig = { appEnvironment: 'local', aiEnabled: true };
+        getMock.mockResolvedValueOnce(makeIndexResponse(defaultTasks));
+
+        postMock.mockResolvedValueOnce({
+            data: {
+                data: {
+                    title: 'Imported urgent fixes issue',
+                    priority: 'high',
+                    description_html: '<p>Customer reports the urgent fixes API fails.</p>',
+                    missing_details: [],
+                    ai_used: true,
+                },
+            },
+        });
+
+        const wrapper = mountTaskListBare();
+        await flushPromises();
+        await nextTick();
+
+        await wrapper.get('[data-testid="open-create-task"]').trigger('click');
+        await nextTick();
+
+        const file = new File(['Subject: API question\r\n\r\nBody'], 'issue.eml', { type: 'message/rfc822' });
+
+        await wrapper.get('[data-testid="task-email-import-dropzone"]').trigger('drop', {
+            dataTransfer: {
+                files: [file],
+            },
+        });
+        await flushPromises();
+        await nextTick();
+
+        expect(postMock).toHaveBeenCalledTimes(1);
+        expect(postMock).toHaveBeenCalledWith(
+            '/shift/api/tasks/email-import',
+            expect.any(FormData),
+            expect.objectContaining({
+                headers: { 'Content-Type': 'multipart/form-data' },
+            }),
+        );
+        expect((wrapper.get('[data-testid="create-task-title"]').element as HTMLInputElement).value).toBe('Imported urgent fixes issue');
+        expect(wrapper.get('[data-testid="create-task-priority-high"]').classes()).toContain('bg-rose-100');
+        expect(wrapper.get('[data-testid="create-description-editor"] [data-testid="stub-editor-preview"]').text()).toContain(
+            'Customer reports the urgent fixes API fails.',
+        );
+        expect(postMock).not.toHaveBeenCalledWith('/shift/api/tasks', expect.anything());
+
+        wrapper.unmount();
+    });
 });

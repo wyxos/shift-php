@@ -29,15 +29,6 @@ const routes: RouteRecordRaw[] = [
         component: ExternalRoleSettings,
     },
     {
-        path: '/tasks-v2',
-        name: 'task-list-v2',
-        redirect: (to) => ({ path: '/tasks', query: to.query }),
-    },
-    {
-        path: '/tasks-v2/create',
-        redirect: '/tasks',
-    },
-    {
         path: '/tasks/create',
         redirect: '/tasks',
     },
