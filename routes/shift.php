@@ -36,6 +36,7 @@ Route::middleware(config('shift.routes.middleware'))->group(function () {
     Route::put('/shift/api/external-roles', [ShiftExternalRoleController::class, 'update'])->name('external-roles.update');
     Route::get('/shift/api/task-collaborators', [ShiftCollaboratorController::class, 'task'])->name('task-collaborators.index');
     Route::get('/shift/api/tasks/{id}', [ShiftTaskController::class, 'show'])->name('tasks.show');
+    Route::post('/shift/api/tasks/email-import', [ShiftTaskController::class, 'emailImport'])->name('tasks.email-import');
     Route::post('/shift/api/tasks', [ShiftTaskController::class, 'store'])->name('tasks.store');
     Route::put('/shift/api/tasks/{id}', [ShiftTaskController::class, 'update'])->name('tasks.update');
     Route::patch('/shift/api/tasks/{id}/collaborators', [ShiftTaskController::class, 'updateCollaborators'])->name('tasks.collaborators.update');
