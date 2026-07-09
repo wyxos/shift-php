@@ -37,12 +37,11 @@ class TaskThreadUpdated extends CoreTaskThreadUpdated
     public function toMail(object $notifiable): MailMessage
     {
         $taskTitle = $this->data['task_title'] ?? 'Task #'.$this->data['task_id'];
-        $threadType = ucfirst($this->data['type']).' thread';
         $snippet = Str::limit($this->previewContent(), 120);
         $url = $this->resolveUrl();
 
         $message = (new MailMessage)
-            ->subject("New reply in {$threadType} for {$taskTitle}")
+            ->subject("SHIFT: New reply on {$taskTitle}")
             ->line('A new message was posted.')
             ->line("Preview: \"{$snippet}\"")
             ->markdown('shift::notifications.email');
