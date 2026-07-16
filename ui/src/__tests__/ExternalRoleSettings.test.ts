@@ -56,14 +56,14 @@ describe('ExternalRoleSettings.vue', () => {
                 },
                 roles: [
                     { value: 'owner', label: 'Owner' },
-                    { value: 'shift_developer', label: 'SHIFT Developer' },
+                    { value: 'client_developer', label: 'Developer' },
                 ],
                 users: [
                     {
                         id: 'client-1',
-                        name: 'Client Owner',
-                        email: 'owner@example.com',
-                        role: 'shift_developer',
+                        name: 'Project Developer',
+                        email: 'developer@example.com',
+                        role: 'client_developer',
                     },
                 ],
             },
@@ -73,8 +73,10 @@ describe('ExternalRoleSettings.vue', () => {
         await flushPromises();
 
         const options = wrapper.get('[data-testid="external-role-row-client-1"]').findAll('option');
-        expect(options.map((option) => option.attributes('value'))).toEqual(['owner', 'shift_developer']);
-        expect(wrapper.text()).toContain('SHIFT Developer');
+        expect(options.map((option) => option.attributes('value'))).toEqual(['owner', 'client_developer']);
+        expect(options.map((option) => option.text())).toEqual(['Owner', 'Developer']);
+        expect(wrapper.get('[data-testid="external-role-current-client-1"]').text()).toBe('Developer');
+        expect(wrapper.get('[data-testid="external-role-mobile-current-client-1"]').text()).toBe('Developer');
     });
 
     it('does not render role controls when SHIFT denies the capability', async () => {

@@ -103,7 +103,16 @@ function userKey(user: ExternalUserRole): string {
 }
 
 function roleLabel(role: string | null | undefined): string {
-    return String(role || 'guest')
+    const value = String(role || 'guest');
+
+    return roles.value.find((option) => option.value === value)?.label || fallbackRoleLabel(value);
+}
+
+function fallbackRoleLabel(role: string): string {
+    if (role === 'owner') return 'Owner';
+    if (role === 'client_developer') return 'Developer';
+
+    return role
         .split('_')
         .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
         .join(' ');
@@ -113,7 +122,7 @@ function normalizeRoleOption(role: string | Partial<RoleOption>): RoleOption {
     if (typeof role === 'string') {
         return {
             value: role,
-            label: roleLabel(role),
+            label: fallbackRoleLabel(role),
         };
     }
 
@@ -121,7 +130,7 @@ function normalizeRoleOption(role: string | Partial<RoleOption>): RoleOption {
 
     return {
         value,
-        label: role.label || roleLabel(value),
+        label: role.label || fallbackRoleLabel(value),
     };
 }
 
@@ -197,7 +206,9 @@ function hasChanged(user: ExternalUserRole): boolean {
                                     </div>
                                 </TableCell>
                                 <TableCell>
-                                    <Badge variant="outline">{{ roleLabel(user.role) }}</Badge>
+                                    <Badge variant="outline" :data-testid="`external-role-current-${userKey(user)}`">
+                                        {{ roleLabel(user.role) }}
+                                    </Badge>
                                 </TableCell>
                                 <TableCell class="w-[15rem]">
                                     <select
@@ -237,7 +248,9 @@ function hasChanged(user: ExternalUserRole): boolean {
                                 <div class="truncate text-sm font-medium">{{ user.name }}</div>
                                 <div class="text-muted-foreground truncate text-xs">{{ user.email }}</div>
                             </div>
-                            <Badge variant="outline">{{ roleLabel(user.role) }}</Badge>
+                            <Badge variant="outline" :data-testid="`external-role-mobile-current-${userKey(user)}`">
+                                {{ roleLabel(user.role) }}
+                            </Badge>
                         </div>
                         <select
                             v-model="roleDrafts[userKey(user)]"
