@@ -44,6 +44,8 @@ class ShiftServiceProvider extends ServiceProvider
 
         $this->loadRoutesFrom(__DIR__.'/../routes/shift.php');
 
+        $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
+
         // Publish public assets separately
         $this->publishes([
             __DIR__.'/../public' => public_path(''),
