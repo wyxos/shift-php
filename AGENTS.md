@@ -17,6 +17,13 @@ Applies inside `packages/shift-php/**` except where `ui/AGENTS.md` is more speci
 - Attachment downloads must keep using the client-app proxy route (`/shift/api/attachments/{attachment}/download`), not direct portal URLs.
 - In local development, `src/Http/Controllers/ShiftController.php` prefers the Vite dev server and falls back to built files in `public/shift-assets/`.
 
+## Deprecated Notification Contract
+- `tasks.awaiting_feedback` and `Wyxos\Shift\TasksAwaitingFeedback` are deprecated compatibility surfaces in `1.x`. The current SHIFT portal no longer emits this notification.
+- Keep the receiver and its regression test throughout `1.x`; removing a public handler or notification class is a breaking package change.
+- During the next major `shift-php` release, remove the `TasksAwaitingFeedback` class, its import and match arm in `ShiftNotificationController`, and the harness regression test for `tasks.awaiting_feedback`.
+- Before that removal, verify the release is a new major, confirm the current portal still has no `tasks.awaiting_feedback` sender, search the package and harness for remaining references, and document the removal in the major-version upgrade notes.
+- Do not remove or rename the separate `awaiting-feedback` task status, dashboard filter, or dashboard metric; those remain active product behavior and are not part of the deprecated notification receiver.
+
 ## Install, Publish, and Release Rules
 - `php artisan install:shift` supports browser verification and install sessions, registers the consumer app environment and URL with SHIFT, writes `SHIFT_TOKEN` and `SHIFT_PROJECT`, scaffolds `App\Services\ShiftCollaboratorResolver` when needed, and publishes assets and config at the end.
 - After UI or public asset changes, publish with `php artisan shift:publish --group=public`.

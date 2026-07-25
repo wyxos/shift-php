@@ -6,6 +6,9 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
+/**
+ * @deprecated Retained for shift-php 1.x compatibility. Remove in the next major release.
+ */
 class TasksAwaitingFeedback extends Notification
 {
     use Queueable;
