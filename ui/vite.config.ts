@@ -122,6 +122,10 @@ export default defineConfig(({ command }) => {
           replacement: path.resolve(__dirname, 'node_modules/lucide-vue-next'),
         },
         {
+          find: /^reka-ui$/,
+          replacement: path.resolve(__dirname, 'node_modules/reka-ui'),
+        },
+        {
           find: /^axios$/,
           replacement: path.resolve(__dirname, 'node_modules/axios'),
         },

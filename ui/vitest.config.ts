@@ -26,6 +26,7 @@ export default defineConfig({
       { find: /^lowlight$/, replacement: path.resolve(__dirname, 'node_modules/lowlight') },
       { find: /^emoji-picker-element$/, replacement: path.resolve(__dirname, 'node_modules/emoji-picker-element') },
       { find: /^lucide-vue-next$/, replacement: path.resolve(__dirname, 'node_modules/lucide-vue-next') },
+      { find: /^reka-ui$/, replacement: path.resolve(__dirname, 'node_modules/reka-ui') },
       { find: /^axios$/, replacement: path.resolve(__dirname, 'node_modules/axios') },
     ],
   },
