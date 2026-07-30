@@ -197,9 +197,9 @@ class ReverbInstallSessionApprovalListener implements InstallSessionApprovalList
 
         $first = ord($header[0]);
         $second = ord($header[1]);
-        $opcode = $first & 0x0f;
+        $opcode = $first & 0x0F;
         $masked = ($second & 0x80) === 0x80;
-        $length = $second & 0x7f;
+        $length = $second & 0x7F;
 
         if ($length === 126) {
             $extended = $this->readBytes(2);
