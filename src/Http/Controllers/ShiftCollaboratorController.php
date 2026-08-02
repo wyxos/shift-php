@@ -11,6 +11,7 @@ use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use RuntimeException;
+use Wyxos\Shift\Contracts\PaginatesShiftCollaborators;
 use Wyxos\Shift\Contracts\ResolvesShiftCollaborators;
 
 class ShiftCollaboratorController extends Controller
@@ -25,7 +26,12 @@ class ShiftCollaboratorController extends Controller
         }
 
         try {
-            $payload = $this->resolveLocalCollaboratorPayload(trim((string) $request->input('search', '')) ?: null);
+            $payload = $this->resolveLocalCollaboratorPayload(
+                trim((string) $request->input('search', '')) ?: null,
+                $request->boolean('paginate'),
+                max(1, $request->integer('page', 1)),
+                min(100, max(1, $request->integer('per_page', 15))),
+            );
         } catch (RuntimeException $exception) {
             $status = str_contains($exception->getMessage(), 'not configured') ? 503 : 500;
 
@@ -67,17 +73,55 @@ class ShiftCollaboratorController extends Controller
         }
     }
 
-    private function resolveLocalCollaboratorPayload(?string $search): array
-    {
-        $users = $this->normalizeResolverUsers(
-            $this->resolveLocalCollaboratorResolver()->resolve($search)
-        );
+    private function resolveLocalCollaboratorPayload(
+        ?string $search,
+        bool $paginate = false,
+        int $page = 1,
+        int $perPage = 15,
+    ): array {
+        $resolver = $this->resolveLocalCollaboratorResolver();
 
-        return [
+        if ($paginate && $resolver instanceof PaginatesShiftCollaborators) {
+            $paginator = $resolver->paginate($search, $page, $perPage);
+            $users = $this->normalizeResolverUsers($paginator->items());
+            $pagination = [
+                'current_page' => $paginator->currentPage(),
+                'last_page' => max(1, $paginator->lastPage()),
+                'per_page' => $paginator->perPage(),
+                'total' => $paginator->total(),
+                'from' => $paginator->firstItem(),
+                'to' => $paginator->lastItem(),
+            ];
+        } else {
+            $users = $this->normalizeResolverUsers($resolver->resolve($search));
+
+            if ($paginate) {
+                $total = count($users);
+                $lastPage = max(1, (int) ceil($total / $perPage));
+                $page = min($page, $lastPage);
+                $users = array_slice($users, ($page - 1) * $perPage, $perPage);
+                $pagination = [
+                    'current_page' => $page,
+                    'last_page' => $lastPage,
+                    'per_page' => $perPage,
+                    'total' => $total,
+                    'from' => $total === 0 ? null : (($page - 1) * $perPage) + 1,
+                    'to' => $total === 0 ? null : min($page * $perPage, $total),
+                ];
+            }
+        }
+
+        $payload = [
             'url' => rtrim((string) config('app.url'), '/'),
             'environment' => (string) config('app.env'),
             'users' => $users,
         ];
+
+        if (isset($pagination)) {
+            $payload['pagination'] = $pagination;
+        }
+
+        return $payload;
     }
 
     private function resolveLocalCollaboratorResolver(): ResolvesShiftCollaborators

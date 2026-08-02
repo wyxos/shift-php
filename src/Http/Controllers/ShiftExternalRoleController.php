@@ -53,7 +53,7 @@ class ShiftExternalRoleController extends Controller
                 ...$this->context()->basePayload(),
             ];
 
-            foreach (['search', 'environment'] as $filter) {
+            foreach (['search', 'environment', 'paginate', 'page', 'per_page'] as $filter) {
                 if ($request->filled($filter)) {
                     $params[$filter] = $request->input($filter);
                 }

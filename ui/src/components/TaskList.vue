@@ -70,6 +70,7 @@ const {
     totalTasks,
     loading,
     error,
+    environmentOptions,
     deleteLoading,
     filtersOpen,
     currentPage,
@@ -389,6 +390,7 @@ onMounted(async () => {
         :draft-priorities="draftPriorities"
         :draft-search-term="draftSearchTerm"
         :draft-environment-term="draftEnvironmentTerm"
+        :environment-options="environmentOptions"
         :draft-sort-by="draftSortBy"
         :status-options="statusOptions"
         :priority-options="priorityOptions"

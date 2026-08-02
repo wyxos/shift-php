@@ -26,6 +26,7 @@ interface Props {
     draftPriorities: string[];
     draftSearchTerm: string;
     draftEnvironmentTerm: string;
+    environmentOptions?: Option[];
     draftSortBy: string;
     statusOptions: Option[];
     priorityOptions: Option[];
@@ -83,6 +84,7 @@ const props = withDefaults(defineProps<Props>(), {
         :draft-priorities="props.draftPriorities"
         :draft-search-term="props.draftSearchTerm"
         :draft-environment-term="props.draftEnvironmentTerm"
+        :environment-options="props.environmentOptions"
         :draft-sort-by="props.draftSortBy"
         :status-options="props.statusOptions"
         :priority-options="props.priorityOptions"

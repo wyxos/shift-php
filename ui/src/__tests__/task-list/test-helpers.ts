@@ -215,7 +215,7 @@ export const defaultStatuses = ['pending', 'in-progress', 'awaiting-feedback', '
 export const defaultRequirementStatuses = ['submitted', 'in-review', 'awaiting-feedback', 'ready-to-finalize', 'parked', 'declined'];
 export const defaultTasks = seedTasks.filter((t) => defaultStatuses.includes(t.status));
 
-export function makeIndexResponse(tasks: any[]) {
+export function makeIndexResponse(tasks: any[], projectEnvironments?: Array<{ key: string; label: string }>) {
     const total = tasks.length;
     return {
         data: {
@@ -225,6 +225,7 @@ export function makeIndexResponse(tasks: any[]) {
             last_page: 1,
             from: total ? 1 : 0,
             to: total,
+            ...(projectEnvironments === undefined ? {} : { project_environments: projectEnvironments }),
         },
     };
 }

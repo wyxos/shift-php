@@ -1,4 +1,5 @@
 import type { CollaboratorOption } from '@shared/tasks/collaborators';
+import type { ThreadMessage as SharedThreadMessage } from '@shared/tasks/types';
 
 export type Task = {
     id: number;
@@ -52,14 +53,4 @@ export type TaskDetail = Task & {
     external_collaborators?: CollaboratorOption[];
 };
 
-export type ThreadMessage = {
-    clientId: string;
-    id?: number;
-    author: string;
-    time: string;
-    content: string;
-    isYou?: boolean;
-    pending?: boolean;
-    failed?: boolean;
-    attachments?: TaskAttachment[];
-};
+export type ThreadMessage = SharedThreadMessage;

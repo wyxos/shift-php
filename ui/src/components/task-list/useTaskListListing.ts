@@ -20,6 +20,7 @@ export function useTaskListListing(options: UseTaskListListingOptions = {}) {
     const from = ref(0);
     const to = ref(0);
     const highlightedTaskId = ref<number | null>(null);
+    const environmentOptions = ref<Array<{ value: string; label: string }> | undefined>(undefined);
 
     const taskFilters = useTaskFilterState({
         includeClosed: true,
@@ -117,6 +118,8 @@ export function useTaskListListing(options: UseTaskListListingOptions = {}) {
                 params,
             });
 
+            environmentOptions.value = normalizeEnvironmentOptions(response.data?.project_environments);
+
             if (Array.isArray(response.data?.data)) {
                 tasks.value = response.data.data;
                 totalTasks.value = response.data.total ?? response.data.data.length;
@@ -202,6 +205,7 @@ export function useTaskListListing(options: UseTaskListListingOptions = {}) {
         draftSortBy,
         draftStatuses,
         error,
+        environmentOptions,
         fetchTasks,
         filtersOpen: computed(() => activeFilters.value.filtersOpen.value),
         from,
@@ -227,6 +231,16 @@ export function useTaskListListing(options: UseTaskListListingOptions = {}) {
         to,
         totalTasks,
     };
+}
+
+function normalizeEnvironmentOptions(value: unknown): Array<{ value: string; label: string }> | undefined {
+    if (!Array.isArray(value)) return undefined;
+
+    return value
+        .filter((option): option is { key: string; label: string } => {
+            return typeof option?.key === 'string' && option.key.trim() !== '' && typeof option?.label === 'string' && option.label.trim() !== '';
+        })
+        .map((option) => ({ value: option.key, label: option.label }));
 }
 
 function taskListRequestErrorMessage(error: any, fallback: string): string {

@@ -35,7 +35,7 @@ describe('field focus styles', () => {
     });
 
     it('keeps external role selects aligned with field focus treatment', () => {
-        const source = readFileSync(join(process.cwd(), 'src/components/ExternalRoleSettings.vue'), 'utf8');
+        const source = readFileSync(join(process.cwd(), 'src/components/ExternalRoleSelect.vue'), 'utf8');
         const selectIndex = source.indexOf('<select');
         const selectSource = source.slice(selectIndex, selectIndex + 600);
 
