@@ -129,7 +129,7 @@ describe('TaskList requirements flow', () => {
         });
         expect(wrapper.get('[data-testid="requirements-tab"]').attributes('aria-selected')).toBe('true');
         expect(wrapper.text()).toContain('Portal reporting');
-
+        expect(wrapper.text()).not.toContain('Refine your task list in real time.');
         wrapper.unmount();
     });
 

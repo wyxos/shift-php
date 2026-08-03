@@ -3,7 +3,7 @@ import { Button } from '@shift/ui/button';
 import { ButtonGroup } from '@shift/ui/button-group';
 import { Input } from '@shift/ui/input';
 import { Label } from '@shift/ui/label';
-import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from '@shift/ui/sheet';
+import { Sheet, SheetContent, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from '@shift/ui/sheet';
 import { Filter } from 'lucide-vue-next';
 import { computed } from 'vue';
 import Badge from '../ui/badge.vue';
@@ -85,7 +85,6 @@ const sortByModel = computed({
             <SheetHeader class="p-0">
                 <div class="px-6 pt-6 pb-3">
                     <SheetTitle>Filters</SheetTitle>
-                    <SheetDescription class="text-muted-foreground mt-1 text-sm"> Refine your task list in real time. </SheetDescription>
                 </div>
             </SheetHeader>
 
