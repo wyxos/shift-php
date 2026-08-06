@@ -73,7 +73,7 @@ class ShiftExternalRoleCommand extends Command
             return self::FAILURE;
         }
 
-        $this->components->info("Assigned {$account} to {$role}.");
+        $this->info("Assigned {$account} to {$role}.");
 
         return self::SUCCESS;
     }

@@ -32,7 +32,7 @@ class InstallShiftCommand extends Command
     public function handle(): int
     {
         $this->configureOutputStyles();
-        $this->components->info('Starting SHIFT installation.');
+        $this->info('Starting SHIFT installation.');
         $this->environmentRegisteredDuringCredentialResolution = false;
         $this->usedBrowserVerification = false;
 
@@ -73,13 +73,13 @@ class InstallShiftCommand extends Command
         $resolverScaffolded = $this->ensureResolverExists();
 
         $this->newLine();
-        $this->components->info($this->usedBrowserVerification
+        $this->info($this->usedBrowserVerification
             ? 'SHIFT authorization approved.'
             : 'Configured SHIFT credentials.');
-        $this->components->info("Registered {$environment} => {$url} with SHIFT.");
+        $this->info("Registered {$environment} => {$url} with SHIFT.");
 
         if ($resolverScaffolded) {
-            $this->components->info('Scaffolded App\\Services\\ShiftCollaboratorResolver.');
+            $this->info('Scaffolded App\\Services\\ShiftCollaboratorResolver.');
         }
 
         $this->newLine();
@@ -89,7 +89,7 @@ class InstallShiftCommand extends Command
         ]);
 
         $this->newLine();
-        $this->components->info('SHIFT installation complete.');
+        $this->info('SHIFT installation complete.');
 
         if ($this->confirm('Create a QA task in the linked SHIFT project now?', false)) {
             $this->newLine();
@@ -237,7 +237,7 @@ class InstallShiftCommand extends Command
         $this->line($approvalListener === null ? 'Waiting for SHIFT approval...' : 'Waiting for SHIFT approval via Reverb...');
 
         if ($this->installSessionRealtimeWarning !== null) {
-            $this->components->warn('Realtime approval unavailable; falling back to polling. '.$this->installSessionRealtimeWarning);
+            $this->warn('Realtime approval unavailable; falling back to polling. '.$this->installSessionRealtimeWarning);
         }
 
         $session = $this->waitForInstallSessionApproval($client, $session, $approvalListener);
@@ -292,7 +292,7 @@ class InstallShiftCommand extends Command
                     'status' => is_string($status) && $status !== '' ? Str::lower($status) : 'approved',
                 ]);
             } catch (RuntimeException $exception) {
-                $this->components->warn('Realtime approval unavailable; falling back to polling. '.$exception->getMessage());
+                $this->warn('Realtime approval unavailable; falling back to polling. '.$exception->getMessage());
             }
         }
 
@@ -379,7 +379,7 @@ class InstallShiftCommand extends Command
             }
 
             $project = $client->createProject($session, $name);
-            $this->components->info("Created SHIFT project: {$project['name']}");
+            $this->info("Created SHIFT project: {$project['name']}");
 
             return $project;
         }
