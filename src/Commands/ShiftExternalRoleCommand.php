@@ -7,12 +7,13 @@ use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Str;
 use RuntimeException;
 use Wyxos\Shift\Contracts\ResolvesShiftCollaborators;
+use Wyxos\Shift\Support\CollaboratorResolverFactory;
 use Wyxos\Shift\Support\ShiftActorContext;
 
 class ShiftExternalRoleCommand extends Command
 {
     protected $signature = 'shift:external-role
-        {account : Consuming-app user id or email to resolve through SHIFT_COLLABORATORS_RESOLVER.}
+        {account : Consuming-app user id or email to resolve through the configured collaborator resolver.}
         {role : External SHIFT role to assign.}
         {--environment= : SHIFT project environment to link, defaults to the current APP_ENV.}';
 
@@ -110,19 +111,7 @@ class ShiftExternalRoleCommand extends Command
 
     private function resolver(): ResolvesShiftCollaborators
     {
-        $resolver = config('shift.collaborators.resolver');
-
-        if (! is_string($resolver) || trim($resolver) === '') {
-            throw new RuntimeException('SHIFT collaborator resolver is not configured.');
-        }
-
-        $instance = app($resolver);
-
-        if (! $instance instanceof ResolvesShiftCollaborators) {
-            throw new RuntimeException('SHIFT collaborator resolver must implement '.ResolvesShiftCollaborators::class.'.');
-        }
-
-        return $instance;
+        return app(CollaboratorResolverFactory::class)->make();
     }
 
     /**

@@ -1,5 +1,7 @@
 <?php
 
+use Wyxos\Shift\Collaborators\DefaultCollaboratorResolver;
+
 return [
     /*
     |--------------------------------------------------------------------------
@@ -53,7 +55,7 @@ return [
     ],
 
     'collaborators' => [
-        'resolver' => env('SHIFT_COLLABORATORS_RESOLVER', App\Services\ShiftCollaboratorResolver::class),
+        'resolver' => env('SHIFT_COLLABORATORS_RESOLVER', DefaultCollaboratorResolver::class),
     ],
 
     /*

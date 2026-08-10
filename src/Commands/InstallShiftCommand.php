@@ -45,19 +45,14 @@ class InstallShiftCommand extends Command
             return self::FAILURE;
         }
 
-        $resolver = trim((string) config('shift.collaborators.resolver', 'App\\Services\\ShiftCollaboratorResolver'));
-        $resolverClass = $resolver !== '' ? $resolver : 'App\\Services\\ShiftCollaboratorResolver';
-
         $this->writeEnv([
             'SHIFT_TOKEN' => $token,
             'SHIFT_PROJECT' => $project,
-            'SHIFT_COLLABORATORS_RESOLVER' => $resolverClass,
-        ], ['SHIFT_COLLABORATORS_RESOLVER']);
+        ]);
 
         config([
             'shift.token' => $token,
             'shift.project' => $project,
-            'shift.collaborators.resolver' => $resolverClass,
         ]);
 
         if (! $this->environmentRegisteredDuringCredentialResolution) {
@@ -70,17 +65,11 @@ class InstallShiftCommand extends Command
             }
         }
 
-        $resolverScaffolded = $this->ensureResolverExists();
-
         $this->newLine();
         $this->info($this->usedBrowserVerification
             ? 'SHIFT authorization approved.'
             : 'Configured SHIFT credentials.');
         $this->info("Registered {$environment} => {$url} with SHIFT.");
-
-        if ($resolverScaffolded) {
-            $this->info('Scaffolded App\\Services\\ShiftCollaboratorResolver.');
-        }
 
         $this->newLine();
         $this->call('vendor:publish', [
@@ -487,27 +476,6 @@ class InstallShiftCommand extends Command
         );
 
         return "\"{$escaped}\"";
-    }
-
-    private function ensureResolverExists(): bool
-    {
-        $resolverPath = app_path('Services/ShiftCollaboratorResolver.php');
-
-        if (File::exists($resolverPath)) {
-            return false;
-        }
-
-        File::ensureDirectoryExists(dirname($resolverPath));
-
-        try {
-            $stub = File::get(__DIR__.'/../../stubs/shift-collaborator-resolver.stub');
-        } catch (FileNotFoundException $exception) {
-            throw new RuntimeException('Unable to scaffold the SHIFT collaborator resolver.', previous: $exception);
-        }
-
-        File::put($resolverPath, $stub);
-
-        return true;
     }
 
     private function isLocalOrPrivateUrl(string $url): bool

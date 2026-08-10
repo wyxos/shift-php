@@ -25,7 +25,7 @@ Applies inside `packages/shift-php/**` except where `ui/AGENTS.md` is more speci
 - Do not remove or rename the separate `awaiting-feedback` task status, dashboard filter, or dashboard metric; those remain active product behavior and are not part of the deprecated notification receiver.
 
 ## Install, Publish, and Release Rules
-- `php artisan install:shift` supports browser verification and install sessions, registers the consumer app environment and URL with SHIFT, writes `SHIFT_TOKEN` and `SHIFT_PROJECT`, scaffolds `App\Services\ShiftCollaboratorResolver` when needed, and publishes assets and config at the end.
+- `php artisan install:shift` supports browser verification and install sessions, registers the consumer app environment and URL with SHIFT, writes `SHIFT_TOKEN` and `SHIFT_PROJECT`, uses the package-owned local-only collaborator resolver by default, and publishes assets and config at the end. A consumer resolver is an explicit application customization for non-local environments.
 - After UI or public asset changes, publish with `php artisan shift:publish --group=public`.
 - After config or template changes, publish with `php artisan shift:publish --group=all`.
 - This directory has its own `.git`; package commits, tags, and releases happen here.

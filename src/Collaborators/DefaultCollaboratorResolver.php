@@ -1,19 +1,18 @@
 <?php
 
-namespace App\Services;
+namespace Wyxos\Shift\Collaborators;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 use Wyxos\Shift\Contracts\ResolvesShiftCollaborators;
+use Wyxos\Shift\Exceptions\CollaboratorResolverNotConfigured;
 
-class ShiftCollaboratorResolver implements ResolvesShiftCollaborators
+class DefaultCollaboratorResolver implements ResolvesShiftCollaborators
 {
     public function resolve(?string $search = null): array
     {
         if (config('app.env') !== 'local') {
-            // TODO: Replace this empty default with the exact app-specific rules
-            // that determine which external users SHIFT may tag in this environment.
-            return [];
+            throw CollaboratorResolverNotConfigured::forCurrentEnvironment();
         }
 
         $modelClass = $this->userModelClass();
@@ -21,13 +20,11 @@ class ShiftCollaboratorResolver implements ResolvesShiftCollaborators
         return $modelClass::query()
             ->get()
             ->filter(fn (Model $user) => filled($user->getAttribute('email')))
-            ->map(function (Model $user) {
-                return [
-                    'id' => (string) $user->getKey(),
-                    'name' => $this->displayName($user),
-                    'email' => (string) $user->getAttribute('email'),
-                ];
-            })
+            ->map(fn (Model $user) => [
+                'id' => (string) $user->getKey(),
+                'name' => $this->displayName($user),
+                'email' => (string) $user->getAttribute('email'),
+            ])
             ->when(
                 filled($search),
                 fn ($users) => $users->filter(function (array $user) use ($search) {
@@ -44,18 +41,20 @@ class ShiftCollaboratorResolver implements ResolvesShiftCollaborators
     /**
      * @return class-string<Model>
      */
-    private function userModelClass(): string
+    protected function userModelClass(): string
     {
         $guard = (string) config('auth.defaults.guard', 'web');
         $provider = (string) config("auth.guards.{$guard}.provider", 'users');
-        $modelClass = config("auth.providers.{$provider}.model", \App\Models\User::class);
+        $modelClass = config("auth.providers.{$provider}.model");
 
-        return is_string($modelClass) && is_subclass_of($modelClass, Model::class)
-            ? $modelClass
-            : \App\Models\User::class;
+        if (! is_string($modelClass) || ! is_subclass_of($modelClass, Model::class)) {
+            throw new \RuntimeException('SHIFT could not determine the application user model for local collaborator lookup.');
+        }
+
+        return $modelClass;
     }
 
-    private function displayName(Model $user): string
+    protected function displayName(Model $user): string
     {
         $name = trim((string) $user->getAttribute('name'));
 
@@ -67,10 +66,6 @@ class ShiftCollaboratorResolver implements ResolvesShiftCollaborators
         $lastName = trim((string) $user->getAttribute('last_name'));
         $fullName = trim("{$firstName} {$lastName}");
 
-        if ($fullName !== '') {
-            return $fullName;
-        }
-
-        return (string) $user->getAttribute('email');
+        return $fullName !== '' ? $fullName : (string) $user->getAttribute('email');
     }
 }

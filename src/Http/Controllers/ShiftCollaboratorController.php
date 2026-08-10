@@ -13,6 +13,8 @@ use Illuminate\Support\Str;
 use RuntimeException;
 use Wyxos\Shift\Contracts\PaginatesShiftCollaborators;
 use Wyxos\Shift\Contracts\ResolvesShiftCollaborators;
+use Wyxos\Shift\Exceptions\CollaboratorResolverNotConfigured;
+use Wyxos\Shift\Support\CollaboratorResolverFactory;
 
 class ShiftCollaboratorController extends Controller
 {
@@ -32,10 +34,10 @@ class ShiftCollaboratorController extends Controller
                 max(1, $request->integer('page', 1)),
                 min(100, max(1, $request->integer('per_page', 15))),
             );
+        } catch (CollaboratorResolverNotConfigured $exception) {
+            return response()->json(['message' => $exception->getMessage()], 503);
         } catch (RuntimeException $exception) {
-            $status = str_contains($exception->getMessage(), 'not configured') ? 503 : 500;
-
-            return response()->json(['message' => $exception->getMessage()], $status);
+            return response()->json(['message' => $exception->getMessage()], 500);
         }
 
         return response()->json($payload);
@@ -126,17 +128,7 @@ class ShiftCollaboratorController extends Controller
 
     private function resolveLocalCollaboratorResolver(): ResolvesShiftCollaborators
     {
-        $resolver = config('shift.collaborators.resolver');
-        if (! is_string($resolver) || trim($resolver) === '') {
-            throw new RuntimeException('SHIFT collaborator resolver is not configured.');
-        }
-
-        $instance = app($resolver);
-        if (! $instance instanceof ResolvesShiftCollaborators) {
-            throw new RuntimeException('SHIFT collaborator resolver must implement '.ResolvesShiftCollaborators::class.'.');
-        }
-
-        return $instance;
+        return app(CollaboratorResolverFactory::class)->make();
     }
 
     private function normalizeResolverUsers(iterable $users): array

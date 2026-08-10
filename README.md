@@ -23,7 +23,7 @@ The default installer uses browser verification:
 - Lets you choose a project or create one when the account has no available option.
 - Writes `SHIFT_TOKEN` and `SHIFT_PROJECT` to the app `.env`.
 - Registers the current app environment and URL.
-- Scaffolds `App\Services\ShiftCollaboratorResolver` when the app does not already have one.
+- Uses the package resolver automatically. It exposes application users in `local` only and asks for an application resolver in every other environment.
 - Publishes config and frontend assets.
 
 If `SHIFT_TOKEN` and `SHIFT_PROJECT` already exist, the installer keeps those values and skips browser verification.
@@ -42,7 +42,6 @@ Typical `.env` values:
 SHIFT_URL=https://shift.wyxos.com
 SHIFT_TOKEN=your-shift-api-token
 SHIFT_PROJECT=your-shift-project-token
-SHIFT_COLLABORATORS_RESOLVER=App\Services\ShiftCollaboratorResolver
 
 SHIFT_ERROR_REPORTING_ENABLED=true
 ```
@@ -66,6 +65,48 @@ Publish the config when you need to customize middleware, widget behavior, or er
 ```bash
 php artisan vendor:publish --tag=shift
 ```
+
+The package default collaborator resolver is deliberately environment-aware:
+
+- In `local`, it reads the configured Laravel authentication user model and exposes users with an email address.
+- Outside `local`, it returns a controlled configuration-required response instead of enumerating application users.
+
+To expose eligible users in a non-local environment, add an application resolver and select it in `config/shift.php`:
+
+```php
+<?php
+
+namespace App\Services;
+
+use App\Models\User;
+use Wyxos\Shift\Contracts\ResolvesShiftCollaborators;
+
+class ShiftCollaboratorResolver implements ResolvesShiftCollaborators
+{
+    public function resolve(?string $search = null): iterable
+    {
+        return User::query()
+            ->whereNotNull('email')
+            ->when($search, fn ($query, $search) => $query->where('email', 'like', "%{$search}%"))
+            ->get()
+            ->map(fn (User $user) => [
+                'id' => (string) $user->getKey(),
+                'name' => $user->name ?: $user->email,
+                'email' => $user->email,
+            ]);
+    }
+}
+```
+
+```php
+'collaborators' => [
+    'resolver' => App\Services\ShiftCollaboratorResolver::class,
+],
+```
+
+The custom class may also extend `Wyxos\Shift\Collaborators\DefaultCollaboratorResolver` and override `resolve()`.
+
+Versions before this default was introduced wrote `SHIFT_COLLABORATORS_RESOLVER=App\Services\ShiftCollaboratorResolver` and generated that class. A missing legacy class automatically falls back to the package default. If the generated class still exists, it remains an explicit application override; remove that setting and class to adopt the package default, or replace its `resolve()` method with the production eligibility rules you intend.
 
 Important config keys:
 
