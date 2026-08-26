@@ -24,6 +24,10 @@ return [
         'enabled' => env('SHIFT_AI_ENABLED', false),
     ],
 
+    'workspace' => [
+        'enabled' => env('SHIFT_WORKSPACE_ENABLED', true),
+    ],
+
     'widget' => [
         'enabled' => env('SHIFT_WIDGET_ENABLED', true),
 

@@ -5,6 +5,7 @@ namespace Wyxos\Shift\Http\Controllers;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Route;
 
 class ShiftController extends Controller
 {
@@ -87,8 +88,8 @@ class ShiftController extends Controller
      */
     private function injectLoginRoute(string $html): string
     {
-        $loginRoute = route('login');
-        $logoutRoute = route('logout');
+        $loginRoute = Route::has('login') ? route('login') : null;
+        $logoutRoute = Route::has('logout') ? route('logout') : null;
         $baseUrl = config('app.url');
         $appName = config('app.name');
 

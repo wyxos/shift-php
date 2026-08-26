@@ -44,6 +44,7 @@ SHIFT_TOKEN=your-shift-api-token
 SHIFT_PROJECT=your-shift-project-token
 
 SHIFT_ERROR_REPORTING_ENABLED=true
+SHIFT_WORKSPACE_ENABLED=true
 ```
 
 Hosted portal:
@@ -116,6 +117,10 @@ return [
     'project' => env('SHIFT_PROJECT'),
     'url' => env('SHIFT_URL', 'https://shift.wyxos.com'),
 
+    'workspace' => [
+        'enabled' => env('SHIFT_WORKSPACE_ENABLED', true),
+    ],
+
     'routes' => [
         'prefix' => 'shift',
         'middleware' => ['web', 'auth'],
@@ -145,6 +150,8 @@ After installation, the dashboard is available at:
 ```
 
 It uses the configured route middleware, which defaults to `web` and `auth`. Authenticated users can create tasks, edit task details, comment in threads, upload attachments, and manage collaborators for the linked project.
+
+Set `SHIFT_WORKSPACE_ENABLED=false` to make the embedded workspace and its authenticated `/shift/api/**` routes return `404`. Signed notification delivery, project-token collaborator lookup, the widget, and backend error reporting remain independent of this setting.
 
 For a lightweight report form inside the host app, use the widget endpoint:
 
