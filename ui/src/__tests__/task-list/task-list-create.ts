@@ -90,7 +90,7 @@ describe('TaskList create flow', () => {
         const createCollaboratorStub = wrapper.findAll('[data-testid="stub-task-collaborators"]')[0];
         await createCollaboratorStub.get('[data-testid="stub-add-internal-collaborator"]').trigger('click');
         await createCollaboratorStub.get('[data-testid="stub-add-external-collaborator"]').trigger('click');
-        expect(wrapper.text()).toContain('On create, the submitter and selected collaborators are notified.');
+        expect(wrapper.text()).toContain('Selected collaborators can access the task and receive follow-up notifications.');
         await wrapper.get('[data-testid="create-task-title"]').setValue('Created with collaborators');
         await wrapper.get('[data-testid="create-task-form"]').trigger('submit');
         await flushPromises();
@@ -109,6 +109,55 @@ describe('TaskList create flow', () => {
                         email: 'project@example.com',
                     },
                 ],
+            }),
+        );
+
+        wrapper.unmount();
+    });
+
+    it('preselects the submitter and allows opting out before task creation', async () => {
+        (window as any).shiftConfig = {
+            appEnvironment: 'local',
+            userId: 42,
+            username: 'David McNee',
+            email: 'david@example.com',
+        };
+        getMock.mockResolvedValueOnce(makeIndexResponse(defaultTasks)).mockResolvedValueOnce(makeIndexResponse(defaultTasks));
+        postMock.mockResolvedValueOnce({
+            data: {
+                data: {
+                    id: 121,
+                    title: 'Created without submitter follow ups',
+                    status: 'pending',
+                    priority: 'medium',
+                },
+            },
+        });
+
+        const wrapper = mountTaskListBare();
+        await flushPromises();
+        await nextTick();
+
+        await wrapper.get('[data-testid="open-create-task"]').trigger('click');
+        await nextTick();
+
+        const createCollaboratorStub = wrapper.findAll('[data-testid="stub-task-collaborators"]')[0];
+        expect(createCollaboratorStub.attributes('data-external-count')).toBe('1');
+        await createCollaboratorStub.get('[data-testid="stub-remove-external-collaborators"]').trigger('click');
+        await nextTick();
+        expect(createCollaboratorStub.attributes('data-external-count')).toBe('0');
+
+        await wrapper.get('[data-testid="create-task-title"]').setValue('Created without submitter follow ups');
+        await wrapper.get('[data-testid="create-task-form"]').trigger('submit');
+        await flushPromises();
+        await nextTick();
+
+        expect(postMock).toHaveBeenCalledWith(
+            '/shift/api/tasks',
+            expect.objectContaining({
+                title: 'Created without submitter follow ups',
+                external_collaborators: [],
+                include_submitter_as_collaborator: false,
             }),
         );
 

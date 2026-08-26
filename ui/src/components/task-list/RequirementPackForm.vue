@@ -2,13 +2,14 @@
 import axios from '@/axios-config';
 import ShiftEditor from '@shared/components/ShiftEditor.vue';
 import TaskCollaboratorField from '@shared/components/TaskCollaboratorField.vue';
-import { emptyTaskCollaborators, type TaskCollaboratorSelection } from '@shared/tasks/collaborators';
+import { type TaskCollaboratorSelection } from '@shared/tasks/collaborators';
 import { Button } from '@shift/ui/button';
 import { Input } from '@shift/ui/input';
 import { Label } from '@shift/ui/label';
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from '@shift/ui/sheet';
 import { Plus, Trash2, Users } from 'lucide-vue-next';
 import { computed, ref } from 'vue';
+import { defaultSubmitterCollaborators, includesCurrentSubmitter } from './current-submitter';
 import { aiImproveUrl, getTaskListAiImproveEnabled, removeTempUrl, resolveTempUrl, taskListUploadEndpoints } from './editor-config';
 
 type RequirementDraft = {
@@ -26,6 +27,7 @@ type RequirementPackPayload = {
         description: string;
         temp_identifier: string;
         internal_collaborator_ids?: number[];
+        include_submitter_as_collaborator?: boolean;
         external_collaborators?: Array<{
             id: string | number;
             name: string;
@@ -33,6 +35,7 @@ type RequirementPackPayload = {
         }>;
     }>;
     internal_collaborator_ids?: number[];
+    include_submitter_as_collaborator?: boolean;
     external_collaborators?: Array<{
         id: string | number;
         name: string;
@@ -55,7 +58,7 @@ const packTitle = ref('');
 const nextKey = ref(1);
 const items = ref<RequirementDraft[]>([]);
 const collaboratorsApplyPerRequirement = ref(false);
-const globalCollaborators = ref<TaskCollaboratorSelection>(emptyTaskCollaborators());
+const globalCollaborators = ref<TaskCollaboratorSelection>(defaultSubmitterCollaborators());
 const aiImproveEnabled = getTaskListAiImproveEnabled();
 
 const appSlug = computed(() => slugify(window.shiftConfig?.appName || 'project'));
@@ -97,7 +100,7 @@ function newRequirementDraft(): RequirementDraft {
         title: '',
         description: '',
         tempIdentifier: `requirement-${Date.now()}-${nextKey.value}`,
-        collaborators: emptyTaskCollaborators(),
+        collaborators: defaultSubmitterCollaborators(),
     };
 }
 
@@ -132,6 +135,7 @@ function collaboratorPayload(collaborators: TaskCollaboratorSelection) {
             name: collaborator.name,
             email: collaborator.email ?? '',
         })),
+        include_submitter_as_collaborator: includesCurrentSubmitter(collaborators),
     };
 }
 

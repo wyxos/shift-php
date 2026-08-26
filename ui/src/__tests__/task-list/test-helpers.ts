@@ -177,7 +177,11 @@ export const stubs = {
     },
     TaskCollaboratorField: {
         props: ['modelValue', 'readOnly'],
-        template: `<div data-testid="stub-task-collaborators" :data-read-only="String(Boolean(readOnly))">
+        template: `<div
+      data-testid="stub-task-collaborators"
+      :data-read-only="String(Boolean(readOnly))"
+      :data-external-count="String((modelValue && modelValue.external && modelValue.external.length) || 0)"
+    >
       <button
         data-testid="stub-add-internal-collaborator"
         @click="$emit('update:modelValue', { internal: [{ id: 77, name: 'Shift User', email: 'shift@example.com' }], external: (modelValue && modelValue.external) || [] })"
@@ -189,6 +193,12 @@ export const stubs = {
         @click="$emit('update:modelValue', { internal: (modelValue && modelValue.internal) || [], external: [{ id: 'client-2', name: 'Project User', email: 'project@example.com' }] })"
       >
         add external
+      </button>
+      <button
+        data-testid="stub-remove-external-collaborators"
+        @click="$emit('update:modelValue', { internal: (modelValue && modelValue.internal) || [], external: [] })"
+      >
+        remove external
       </button>
     </div>`,
     },

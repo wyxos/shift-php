@@ -68,6 +68,7 @@ class ShiftRequirementController extends Controller
             'external_collaborators.*.id' => 'required',
             'external_collaborators.*.name' => 'required|string|max:255',
             'external_collaborators.*.email' => 'required|email',
+            'include_submitter_as_collaborator' => 'sometimes|boolean',
             'items' => 'required|array|min:1|max:50',
             'items.*.title' => 'required|string|max:255',
             'items.*.description' => 'required|string',
@@ -78,6 +79,7 @@ class ShiftRequirementController extends Controller
             'items.*.external_collaborators.*.id' => 'required',
             'items.*.external_collaborators.*.name' => 'required|string|max:255',
             'items.*.external_collaborators.*.email' => 'required|email',
+            'items.*.include_submitter_as_collaborator' => 'sometimes|boolean',
         ]);
 
         try {

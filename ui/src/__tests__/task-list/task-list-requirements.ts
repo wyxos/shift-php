@@ -2,17 +2,7 @@ import { flushPromises, mount } from '@vue/test-utils';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { nextTick } from 'vue';
 import TaskList from '../../components/TaskList.vue';
-import {
-    defaultRequirementStatuses,
-    defaultStatuses,
-    defaultTasks,
-    getMock,
-    makeIndexResponse,
-    postMock,
-    putMock,
-    resetTaskListTestState,
-    stubs,
-} from './test-helpers';
+import { defaultRequirementStatuses, defaultStatuses, defaultTasks, getMock, makeIndexResponse, postMock, putMock, resetTaskListTestState, stubs } from './test-helpers';
 
 const requirementItems = [
     {
@@ -251,6 +241,7 @@ describe('TaskList requirements flow', () => {
             ],
             internal_collaborator_ids: [],
             external_collaborators: [],
+            include_submitter_as_collaborator: true,
         });
         expect(getMock).toHaveBeenLastCalledWith('/shift/api/requirements', {
             params: { page: 1, sort_by: 'updated_at' },

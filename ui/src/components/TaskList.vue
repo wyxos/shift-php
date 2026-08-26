@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import axios from '@/axios-config';
-import { emptyTaskCollaborators, normalizeTaskCollaborators, type TaskCollaboratorSelection } from '@shared/tasks/collaborators';
+import { normalizeTaskCollaborators, type TaskCollaboratorSelection } from '@shared/tasks/collaborators';
 import { getTaskIdFromQuery } from '@shared/tasks/history';
 import { ImageLightbox } from '@shift/ui/image-lightbox';
 import { computed, onMounted, ref, watch } from 'vue';
@@ -13,32 +13,14 @@ import TaskDiscardDialog from './task-list/TaskDiscardDialog.vue';
 import TaskEditSheet from './task-list/TaskEditSheet.vue';
 import TaskListOverviewCard from './task-list/TaskListOverviewCard.vue';
 import TaskSurfaceTabs from './task-list/TaskSurfaceTabs.vue';
+import { defaultSubmitterCollaborators, includesCurrentSubmitter } from './task-list/current-submitter';
 import { getCurrentAppEnvironment } from './task-list/editor-config';
-import type { TaskDetail } from './task-list/types';
+import type { RequirementPackPayload, TaskDetail } from './task-list/types';
 import { useTaskListComments } from './task-list/useTaskListComments';
 import { useTaskListEdit } from './task-list/useTaskListEdit';
 import { useTaskListListing } from './task-list/useTaskListListing';
 
 type TaskSurface = 'tasks' | 'requirements';
-type RequirementCollaboratorPayload = {
-    internal_collaborator_ids?: number[];
-    external_collaborators?: Array<{
-        id: string | number;
-        name: string;
-        email: string;
-    }>;
-};
-type RequirementPackPayload = RequirementCollaboratorPayload & {
-    title: string;
-    items: Array<
-        RequirementCollaboratorPayload & {
-            title: string;
-            description: string;
-            temp_identifier: string;
-        }
-    >;
-};
-
 const route = useRoute();
 const router = useRouter();
 const activeSurface = ref<TaskSurface>(surfaceFromPath(route.path));
@@ -53,7 +35,7 @@ const createForm = ref({
     title: '',
     priority: 'medium',
     description: '',
-    collaborators: emptyTaskCollaborators(),
+    collaborators: defaultSubmitterCollaborators(),
 });
 const requirementCreateOpen = ref(false);
 const requirementCreateLoading = ref(false);
@@ -212,7 +194,7 @@ function resetCreateForm() {
         title: '',
         priority: 'medium',
         description: '',
-        collaborators: emptyTaskCollaborators(),
+        collaborators: defaultSubmitterCollaborators(),
     };
     createTempIdentifier.value = Date.now().toString();
     createError.value = null;
@@ -311,6 +293,7 @@ async function createTask() {
                 name: collaborator.name,
                 email: collaborator.email,
             })),
+            include_submitter_as_collaborator: includesCurrentSubmitter(createForm.value.collaborators),
         };
         const response = await axios.post('/shift/api/tasks', payload);
         const created = response.data?.data ?? response.data;

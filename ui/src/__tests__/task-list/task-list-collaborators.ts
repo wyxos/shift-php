@@ -119,4 +119,75 @@ describe('TaskList collaborators', () => {
 
         wrapper.unmount();
     });
+
+    it('sends an empty external collaborator selection when the submitter opts out', async () => {
+        vi.useFakeTimers();
+        (window as any).shiftConfig = { email: 'submitter@example.com' };
+
+        getMock
+            .mockResolvedValueOnce(makeIndexResponse(defaultTasks))
+            .mockResolvedValueOnce({
+                data: {
+                    id: 1,
+                    project_id: 10,
+                    title: 'Auth issue',
+                    priority: 'high',
+                    status: 'pending',
+                    environment: 'staging',
+                    created_at: '2026-02-10T17:40:00Z',
+                    description: '',
+                    submitter: { email: 'submitter@example.com' },
+                    attachments: [],
+                    can_manage_collaborators: true,
+                    internal_collaborators: [],
+                    external_collaborators: [
+                        {
+                            id: 'submitter-1',
+                            name: 'Task Submitter',
+                            email: 'submitter@example.com',
+                        },
+                    ],
+                },
+            })
+            .mockResolvedValueOnce({ data: { external: [] } })
+            .mockResolvedValueOnce(makeIndexResponse(defaultTasks));
+
+        patchMock.mockResolvedValueOnce({
+            data: {
+                id: 1,
+                title: 'Auth issue',
+                status: 'pending',
+                priority: 'high',
+                environment: 'staging',
+                attachments: [],
+                can_manage_collaborators: true,
+                internal_collaborators: [],
+                external_collaborators: [],
+            },
+        });
+
+        const wrapper = mountTaskListBare();
+        await flushPromises();
+        await nextTick();
+
+        await wrapper.findAll('[data-testid="task-row"]')[0].find('button[title="Open details"]').trigger('click');
+        await flushPromises();
+        await nextTick();
+
+        const editCollaboratorStub = wrapper.findAll('[data-testid="stub-task-collaborators"]').at(-1);
+        await editCollaboratorStub!.get('[data-testid="stub-remove-external-collaborators"]').trigger('click');
+        await nextTick();
+        await vi.advanceTimersByTimeAsync(700);
+        await flushPromises();
+        await nextTick();
+
+        expect(patchMock).toHaveBeenCalledWith('/shift/api/tasks/1/collaborators', {
+            environment: 'staging',
+            internal_collaborator_ids: [],
+            external_collaborators: [],
+        });
+
+        wrapper.unmount();
+        vi.useRealTimers();
+    });
 });

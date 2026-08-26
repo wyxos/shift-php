@@ -53,4 +53,25 @@ export type TaskDetail = Task & {
     external_collaborators?: CollaboratorOption[];
 };
 
+export type RequirementCollaboratorPayload = {
+    internal_collaborator_ids?: number[];
+    include_submitter_as_collaborator?: boolean;
+    external_collaborators?: Array<{
+        id: string | number;
+        name: string;
+        email: string;
+    }>;
+};
+
+export type RequirementPackPayload = RequirementCollaboratorPayload & {
+    title: string;
+    items: Array<
+        RequirementCollaboratorPayload & {
+            title: string;
+            description: string;
+            temp_identifier: string;
+        }
+    >;
+};
+
 export type ThreadMessage = SharedThreadMessage;

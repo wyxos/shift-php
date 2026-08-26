@@ -104,6 +104,7 @@ class ShiftController extends Controller
             'baseUrl' => $baseUrl,
             'appName' => $appName,
             'username' => $username,
+            'userId' => $user?->getAuthIdentifier(),
             'email' => $email,
             'aiEnabled' => $aiEnabled,
             'appEnvironment' => (string) config('app.env', 'production'),

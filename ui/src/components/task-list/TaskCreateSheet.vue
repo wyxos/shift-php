@@ -257,7 +257,7 @@ async function importEmailFile(file: File | null) {
                     external-description="Users with access from this portal."
                     @update:model-value="updateCollaborators"
                 />
-                <p class="text-muted-foreground text-xs">On create, the submitter and selected collaborators are notified.</p>
+                <p class="text-muted-foreground text-xs">Selected collaborators can access the task and receive follow-up notifications.</p>
 
                 <template #actions>
                     <SheetFooter class="flex flex-row items-center justify-between border-t px-6 py-4">

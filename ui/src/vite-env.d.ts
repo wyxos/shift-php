@@ -7,6 +7,7 @@ interface Window {
         baseUrl: string;
         appName: string;
         username: string;
+        userId?: number | string | null;
         email?: string;
         aiEnabled: boolean;
         appEnvironment?: string;
