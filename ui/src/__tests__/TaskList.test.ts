@@ -5,5 +5,6 @@ import './task-list/task-list-create';
 import './task-list/task-list-edit-sheet';
 import './task-list/task-list-environments';
 import './task-list/task-list-listing';
+import './task-list/task-list-metadata';
 import './task-list/task-list-requirement-submitters';
 import './task-list/task-list-requirements';
