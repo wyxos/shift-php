@@ -126,7 +126,7 @@ describe('TaskList listing and filters', () => {
         await nextTick();
 
         const firstRow = wrapper.findAll('[data-testid="task-row"]')[0];
-        await firstRow.find('button[title="Open details"]').trigger('click');
+        await firstRow.find('button[data-testid^="task-open-"]').trigger('click');
         await flushPromises();
         await nextTick();
 
@@ -360,8 +360,8 @@ describe('TaskList listing and filters', () => {
         await flushPromises();
         await nextTick();
 
-        await wrapper.get('[data-testid="priority-low"]').setValue(false);
-        await wrapper.get('[data-testid="priority-medium"]').setValue(false);
+        await wrapper.get('[data-testid="priority-low"]').trigger('click');
+        await wrapper.get('[data-testid="priority-medium"]').trigger('click');
         await nextTick();
 
         // Draft changes should not apply until the user clicks Apply.

@@ -1,16 +1,8 @@
 import { flushPromises, mount } from '@vue/test-utils';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { nextTick } from 'vue';
-import {
-    defaultTasks,
-    getMock,
-    makeIndexResponse,
-    postMock,
-    putMock,
-    resetTaskListTestState,
-    stubs,
-} from './test-helpers';
 import TaskList from '../../components/TaskList.vue';
+import { defaultTasks, getMock, makeIndexResponse, postMock, putMock, resetTaskListTestState, stubs } from './test-helpers';
 
 describe('TaskList comment composer', () => {
     beforeEach(resetTaskListTestState);
@@ -52,7 +44,7 @@ describe('TaskList comment composer', () => {
         await nextTick();
 
         const firstRow = wrapper.findAll('[data-testid="task-row"]')[0];
-        await firstRow.find('button[title="Open details"]').trigger('click');
+        await firstRow.find('button[data-testid^="task-open-"]').trigger('click');
         await flushPromises();
         await nextTick();
 
@@ -127,7 +119,7 @@ describe('TaskList comment composer', () => {
         await nextTick();
 
         const firstRow = wrapper.findAll('[data-testid="task-row"]')[0];
-        await firstRow.find('button[title="Open details"]').trigger('click');
+        await firstRow.find('button[data-testid^="task-open-"]').trigger('click');
         await flushPromises();
         await nextTick();
 
@@ -186,7 +178,7 @@ describe('TaskList comment composer', () => {
         await nextTick();
 
         const firstRow = wrapper.findAll('[data-testid="task-row"]')[0];
-        await firstRow.find('button[title="Open details"]').trigger('click');
+        await firstRow.find('button[data-testid^="task-open-"]').trigger('click');
         await flushPromises();
         await nextTick();
 
@@ -204,5 +196,4 @@ describe('TaskList comment composer', () => {
         wrapper.unmount();
         vi.useRealTimers();
     });
-
 });

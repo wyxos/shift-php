@@ -1,16 +1,8 @@
 import { flushPromises, mount } from '@vue/test-utils';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { nextTick } from 'vue';
-import {
-    defaultTasks,
-    getMock,
-    makeIndexResponse,
-    postMock,
-    resetTaskListTestState,
-    stubs,
-    toastMocks,
-} from './test-helpers';
 import TaskList from '../../components/TaskList.vue';
+import { defaultTasks, getMock, makeIndexResponse, postMock, resetTaskListTestState, stubs, toastMocks } from './test-helpers';
 
 describe('TaskList comment reply and copy actions', () => {
     beforeEach(resetTaskListTestState);
@@ -56,7 +48,7 @@ describe('TaskList comment reply and copy actions', () => {
         await nextTick();
 
         const firstRow = wrapper.findAll('[data-testid="task-row"]')[0];
-        await firstRow.find('button[title="Open details"]').trigger('click');
+        await firstRow.find('button[data-testid^="task-open-"]').trigger('click');
         await flushPromises();
         await nextTick();
 
@@ -110,7 +102,7 @@ describe('TaskList comment reply and copy actions', () => {
         await nextTick();
 
         const firstRow = wrapper.findAll('[data-testid="task-row"]')[0];
-        await firstRow.find('button[title="Open details"]').trigger('click');
+        await firstRow.find('button[data-testid^="task-open-"]').trigger('click');
         await flushPromises();
         await nextTick();
 
@@ -176,7 +168,7 @@ describe('TaskList comment reply and copy actions', () => {
         await nextTick();
 
         const firstRow = wrapper.findAll('[data-testid="task-row"]')[0];
-        await firstRow.find('button[title="Open details"]').trigger('click');
+        await firstRow.find('button[data-testid^="task-open-"]').trigger('click');
         await flushPromises();
         await nextTick();
 
@@ -247,7 +239,7 @@ describe('TaskList comment reply and copy actions', () => {
         await nextTick();
 
         const firstRow = wrapper.findAll('[data-testid="task-row"]')[0];
-        await firstRow.find('button[title="Open details"]').trigger('click');
+        await firstRow.find('button[data-testid^="task-open-"]').trigger('click');
         await flushPromises();
         await nextTick();
 
@@ -319,7 +311,7 @@ describe('TaskList comment reply and copy actions', () => {
         await nextTick();
 
         const firstRow = wrapper.findAll('[data-testid="task-row"]')[0];
-        await firstRow.find('button[title="Open details"]').trigger('click');
+        await firstRow.find('button[data-testid^="task-open-"]').trigger('click');
         await flushPromises();
         await nextTick();
 
@@ -365,5 +357,4 @@ describe('TaskList comment reply and copy actions', () => {
 
         wrapper.unmount();
     });
-
 });

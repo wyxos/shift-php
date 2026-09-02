@@ -56,7 +56,7 @@ describe('TaskList collaborators', () => {
         await flushPromises();
         await nextTick();
 
-        await wrapper.findAll('[data-testid="task-row"]')[0].find('button[title="Open details"]').trigger('click');
+        await wrapper.findAll('[data-testid="task-row"]')[0].find('button[data-testid^="task-open-"]').trigger('click');
         await flushPromises();
         await nextTick();
 
@@ -110,7 +110,7 @@ describe('TaskList collaborators', () => {
         await flushPromises();
         await nextTick();
 
-        await wrapper.findAll('[data-testid="task-row"]')[0].find('button[title="Open details"]').trigger('click');
+        await wrapper.findAll('[data-testid="task-row"]')[0].find('button[data-testid^="task-open-"]').trigger('click');
         await flushPromises();
         await nextTick();
 
@@ -170,7 +170,7 @@ describe('TaskList collaborators', () => {
         await flushPromises();
         await nextTick();
 
-        await wrapper.findAll('[data-testid="task-row"]')[0].find('button[title="Open details"]').trigger('click');
+        await wrapper.findAll('[data-testid="task-row"]')[0].find('button[data-testid^="task-open-"]').trigger('click');
         await flushPromises();
         await nextTick();
 

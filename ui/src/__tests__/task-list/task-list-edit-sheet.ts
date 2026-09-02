@@ -62,7 +62,7 @@ describe('TaskList edit sheet', () => {
         await nextTick();
 
         const firstRow = wrapper.findAll('[data-testid="task-row"]')[0];
-        await firstRow.find('button[title="Open details"]').trigger('click');
+        await firstRow.find('button[data-testid^="task-open-"]').trigger('click');
         await flushPromises();
         await nextTick();
 
@@ -104,7 +104,7 @@ describe('TaskList edit sheet', () => {
         await nextTick();
 
         const firstRow = wrapper.findAll('[data-testid="task-row"]')[0];
-        await firstRow.find('button[title="Open details"]').trigger('click');
+        await firstRow.find('button[data-testid^="task-open-"]').trigger('click');
         await flushPromises();
         await nextTick();
 
@@ -177,7 +177,7 @@ describe('TaskList edit sheet', () => {
         await nextTick();
 
         const firstRow = wrapper.findAll('[data-testid="task-row"]')[0];
-        await firstRow.find('button[title="Open details"]').trigger('click');
+        await firstRow.find('button[data-testid^="task-open-"]').trigger('click');
         await flushPromises();
         await nextTick();
 
@@ -223,7 +223,7 @@ describe('TaskList edit sheet', () => {
         await nextTick();
 
         const firstRow = wrapper.findAll('[data-testid="task-row"]')[0];
-        await firstRow.find('button[title="Open details"]').trigger('click');
+        await firstRow.find('button[data-testid^="task-open-"]').trigger('click');
         await flushPromises();
         await nextTick();
 
@@ -269,7 +269,7 @@ describe('TaskList edit sheet', () => {
         await nextTick();
 
         const firstRow = wrapper.findAll('[data-testid="task-row"]')[0];
-        await firstRow.find('button[title="Open details"]').trigger('click');
+        await firstRow.find('button[data-testid^="task-open-"]').trigger('click');
         await flushPromises();
         await nextTick();
 
@@ -316,7 +316,7 @@ describe('TaskList edit sheet', () => {
         await nextTick();
 
         const firstRow = wrapper.findAll('[data-testid="task-row"]')[0];
-        await firstRow.find('button[title="Open details"]').trigger('click');
+        await firstRow.find('button[data-testid^="task-open-"]').trigger('click');
         await flushPromises();
         await nextTick();
 
@@ -363,7 +363,7 @@ describe('TaskList edit sheet', () => {
         await nextTick();
 
         const firstRow = wrapper.findAll('[data-testid="task-row"]')[0];
-        await firstRow.find('button[title="Open details"]').trigger('click');
+        await firstRow.find('button[data-testid^="task-open-"]').trigger('click');
         await flushPromises();
         await nextTick();
 
@@ -409,7 +409,7 @@ describe('TaskList edit sheet', () => {
         await nextTick();
 
         const firstRow = wrapper.findAll('[data-testid="task-row"]')[0];
-        await firstRow.find('button[title="Open details"]').trigger('click');
+        await firstRow.find('button[data-testid^="task-open-"]').trigger('click');
         await flushPromises();
         await nextTick();
 
@@ -462,7 +462,7 @@ describe('TaskList edit sheet', () => {
         await nextTick();
 
         const firstRow = wrapper.findAll('[data-testid="task-row"]')[0];
-        await firstRow.find('button[title="Open details"]').trigger('click');
+        await firstRow.find('button[data-testid^="task-open-"]').trigger('click');
         await flushPromises();
         await nextTick();
 

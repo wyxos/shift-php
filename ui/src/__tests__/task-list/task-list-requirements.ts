@@ -2,7 +2,17 @@ import { flushPromises, mount } from '@vue/test-utils';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { nextTick } from 'vue';
 import TaskList from '../../components/TaskList.vue';
-import { defaultRequirementStatuses, defaultStatuses, defaultTasks, getMock, makeIndexResponse, postMock, putMock, resetTaskListTestState, stubs } from './test-helpers';
+import {
+    defaultRequirementStatuses,
+    defaultStatuses,
+    defaultTasks,
+    getMock,
+    makeIndexResponse,
+    postMock,
+    putMock,
+    resetTaskListTestState,
+    stubs,
+} from './test-helpers';
 
 const requirementItems = [
     {
@@ -55,7 +65,6 @@ const mixedRequirementItems = [
         },
     },
 ];
-
 describe('TaskList requirements flow', () => {
     beforeEach(resetTaskListTestState);
 
@@ -134,7 +143,7 @@ describe('TaskList requirements flow', () => {
         await nextTick();
 
         for (const status of defaultRequirementStatuses.filter((value) => value !== 'parked')) {
-            await wrapper.get(`[data-testid="status-${status}"]`).setValue(false);
+            await wrapper.get(`[data-testid="status-${status}"]`).trigger('click');
         }
         await nextTick();
         await wrapper.get('[data-testid="filters-apply"]').trigger('click');
