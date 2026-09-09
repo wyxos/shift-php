@@ -283,14 +283,14 @@ function toTitle(value: string): string {
     <div v-if="shouldRender" class="shift-widget" :class="{ 'shift-widget--open': isOpen }">
         <button v-if="!isOpen" class="shift-widget__launcher" type="button" @click="isOpen = true">
             <MessageSquare aria-hidden="true" />
-            <span>Feedback</span>
+            <span>Requests</span>
         </button>
 
-        <section v-else class="shift-widget__panel" aria-label="Feedback">
+        <section v-else class="shift-widget__panel" aria-label="Requests">
             <header class="shift-widget__header">
                 <div>
                     <p class="shift-widget__eyebrow">{{ props.config.appName }}</p>
-                    <h2>Feedback</h2>
+                    <h2>Requests</h2>
                 </div>
                 <div class="shift-widget__actions">
                     <button v-if="workspaceUrl && !showMenu && !success" class="shift-widget__icon-button" type="button" aria-label="Back" title="Back" @click="formSelected = false">
@@ -303,15 +303,15 @@ function toTitle(value: string): string {
             </header>
 
             <div v-if="showMenu" class="shift-widget__menu">
-                <a class="shift-widget__button shift-widget__button--secondary" :href="workspaceUrl!" target="_blank" rel="noopener noreferrer">View my feedback</a>
-                <button class="shift-widget__button" type="button" @click="formSelected = true">Share feedback</button>
+                <a class="shift-widget__button shift-widget__button--secondary" :href="workspaceUrl!" target="_blank" rel="noopener noreferrer">My requests</a>
+                <button class="shift-widget__button" type="button" @click="formSelected = true">Submit a request</button>
             </div>
 
             <div v-else-if="success" class="shift-widget__success">
                 <CheckCircle2 aria-hidden="true" />
-                <h3>Feedback sent</h3>
+                <h3>Request submitted</h3>
                 <div class="shift-widget__success-actions">
-                    <a v-if="submittedFeedbackUrl" class="shift-widget__button" :href="submittedFeedbackUrl" target="_blank" rel="noopener noreferrer">View feedback</a>
+                    <a v-if="submittedFeedbackUrl" class="shift-widget__button" :href="submittedFeedbackUrl" target="_blank" rel="noopener noreferrer">View request</a>
                     <button class="shift-widget__button shift-widget__button--secondary" type="button" @click="resetForm">Add another</button>
                     <button class="shift-widget__button shift-widget__button--secondary" type="button" @click="isOpen = false">
                         Close
@@ -320,7 +320,7 @@ function toTitle(value: string): string {
             </div>
 
             <form v-else class="shift-widget__form" @submit.prevent="submitReport">
-                <div class="shift-widget__segmented" aria-label="Feedback type">
+                <div class="shift-widget__segmented" aria-label="Request type">
                     <button v-for="option in kindOptions" :key="option" type="button" :aria-pressed="kind === option" @click="kind = option">
                         {{ toTitle(option) }}
                     </button>
@@ -365,7 +365,7 @@ function toTitle(value: string): string {
 
                         <div v-else-if="remoteConfig.requiresAuthentication" class="shift-widget__account">
                             <span>Log in required</span>
-                            <small>Log in to send feedback from {{ props.config.appName }}.</small>
+                            <small>Log in to submit a request from {{ props.config.appName }}.</small>
                         </div>
 
                         <div v-if="remoteConfig.guestSubmissionsEnabled && identityMode === 'details'" class="shift-widget__grid">

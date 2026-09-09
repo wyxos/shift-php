@@ -13,14 +13,14 @@ describe('WidgetApp.vue', () => {
         expect(wrapper.get('a').attributes('href')).toBe('/shift/tasks');
         expect(wrapper.get('a').attributes('target')).toBe('_blank');
         expect(wrapper.get('a').attributes('rel')).toBe('noopener noreferrer');
-        expect(wrapper.text()).toContain('View my feedback');
+        expect(wrapper.text()).toContain('My requests');
         expect(wrapper.find('form').exists()).toBe(false);
-        await clickButton(wrapper, 'Share feedback');
+        await clickButton(wrapper, 'Submit a request');
         await wrapper.get('input[type="text"]').setValue('Saved draft');
-        expect(wrapper.get('header h2').text()).toBe('Feedback');
+        expect(wrapper.get('header h2').text()).toBe('Requests');
         await wrapper.get('header button[aria-label="Back"]').trigger('click');
         expect(wrapper.find('form').exists()).toBe(false);
-        await clickButton(wrapper, 'Share feedback');
+        await clickButton(wrapper, 'Submit a request');
         expect(wrapper.get<HTMLInputElement>('input[type="text"]').element.value).toBe('Saved draft');
     });
 
@@ -32,13 +32,13 @@ describe('WidgetApp.vue', () => {
         const wrapper = await mountWorkspaceWidget(authenticated, workspaceUrl);
 
         expect(wrapper.find('form').exists()).toBe(true);
-        expect(wrapper.text()).not.toContain('View my feedback');
+        expect(wrapper.text()).not.toContain('My requests');
         expect(wrapper.find('a').exists()).toBe(false);
     });
 
     it.each([false, true])('offers a created-feedback link only for an identified submission: anonymous=%s', async (anonymous) => {
         const wrapper = await mountWorkspaceWidget(true, '/shift/tasks');
-        await clickButton(wrapper, 'Share feedback');
+        await clickButton(wrapper, 'Submit a request');
         await wrapper.get('input[type="text"]').setValue('A report');
         await wrapper.get('textarea').setValue('Report details');
         if (anonymous) {
@@ -47,13 +47,13 @@ describe('WidgetApp.vue', () => {
         await wrapper.get('form').trigger('submit');
         await flushPromises();
 
-        expect(wrapper.text()).toContain('Feedback sent');
+        expect(wrapper.text()).toContain('Request submitted');
         expect(wrapper.find('a').exists()).toBe(!anonymous);
         if (!anonymous) {
             const url = new URL(wrapper.get('a').attributes('href')!);
             expect(url.pathname).toBe('/shift/tasks');
             expect(url.search).toBe('?task=42');
-            expect(wrapper.get('a').text()).toBe('View feedback');
+            expect(wrapper.get('a').text()).toBe('View request');
             expect(wrapper.get('a').attributes('target')).toBe('_blank');
             expect(wrapper.get('a').attributes('rel')).toBe('noopener noreferrer');
         }
@@ -65,7 +65,7 @@ describe('WidgetApp.vue', () => {
         await wrapper.get('textarea').setValue('Report details');
         await wrapper.get('form').trigger('submit');
         await flushPromises();
-        expect(wrapper.text()).toContain('Feedback sent');
+        expect(wrapper.text()).toContain('Request submitted');
         expect(wrapper.find('a').exists()).toBe(false);
     });
 
@@ -154,7 +154,7 @@ describe('WidgetApp.vue', () => {
         await wrapper.get('form').trigger('submit');
         await flushPromises();
 
-        expect(wrapper.text()).toContain('Feedback sent');
+        expect(wrapper.text()).toContain('Request submitted');
         expect(fetchMock).toHaveBeenCalledWith(
             '/shift/api/widget/tasks',
             expect.objectContaining({
