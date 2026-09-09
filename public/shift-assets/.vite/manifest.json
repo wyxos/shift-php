@@ -1,30 +1,30 @@
 {
-  "_x-DWnTU1BA.js": {
-    "file": "assets/x-DWnTU1BA.js",
+  "_x-J6kRyj9O.js": {
+    "file": "assets/x-J6kRyj9O.js",
     "name": "x"
   },
   "index.html": {
-    "file": "assets/app-BdROgUc-.js",
+    "file": "assets/app-BCYrWO1z.js",
     "name": "app",
     "src": "index.html",
     "isEntry": true,
     "imports": [
-      "_x-DWnTU1BA.js"
+      "_x-J6kRyj9O.js"
     ],
     "css": [
-      "assets/app-BE3Oe6TY.css"
+      "assets/app-By0UUduW.css"
     ]
   },
   "src/widget.ts": {
-    "file": "assets/widget-B4Lacexe.js",
+    "file": "assets/widget-Bf0RciQa.js",
     "name": "widget",
     "src": "src/widget.ts",
     "isEntry": true,
     "imports": [
-      "_x-DWnTU1BA.js"
+      "_x-J6kRyj9O.js"
     ],
     "css": [
-      "assets/widget-DnhohflG.css"
+      "assets/widget-BrtRHeh-.css"
     ]
   }
 }

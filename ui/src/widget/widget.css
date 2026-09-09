@@ -108,7 +108,15 @@
 }
 
 .shift-widget__success {
-    align-items: flex-start;
+    align-items: center;
+    text-align: center;
+}
+
+.shift-widget__success-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    width: 100%;
 }
 
 .shift-widget__success > svg {

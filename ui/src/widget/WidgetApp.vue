@@ -310,12 +310,12 @@ function toTitle(value: string): string {
             <div v-else-if="success" class="shift-widget__success">
                 <CheckCircle2 aria-hidden="true" />
                 <h3>Feedback sent</h3>
-                <a v-if="submittedFeedbackUrl" class="shift-widget__button" :href="submittedFeedbackUrl" target="_blank" rel="noopener noreferrer">View this feedback</a>
-                <div class="shift-widget__actions">
+                <div class="shift-widget__success-actions">
+                    <a v-if="submittedFeedbackUrl" class="shift-widget__button" :href="submittedFeedbackUrl" target="_blank" rel="noopener noreferrer">View feedback</a>
+                    <button class="shift-widget__button shift-widget__button--secondary" type="button" @click="resetForm">Add another</button>
                     <button class="shift-widget__button shift-widget__button--secondary" type="button" @click="isOpen = false">
                         Close
                     </button>
-                    <button class="shift-widget__button" type="button" @click="resetForm">Add another</button>
                 </div>
             </div>
 

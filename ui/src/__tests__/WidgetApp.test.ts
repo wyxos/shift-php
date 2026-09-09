@@ -53,7 +53,7 @@ describe('WidgetApp.vue', () => {
             const url = new URL(wrapper.get('a').attributes('href')!);
             expect(url.pathname).toBe('/shift/tasks');
             expect(url.search).toBe('?task=42');
-            expect(wrapper.get('a').text()).toBe('View this feedback');
+            expect(wrapper.get('a').text()).toBe('View feedback');
             expect(wrapper.get('a').attributes('target')).toBe('_blank');
             expect(wrapper.get('a').attributes('rel')).toBe('noopener noreferrer');
         }
