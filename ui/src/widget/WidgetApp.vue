@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { CheckCircle2, Loader2, LogIn, MessageSquare, Send, X } from 'lucide-vue-next';
+import { CheckCircle2, Loader2, LogIn, MessageSquare, X } from 'lucide-vue-next';
 import { computed, onMounted, reactive, ref } from 'vue';
 
 type WidgetKind = 'task' | 'feature' | 'issue';
@@ -44,6 +44,8 @@ const isOpen = ref(false);
 const submitting = ref(false);
 const loggingIn = ref(false);
 const success = ref(false);
+const formSelected = ref(false);
+const submittedFeedbackUrl = ref<string | null>(null);
 const kind = ref<WidgetKind>('task');
 const title = ref('');
 const description = ref('');
@@ -60,12 +62,15 @@ const csrfToken = ref(props.config.csrfToken || null);
 
 const remoteConfig = reactive({
     widgetEnabled: true,
+    workspaceUrl: null as string | null,
     guestSubmissionsEnabled: props.config.guestSubmissionsEnabled,
     requiresAuthentication: Boolean(props.config.requiresAuthentication),
     loginCredentialField: props.config.loginCredentialField || 'email',
 });
 
 const isAuthenticated = computed(() => Boolean(sessionUser.value));
+const workspaceUrl = computed(() => isAuthenticated.value ? remoteConfig.workspaceUrl : null);
+const showMenu = computed(() => Boolean(workspaceUrl.value) && !formSelected.value && !success.value);
 const isAnonymousSubmission = computed(() => {
     if (isAuthenticated.value) {
         return anonymous.value;
@@ -97,6 +102,7 @@ async function loadState() {
         const [configResponse, userResponse] = await Promise.all([
             apiJson<{
                 widget_enabled: boolean;
+                workspace_url?: string | null;
                 guest_submissions_enabled: boolean;
                 requires_authentication?: boolean;
                 login_credential_field?: string;
@@ -105,6 +111,7 @@ async function loadState() {
         ]);
 
         remoteConfig.widgetEnabled = configResponse.widget_enabled;
+        remoteConfig.workspaceUrl = configResponse.workspace_url || null;
         remoteConfig.guestSubmissionsEnabled = configResponse.guest_submissions_enabled;
         remoteConfig.requiresAuthentication = Boolean(configResponse.requires_authentication);
         remoteConfig.loginCredentialField = configResponse.login_credential_field || remoteConfig.loginCredentialField;
@@ -144,11 +151,17 @@ async function submitReport() {
             };
         }
 
-        await apiJson(props.config.endpoints.tasks, {
+        const response = await apiJson<{ id: number | string }>(props.config.endpoints.tasks, {
             method: 'POST',
             body: JSON.stringify(payload),
         });
 
+        submittedFeedbackUrl.value = null;
+        if (workspaceUrl.value && !isAnonymousSubmission.value && response.id != null) {
+            const url = new URL(workspaceUrl.value, window.location.href);
+            url.searchParams.set('task', String(response.id));
+            submittedFeedbackUrl.value = url.href;
+        }
         success.value = true;
     } catch (error) {
         applyError(error, errors, generalError);
@@ -178,6 +191,9 @@ async function login() {
         identityMode.value = 'account';
         anonymous.value = false;
         loginDraft.password = '';
+        formSelected.value = true;
+        const configResponse = await apiJson<{ workspace_url?: string | null }>(props.config.endpoints.config).catch(() => null);
+        remoteConfig.workspaceUrl = configResponse?.workspace_url || null;
     } catch (error) {
         applyError(error, loginErrors, loginError);
     } finally {
@@ -187,6 +203,8 @@ async function login() {
 
 function resetForm() {
     success.value = false;
+    submittedFeedbackUrl.value = null;
+    formSelected.value = true;
     title.value = '';
     description.value = '';
     kind.value = 'task';
@@ -265,24 +283,29 @@ function toTitle(value: string): string {
     <div v-if="shouldRender" class="shift-widget" :class="{ 'shift-widget--open': isOpen }">
         <button v-if="!isOpen" class="shift-widget__launcher" type="button" @click="isOpen = true">
             <MessageSquare aria-hidden="true" />
-            <span>Report</span>
+            <span>Feedback</span>
         </button>
 
-        <section v-else class="shift-widget__panel" aria-label="Report to SHIFT">
+        <section v-else class="shift-widget__panel" :aria-label="showMenu ? 'Feedback' : 'Share feedback'">
             <header class="shift-widget__header">
                 <div>
                     <p class="shift-widget__eyebrow">{{ props.config.appName }}</p>
-                    <h2>Report to SHIFT</h2>
+                    <h2>{{ showMenu ? 'Feedback' : 'Share feedback' }}</h2>
                 </div>
                 <button class="shift-widget__icon-button" type="button" aria-label="Close" @click="isOpen = false">
                     <X aria-hidden="true" />
                 </button>
             </header>
 
-            <div v-if="success" class="shift-widget__success">
+            <div v-if="showMenu" class="shift-widget__menu">
+                <a class="shift-widget__button shift-widget__button--secondary" :href="workspaceUrl!">View my feedback</a>
+                <button class="shift-widget__button" type="button" @click="formSelected = true">Share feedback</button>
+            </div>
+
+            <div v-else-if="success" class="shift-widget__success">
                 <CheckCircle2 aria-hidden="true" />
-                <h3>Report sent</h3>
-                <p>SHIFT has received your report.</p>
+                <h3>Feedback sent</h3>
+                <a v-if="submittedFeedbackUrl" class="shift-widget__button" :href="submittedFeedbackUrl">View this feedback</a>
                 <div class="shift-widget__actions">
                     <button class="shift-widget__button shift-widget__button--secondary" type="button" @click="isOpen = false">
                         Close
@@ -292,7 +315,8 @@ function toTitle(value: string): string {
             </div>
 
             <form v-else class="shift-widget__form" @submit.prevent="submitReport">
-                <div class="shift-widget__segmented" aria-label="Report type">
+                <button v-if="workspaceUrl" class="shift-widget__back" type="button" @click="formSelected = false">Back</button>
+                <div class="shift-widget__segmented" aria-label="Feedback type">
                     <button v-for="option in kindOptions" :key="option" type="button" :aria-pressed="kind === option" @click="kind = option">
                         {{ toTitle(option) }}
                     </button>
@@ -323,7 +347,7 @@ function toTitle(value: string): string {
                     </template>
 
                     <template v-else>
-                        <div v-if="remoteConfig.guestSubmissionsEnabled" class="shift-widget__segmented" aria-label="Reporter">
+                        <div v-if="remoteConfig.guestSubmissionsEnabled" class="shift-widget__segmented" aria-label="Your identity">
                             <button type="button" :aria-pressed="identityMode === 'anonymous'" @click="setIdentityMode('anonymous')">
                                 Anonymous
                             </button>
@@ -337,7 +361,7 @@ function toTitle(value: string): string {
 
                         <div v-else-if="remoteConfig.requiresAuthentication" class="shift-widget__account">
                             <span>Log in required</span>
-                            <small>Log in to send this report from {{ props.config.appName }}.</small>
+                            <small>Log in to send feedback from {{ props.config.appName }}.</small>
                         </div>
 
                         <div v-if="remoteConfig.guestSubmissionsEnabled && identityMode === 'details'" class="shift-widget__grid">
@@ -384,9 +408,7 @@ function toTitle(value: string): string {
                 <footer class="shift-widget__footer">
                     <button class="shift-widget__button shift-widget__button--secondary" type="button" @click="isOpen = false">Cancel</button>
                     <button class="shift-widget__button" type="submit" :disabled="!canSubmit">
-                        <Loader2 v-if="submitting" class="shift-widget__spin" aria-hidden="true" />
-                        <Send v-else aria-hidden="true" />
-                        <span>{{ submitting ? 'Sending...' : 'Send report' }}</span>
+                        <span>{{ submitting ? 'Sending...' : 'Send' }}</span>
                     </button>
                 </footer>
             </form>

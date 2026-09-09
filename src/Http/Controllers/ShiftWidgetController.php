@@ -145,6 +145,7 @@ class ShiftWidgetController extends Controller
             'authenticated' => (bool) $user,
             'requires_authentication' => $portalConfig['widget_enabled'] && ! $portalConfig['guest_submissions_enabled'] && ! $user,
             'login_credential_field' => $this->credentialField(),
+            'workspace_url' => $user && config('shift.workspace.enabled', true) ? '/shift/tasks' : null,
         ];
     }
 

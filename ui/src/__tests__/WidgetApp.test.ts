@@ -7,6 +7,63 @@ describe('WidgetApp.vue', () => {
         vi.unstubAllGlobals();
     });
 
+    it('opens an authenticated workspace menu and preserves the draft when returning', async () => {
+        const wrapper = await mountWorkspaceWidget(true, '/shift/tasks');
+
+        expect(wrapper.get('a').attributes('href')).toBe('/shift/tasks');
+        expect(wrapper.text()).toContain('View my feedback');
+        expect(wrapper.find('form').exists()).toBe(false);
+        await clickButton(wrapper, 'Share feedback');
+        await wrapper.get('input[type="text"]').setValue('Saved draft');
+        await clickButton(wrapper, 'Back');
+        expect(wrapper.find('form').exists()).toBe(false);
+        await clickButton(wrapper, 'Share feedback');
+        expect(wrapper.get<HTMLInputElement>('input[type="text"]').element.value).toBe('Saved draft');
+    });
+
+    it.each([
+        [true, null],
+        [false, null],
+        [false, '/shift/tasks'],
+    ])('opens the form directly for authenticated=%s and workspace=%s', async (authenticated, workspaceUrl) => {
+        const wrapper = await mountWorkspaceWidget(authenticated, workspaceUrl);
+
+        expect(wrapper.find('form').exists()).toBe(true);
+        expect(wrapper.text()).not.toContain('View my feedback');
+        expect(wrapper.find('a').exists()).toBe(false);
+    });
+
+    it.each([false, true])('offers a created-feedback link only for an identified submission: anonymous=%s', async (anonymous) => {
+        const wrapper = await mountWorkspaceWidget(true, '/shift/tasks');
+        await clickButton(wrapper, 'Share feedback');
+        await wrapper.get('input[type="text"]').setValue('A report');
+        await wrapper.get('textarea').setValue('Report details');
+        if (anonymous) {
+            await wrapper.get('input[type="checkbox"]').setValue(true);
+        }
+        await wrapper.get('form').trigger('submit');
+        await flushPromises();
+
+        expect(wrapper.text()).toContain('Feedback sent');
+        expect(wrapper.find('a').exists()).toBe(!anonymous);
+        if (!anonymous) {
+            const url = new URL(wrapper.get('a').attributes('href')!);
+            expect(url.pathname).toBe('/shift/tasks');
+            expect(url.search).toBe('?task=42');
+            expect(wrapper.get('a').text()).toBe('View this feedback');
+        }
+    });
+
+    it('does not offer a created-feedback link when workspace is disabled', async () => {
+        const wrapper = await mountWorkspaceWidget(true, null);
+        await wrapper.get('input[type="text"]').setValue('A report');
+        await wrapper.get('textarea').setValue('Report details');
+        await wrapper.get('form').trigger('submit');
+        await flushPromises();
+        expect(wrapper.text()).toContain('Feedback sent');
+        expect(wrapper.find('a').exists()).toBe(false);
+    });
+
     it('uses the refreshed csrf token after inline login before submitting the preserved draft', async () => {
         const fetchMock = vi.fn(async (url: RequestInfo | URL, init?: RequestInit) => {
             const requestUrl = String(url);
@@ -92,7 +149,7 @@ describe('WidgetApp.vue', () => {
         await wrapper.get('form').trigger('submit');
         await flushPromises();
 
-        expect(wrapper.text()).toContain('Report sent');
+        expect(wrapper.text()).toContain('Feedback sent');
         expect(fetchMock).toHaveBeenCalledWith(
             '/shift/api/widget/tasks',
             expect.objectContaining({
@@ -189,4 +246,30 @@ async function clickLastButton(wrapper: ReturnType<typeof mount>, text: string):
     }
 
     await button.trigger('click');
+}
+
+async function mountWorkspaceWidget(authenticated: boolean, workspaceUrl: string | null) {
+    vi.stubGlobal('fetch', vi.fn(async (url: RequestInfo | URL) => {
+        if (String(url).endsWith('/config')) {
+            return jsonResponse({ widget_enabled: true, guest_submissions_enabled: true, workspace_url: workspaceUrl });
+        }
+        if (String(url).endsWith('/session-user')) {
+            return jsonResponse({ authenticated, user: authenticated ? { id: 7, name: 'Widget User' } : null });
+        }
+        return jsonResponse({ id: 42 });
+    }));
+    const wrapper = mount(WidgetApp, {
+        props: {
+            config: {
+                appName: 'Consumer App', authenticated, guestSubmissionsEnabled: true, loginCredentialField: 'email',
+                endpoints: {
+                    config: '/shift/api/widget/config', tasks: '/shift/api/widget/tasks',
+                    sessionUser: '/shift/api/widget/session-user', login: '/shift/api/widget/login',
+                },
+            },
+        },
+    });
+    await flushPromises();
+    await wrapper.get('button.shift-widget__launcher').trigger('click');
+    return wrapper;
 }
