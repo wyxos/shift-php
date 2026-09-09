@@ -281,16 +281,16 @@ function toTitle(value: string): string {
 
 <template>
     <div v-if="shouldRender" class="shift-widget" :class="{ 'shift-widget--open': isOpen }">
-        <button v-if="!isOpen" class="shift-widget__launcher" type="button" @click="isOpen = true">
+        <button v-if="!isOpen" class="shift-widget__launcher" type="button" aria-label="Feedback" @click="isOpen = true">
             <MessageSquare aria-hidden="true" />
-            <span>Requests</span>
+            <span>Feedback</span>
         </button>
 
-        <section v-else class="shift-widget__panel" aria-label="Requests">
+        <section v-else class="shift-widget__panel" aria-label="Feedback">
             <header class="shift-widget__header">
                 <div>
                     <p class="shift-widget__eyebrow">{{ props.config.appName }}</p>
-                    <h2>Requests</h2>
+                    <h2>Feedback</h2>
                 </div>
                 <div class="shift-widget__actions">
                     <button v-if="workspaceUrl && !showMenu && !success" class="shift-widget__icon-button" type="button" aria-label="Back" title="Back" @click="formSelected = false">

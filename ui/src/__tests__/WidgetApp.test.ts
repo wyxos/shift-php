@@ -17,7 +17,7 @@ describe('WidgetApp.vue', () => {
         expect(wrapper.find('form').exists()).toBe(false);
         await clickButton(wrapper, 'Submit a request');
         await wrapper.get('input[type="text"]').setValue('Saved draft');
-        expect(wrapper.get('header h2').text()).toBe('Requests');
+        expect(wrapper.get('header h2').text()).toBe('Feedback');
         await wrapper.get('header button[aria-label="Back"]').trigger('click');
         expect(wrapper.find('form').exists()).toBe(false);
         await clickButton(wrapper, 'Submit a request');
