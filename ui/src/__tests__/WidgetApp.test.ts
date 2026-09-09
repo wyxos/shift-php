@@ -11,11 +11,14 @@ describe('WidgetApp.vue', () => {
         const wrapper = await mountWorkspaceWidget(true, '/shift/tasks');
 
         expect(wrapper.get('a').attributes('href')).toBe('/shift/tasks');
+        expect(wrapper.get('a').attributes('target')).toBe('_blank');
+        expect(wrapper.get('a').attributes('rel')).toBe('noopener noreferrer');
         expect(wrapper.text()).toContain('View my feedback');
         expect(wrapper.find('form').exists()).toBe(false);
         await clickButton(wrapper, 'Share feedback');
         await wrapper.get('input[type="text"]').setValue('Saved draft');
-        await clickButton(wrapper, 'Back');
+        expect(wrapper.get('header h2').text()).toBe('Feedback');
+        await wrapper.get('header button[aria-label="Back"]').trigger('click');
         expect(wrapper.find('form').exists()).toBe(false);
         await clickButton(wrapper, 'Share feedback');
         expect(wrapper.get<HTMLInputElement>('input[type="text"]').element.value).toBe('Saved draft');
@@ -51,6 +54,8 @@ describe('WidgetApp.vue', () => {
             expect(url.pathname).toBe('/shift/tasks');
             expect(url.search).toBe('?task=42');
             expect(wrapper.get('a').text()).toBe('View this feedback');
+            expect(wrapper.get('a').attributes('target')).toBe('_blank');
+            expect(wrapper.get('a').attributes('rel')).toBe('noopener noreferrer');
         }
     });
 

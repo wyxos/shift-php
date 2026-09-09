@@ -300,24 +300,3 @@
 .shift-widget__button:hover:not(:disabled) {
     filter: brightness(0.95);
 }
-
-.shift-widget__back {
-    align-self: flex-start;
-    background: transparent;
-    border: 0;
-    border-radius: 0.25rem;
-    color: var(--shift-widget-muted);
-    cursor: pointer;
-    font: inherit;
-    font-size: 0.8125rem;
-    padding: 0.25rem 0;
-}
-
-.shift-widget__back:hover {
-    color: var(--shift-widget-fg);
-}
-
-.shift-widget__back:focus-visible {
-    outline: 2px solid var(--shift-widget-primary);
-    outline-offset: 2px;
-}

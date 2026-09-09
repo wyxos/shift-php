@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { CheckCircle2, Loader2, LogIn, MessageSquare, X } from 'lucide-vue-next';
+import { ArrowLeft, CheckCircle2, Loader2, LogIn, MessageSquare, X } from 'lucide-vue-next';
 import { computed, onMounted, reactive, ref } from 'vue';
 
 type WidgetKind = 'task' | 'feature' | 'issue';
@@ -286,26 +286,31 @@ function toTitle(value: string): string {
             <span>Feedback</span>
         </button>
 
-        <section v-else class="shift-widget__panel" :aria-label="showMenu ? 'Feedback' : 'Share feedback'">
+        <section v-else class="shift-widget__panel" aria-label="Feedback">
             <header class="shift-widget__header">
                 <div>
                     <p class="shift-widget__eyebrow">{{ props.config.appName }}</p>
-                    <h2>{{ showMenu ? 'Feedback' : 'Share feedback' }}</h2>
+                    <h2>Feedback</h2>
                 </div>
-                <button class="shift-widget__icon-button" type="button" aria-label="Close" @click="isOpen = false">
-                    <X aria-hidden="true" />
-                </button>
+                <div class="shift-widget__actions">
+                    <button v-if="workspaceUrl && !showMenu && !success" class="shift-widget__icon-button" type="button" aria-label="Back" title="Back" @click="formSelected = false">
+                        <ArrowLeft aria-hidden="true" />
+                    </button>
+                    <button class="shift-widget__icon-button" type="button" aria-label="Close" @click="isOpen = false">
+                        <X aria-hidden="true" />
+                    </button>
+                </div>
             </header>
 
             <div v-if="showMenu" class="shift-widget__menu">
-                <a class="shift-widget__button shift-widget__button--secondary" :href="workspaceUrl!">View my feedback</a>
+                <a class="shift-widget__button shift-widget__button--secondary" :href="workspaceUrl!" target="_blank" rel="noopener noreferrer">View my feedback</a>
                 <button class="shift-widget__button" type="button" @click="formSelected = true">Share feedback</button>
             </div>
 
             <div v-else-if="success" class="shift-widget__success">
                 <CheckCircle2 aria-hidden="true" />
                 <h3>Feedback sent</h3>
-                <a v-if="submittedFeedbackUrl" class="shift-widget__button" :href="submittedFeedbackUrl">View this feedback</a>
+                <a v-if="submittedFeedbackUrl" class="shift-widget__button" :href="submittedFeedbackUrl" target="_blank" rel="noopener noreferrer">View this feedback</a>
                 <div class="shift-widget__actions">
                     <button class="shift-widget__button shift-widget__button--secondary" type="button" @click="isOpen = false">
                         Close
@@ -315,7 +320,6 @@ function toTitle(value: string): string {
             </div>
 
             <form v-else class="shift-widget__form" @submit.prevent="submitReport">
-                <button v-if="workspaceUrl" class="shift-widget__back" type="button" @click="formSelected = false">Back</button>
                 <div class="shift-widget__segmented" aria-label="Feedback type">
                     <button v-for="option in kindOptions" :key="option" type="button" :aria-pressed="kind === option" @click="kind = option">
                         {{ toTitle(option) }}
