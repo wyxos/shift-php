@@ -2,7 +2,7 @@
 import { ArrowLeft, CheckCircle2, Loader2, LogIn, MessageSquare, X } from 'lucide-vue-next';
 import { computed, onMounted, reactive, ref } from 'vue';
 
-type WidgetKind = 'task' | 'feature' | 'issue';
+type WidgetKind = 'feature' | 'issue';
 type IdentityMode = 'account' | 'anonymous' | 'details' | 'login';
 
 interface WidgetUser {
@@ -38,7 +38,10 @@ const props = defineProps<{
     config: WidgetRuntimeConfig;
 }>();
 
-const kindOptions: WidgetKind[] = ['task', 'feature', 'issue'];
+const kindOptions: { value: WidgetKind; label: string }[] = [
+    { value: 'feature', label: 'Feature request' },
+    { value: 'issue', label: 'Report an issue' },
+];
 const ready = ref(false);
 const isOpen = ref(false);
 const submitting = ref(false);
@@ -46,7 +49,7 @@ const loggingIn = ref(false);
 const success = ref(false);
 const formSelected = ref(false);
 const submittedFeedbackUrl = ref<string | null>(null);
-const kind = ref<WidgetKind>('task');
+const kind = ref<WidgetKind>('feature');
 const title = ref('');
 const description = ref('');
 const anonymous = ref(false);
@@ -207,7 +210,7 @@ function resetForm() {
     formSelected.value = true;
     title.value = '';
     description.value = '';
-    kind.value = 'task';
+    kind.value = 'feature';
     anonymous.value = false;
     errors.value = {};
     generalError.value = null;
@@ -320,9 +323,9 @@ function toTitle(value: string): string {
             </div>
 
             <form v-else class="shift-widget__form" @submit.prevent="submitReport">
-                <div class="shift-widget__segmented" aria-label="Request type">
-                    <button v-for="option in kindOptions" :key="option" type="button" :aria-pressed="kind === option" @click="kind = option">
-                        {{ toTitle(option) }}
+                <div class="shift-widget__segmented shift-widget__request-types" aria-label="Request type">
+                    <button v-for="option in kindOptions" :key="option.value" type="button" :aria-pressed="kind === option.value" @click="kind = option.value">
+                        {{ option.label }}
                     </button>
                 </div>
 

@@ -162,6 +162,10 @@
     padding: 0.25rem;
 }
 
+.shift-widget__request-types {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .shift-widget__segmented button {
     background: transparent;
     border: 0;

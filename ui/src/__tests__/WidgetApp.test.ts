@@ -25,6 +25,26 @@ describe('WidgetApp.vue', () => {
     });
 
     it.each([
+        ['Feature request', 'feature'],
+        ['Report an issue', 'issue'],
+    ])('submits %s with the matching API kind and resets the next request', async (label, expectedKind) => {
+        const wrapper = await mountWorkspaceWidget(true, '/shift/tasks');
+        await clickButton(wrapper, 'Submit a request');
+        const choices = wrapper.get('[aria-label="Request type"]').findAll('button');
+        expect(choices.map((button) => button.text())).toEqual(['Feature request', 'Report an issue']);
+        expect(choices[0].attributes('aria-pressed')).toBe('true');
+        await clickButton(wrapper, label);
+        await wrapper.get('input[type="text"]').setValue('A request');
+        await wrapper.get('textarea').setValue('Request details');
+        await wrapper.get('form').trigger('submit');
+        await flushPromises();
+        const submission = vi.mocked(fetch).mock.calls.find(([url]) => String(url).endsWith('/tasks'));
+        expect(JSON.parse(String(submission?.[1]?.body)).kind).toBe(expectedKind);
+        await clickButton(wrapper, 'Add another');
+        expect(wrapper.get('[aria-label="Request type"] button').attributes('aria-pressed')).toBe('true');
+    });
+
+    it.each([
         [true, null],
         [false, null],
         [false, '/shift/tasks'],
