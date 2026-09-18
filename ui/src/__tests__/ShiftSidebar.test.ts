@@ -55,6 +55,7 @@ describe('ShiftSidebar.vue', () => {
             username: 'Manager',
             email: 'manager@example.com',
             aiEnabled: false,
+            shiftUrl: 'https://shift.example.test',
         };
     });
 

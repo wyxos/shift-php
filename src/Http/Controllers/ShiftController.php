@@ -92,6 +92,7 @@ class ShiftController extends Controller
         $logoutRoute = Route::has('logout') ? route('logout') : null;
         $baseUrl = config('app.url');
         $appName = config('app.name');
+        $shiftUrl = $this->resolveShiftUrl();
 
         // Get authenticated user if available
         $user = auth()->user();
@@ -109,6 +110,7 @@ class ShiftController extends Controller
             'email' => $email,
             'aiEnabled' => $aiEnabled,
             'appEnvironment' => (string) config('app.env', 'production'),
+            'shiftUrl' => $shiftUrl,
         ], JSON_UNESCAPED_SLASHES);
 
         $script = <<<SCRIPT
@@ -117,7 +119,26 @@ class ShiftController extends Controller
 </script>
 SCRIPT;
 
+        $html = $this->injectShiftFavicon($html, $shiftUrl);
+
         // Inject just before the first <script type="module">
-        return preg_replace('/(<script\s+type="module")/i', $script."\n$1", $html, 1);
+        $injected = preg_replace('/(<script\s+type="module")/i', $script."\n$1", $html, 1);
+
+        return is_string($injected) ? $injected : $html;
+    }
+
+    private function resolveShiftUrl(): string
+    {
+        $url = rtrim((string) config('shift.url', 'https://shift.wyxos.com'), '/');
+
+        return $url !== '' ? $url : 'https://shift.wyxos.com';
+    }
+
+    private function injectShiftFavicon(string $html, string $shiftUrl): string
+    {
+        $favicon = '<link rel="icon" type="image/svg+xml" href="'.e($shiftUrl.'/favicon.svg').'" />';
+        $replaced = preg_replace('/<link\s+rel="icon"[^>]*>/i', $favicon, $html, 1);
+
+        return is_string($replaced) ? $replaced : $html;
     }
 }

@@ -11,6 +11,7 @@ interface Window {
         email?: string;
         aiEnabled: boolean;
         appEnvironment?: string;
+        shiftUrl?: string;
     };
     shiftWidgetConfig?: {
         endpoints: {
