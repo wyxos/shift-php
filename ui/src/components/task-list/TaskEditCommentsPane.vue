@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import axios from '@/axios-config';
 import ShiftEditor from '@shared/components/ShiftEditor.vue';
+import { imageTiles } from '@shared/tasks/image-tile';
 import { renderRichContent } from '@shared/tasks/rich-content';
 import { Paperclip } from 'lucide-vue-next';
 import { ContextMenuContent, ContextMenuItem, ContextMenuPortal, ContextMenuRoot, ContextMenuSeparator, ContextMenuTrigger } from 'reka-ui';
@@ -41,6 +42,7 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
     isRequirement: false,
 });
+const vImageTiles = imageTiles;
 const aiImproveEnabled = getTaskListAiImproveEnabled();
 
 const threadComposerModel = computed({
@@ -97,7 +99,8 @@ function assignCommentsScrollRef(value: Element | ComponentPublicInstance | null
                                     {{ message.author }}
                                 </div>
                                 <div
-                                    class="shift-rich text-inherit [&_img]:my-2 [&_img]:max-w-full [&_img]:cursor-zoom-in [&_img]:rounded-lg [&_img]:shadow-sm [&_img.editor-tile]:aspect-square [&_img.editor-tile]:w-[200px] [&_img.editor-tile]:max-w-[200px] [&_img.editor-tile]:object-cover"
+                                    v-image-tiles
+                                    class="shift-rich text-inherit [&_img]:my-2 [&_img]:max-w-full [&_img]:cursor-zoom-in [&_img]:rounded-lg [&_img]:shadow-sm [&_img.editor-tile]:aspect-square [&_img.editor-tile]:w-[200px] [&_img.editor-tile]:max-w-[200px] [&_img.editor-tile]:object-contain"
                                     @click="onRichContentClick"
                                     v-html="renderRichContent(message.content)"
                                 ></div>
