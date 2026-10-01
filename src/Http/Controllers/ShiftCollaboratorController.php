@@ -47,19 +47,23 @@ class ShiftCollaboratorController extends Controller
     {
         $search = trim((string) $request->input('search', '')) ?: null;
 
-        [$internalUsers, $internalAvailable, $internalError, $internalLabel] = $this->resolveShiftInternalCollaborators($search);
+        if ($search === null) {
+            return response()->json(['internal' => [], 'external' => []]);
+        }
+
+        [$internalUsers, $internalAvailable, $internalError] = $this->resolveShiftInternalCollaborators($search);
         [$externalUsers, $externalAvailable, $externalError] = $this->resolveBrowserExternalCollaborators($search);
 
         return response()->json([
             'internal' => $internalUsers,
             'internal_available' => $internalAvailable,
             'internal_error' => $internalError,
-            'internal_label' => $internalLabel ?? 'Organisation',
+            'internal_label' => 'SHIFT team',
             'internal_description' => 'Users with access in SHIFT.',
             'external' => $externalUsers,
             'external_available' => $externalAvailable,
             'external_error' => $externalError,
-            'external_label' => 'Team',
+            'external_label' => config('app.name', 'Project users'),
             'external_description' => 'Users with access from this portal.',
         ]);
     }
@@ -67,7 +71,7 @@ class ShiftCollaboratorController extends Controller
     private function resolveBrowserExternalCollaborators(?string $search): array
     {
         try {
-            $payload = $this->resolveLocalCollaboratorPayload($search);
+            $payload = $this->resolveLocalCollaboratorPayload($search, paginate: true, perPage: 10);
 
             return [$payload['users'], true, null];
         } catch (RuntimeException $exception) {
