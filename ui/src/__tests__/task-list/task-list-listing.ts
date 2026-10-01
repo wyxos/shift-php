@@ -52,7 +52,7 @@ describe('TaskList listing and filters', () => {
         wrapper.unmount();
     });
 
-    it('uses distinct status badge colors for each status', async () => {
+    it('shows one quiet surface and distinct icons for task statuses', async () => {
         getMock.mockResolvedValueOnce(makeIndexResponse(seedTasks));
 
         const wrapper = mount(TaskList, {
@@ -61,17 +61,14 @@ describe('TaskList listing and filters', () => {
         await flushPromises();
         await nextTick();
 
-        expect(wrapper.get('[data-testid="task-status-badge-1"]').classes()).toContain('bg-amber-100');
-        expect(wrapper.get('[data-testid="task-status-badge-2"]').classes()).toContain('bg-sky-100');
-        expect(wrapper.get('[data-testid="task-status-badge-3"]').classes()).toContain('bg-indigo-100');
-        expect(wrapper.get('[data-testid="task-status-badge-4"]').classes()).toContain('bg-emerald-100');
-        expect(wrapper.get('[data-testid="task-status-badge-5"]').classes()).toContain('bg-slate-100');
-        expect(wrapper.get('[data-testid="task-status-badge-6"]').classes()).toContain('bg-orange-100');
+        const badges = [1, 2, 3, 4, 5, 6].map((id) => wrapper.get(`[data-testid="task-status-badge-${id}"]`));
+        expect(new Set(badges.map((badge) => badge.get('svg').html())).size).toBe(6);
+        expect(badges.map((badge) => badge.text())).toEqual(['Pending', 'In Progress', 'Awaiting Feedback', 'Completed', 'Closed', 'On Hold']);
 
         wrapper.unmount();
     });
 
-    it('uses distinct priority badge colors for each priority', async () => {
+    it('shows one quiet surface and distinct icons for priorities', async () => {
         getMock.mockResolvedValueOnce(makeIndexResponse(seedTasks));
 
         const wrapper = mount(TaskList, {
@@ -80,9 +77,9 @@ describe('TaskList listing and filters', () => {
         await flushPromises();
         await nextTick();
 
-        expect(wrapper.get('[data-testid="task-priority-badge-1"]').classes()).toContain('bg-rose-100');
-        expect(wrapper.get('[data-testid="task-priority-badge-2"]').classes()).toContain('bg-fuchsia-100');
-        expect(wrapper.get('[data-testid="task-priority-badge-3"]').classes()).toContain('bg-cyan-100');
+        const badges = [1, 2, 3].map((id) => wrapper.get(`[data-testid="task-priority-badge-${id}"]`));
+        expect(new Set(badges.map((badge) => badge.get('svg').html())).size).toBe(3);
+        expect(badges.map((badge) => badge.text())).toEqual(['High', 'Medium', 'Low']);
 
         wrapper.unmount();
     });

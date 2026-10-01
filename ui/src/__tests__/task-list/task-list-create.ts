@@ -45,7 +45,7 @@ describe('TaskList create flow', () => {
 
         await wrapper.get('[data-testid="create-task-title"]').setValue('Created from UI');
         await wrapper.get('[data-testid="create-task-priority-high"]').trigger('click');
-        expect(wrapper.get('[data-testid="create-task-priority-high"]').classes()).toContain('bg-rose-100');
+        expect(wrapper.get('[data-testid="create-task-priority-high"]').attributes('aria-checked')).toBe('true');
         await wrapper.get('[data-testid="create-description-editor"] [data-testid="stub-editor-input"]').setValue(createdDescription);
         await wrapper.get('[data-testid="create-task-form"]').trigger('submit');
         await flushPromises();
@@ -221,7 +221,7 @@ describe('TaskList create flow', () => {
             }),
         );
         expect((wrapper.get('[data-testid="create-task-title"]').element as HTMLInputElement).value).toBe('Imported urgent fixes issue');
-        expect(wrapper.get('[data-testid="create-task-priority-high"]').classes()).toContain('bg-rose-100');
+        expect(wrapper.get('[data-testid="create-task-priority-high"]').attributes('aria-checked')).toBe('true');
         expect(wrapper.get('[data-testid="create-description-editor"] [data-testid="stub-editor-preview"]').text()).toContain(
             'Customer reports the urgent fixes API fails.',
         );

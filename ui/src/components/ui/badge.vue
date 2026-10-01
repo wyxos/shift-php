@@ -4,7 +4,7 @@ import { cva } from 'class-variance-authority'
 import { cn } from '@/lib/utils'
 
 const props = defineProps<{
-  variant?: 'default' | 'secondary' | 'destructive' | 'outline' | 'primary' | 'accent'
+  variant?: 'default' | 'secondary' | 'destructive' | 'outline' | 'primary' | 'accent' | 'state'
   class?: string
 }>()
 
@@ -20,6 +20,7 @@ const badgeVariants = cva(
         destructive:
           'border-transparent bg-destructive-surface text-destructive-foreground hover:bg-destructive-hover',
         outline: 'text-foreground',
+        state: 'border-border bg-muted/40 text-foreground gap-1.5 [&_svg]:size-3 [&_svg]:shrink-0',
         primary:
           'border-transparent bg-primary/10 text-primary border-primary/20 hover:bg-primary/20',
         accent:

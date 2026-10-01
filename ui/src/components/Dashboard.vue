@@ -4,7 +4,7 @@ import { Button } from '@shift/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@shift/ui/card';
 import { ChartContainer } from '@shift/ui/chart';
 import { VisAxis, VisDonut, VisGroupedBar, VisSingleContainer, VisXYContainer } from '@unovis/vue';
-import { CheckCircle2, Clock3, Flame, UserCircle2 } from 'lucide-vue-next';
+import { Clock3, Flame, MessageCircle, UserCircle2 } from 'lucide-vue-next';
 import { useRouter } from 'vue-router';
 import { useDashboardData } from './dashboard/useDashboardData';
 
@@ -49,8 +49,6 @@ const {
     fetchDashboard,
 } = useDashboardData();
 </script>
-
-
 
 <template>
     <div class="flex h-full flex-1 flex-col gap-4" data-testid="dashboard-view">
@@ -125,7 +123,9 @@ const {
                         <CardDescription>Created vs completed trend across the last 6 weeks.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <div v-if="throughputData.length === 0" class="text-muted-foreground py-8 text-center text-sm">No throughput history yet.</div>
+                        <div v-if="throughputData.length === 0" class="text-muted-foreground py-8 text-center text-sm">
+                            No throughput history yet.
+                        </div>
                         <ChartContainer v-else :config="throughputChartConfig" class="h-[300px] w-full" cursor>
                             <VisXYContainer :data="throughputData" :margin="{ left: -12, right: 12 }" :y-domain="[0, undefined]">
                                 <VisGroupedBar
@@ -164,12 +164,7 @@ const {
                         <div v-if="statusData.length === 0" class="text-muted-foreground py-8 text-center text-sm">No status data yet.</div>
                         <ChartContainer v-else :config="statusChartConfig" class="mx-auto h-[300px] max-w-[320px]">
                             <VisSingleContainer :data="statusData" :margin="{ top: 10, bottom: 10 }">
-                                <VisDonut
-                                    :value="statusDonutValue"
-                                    :color="statusDonutColor"
-                                    :arc-width="24"
-                                    :corner-radius="3"
-                                />
+                                <VisDonut :value="statusDonutValue" :color="statusDonutColor" :arc-width="24" :corner-radius="3" />
                             </VisSingleContainer>
                         </ChartContainer>
                     </CardContent>
@@ -253,12 +248,7 @@ const {
                         <div v-else class="grid gap-4 md:grid-cols-[240px_1fr] md:items-center">
                             <ChartContainer :config="ownershipChartConfig" class="mx-auto h-[220px] w-full max-w-[240px]">
                                 <VisSingleContainer :data="ownershipData" :margin="{ top: 8, bottom: 8 }">
-                                    <VisDonut
-                                        :value="ownershipDonutValue"
-                                        :color="ownershipDonutColor"
-                                        :arc-width="20"
-                                        :corner-radius="3"
-                                    />
+                                    <VisDonut :value="ownershipDonutValue" :color="ownershipDonutColor" :arc-width="20" :corner-radius="3" />
                                 </VisSingleContainer>
                             </ChartContainer>
                             <div class="space-y-2">
@@ -270,7 +260,9 @@ const {
                                     <div class="flex items-center gap-2">
                                         <span
                                             class="h-2.5 w-2.5 rounded-sm"
-                                            :style="{ backgroundColor: ownershipChartConfig[segment.segment as keyof typeof ownershipChartConfig]?.color }"
+                                            :style="{
+                                                backgroundColor: ownershipChartConfig[segment.segment as keyof typeof ownershipChartConfig]?.color,
+                                            }"
                                         />
                                         <span class="text-sm font-medium">{{ segment.label }}</span>
                                     </div>
@@ -287,7 +279,9 @@ const {
                         <CardDescription>How your submitted tasks are currently distributed.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <div v-if="myStatusData.length === 0" class="text-muted-foreground py-8 text-center text-sm">No personal status data yet.</div>
+                        <div v-if="myStatusData.length === 0" class="text-muted-foreground py-8 text-center text-sm">
+                            No personal status data yet.
+                        </div>
                         <ChartContainer v-else :config="myStatusChartConfig" class="h-[280px] w-full" cursor>
                             <VisXYContainer :data="myStatusData" :margin="{ left: 8, right: 12 }" :y-domain="[0, undefined]">
                                 <VisGroupedBar
@@ -314,11 +308,12 @@ const {
                 </Card>
             </div>
 
-            <Card v-if="metrics.awaiting_feedback > 0" class="border-amber-300/70 bg-amber-50/30 dark:border-amber-700/50 dark:bg-amber-950/15">
+            <Card v-if="metrics.awaiting_feedback > 0">
                 <CardContent class="flex items-center gap-3 py-4 text-sm">
-                    <CheckCircle2 class="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                    <MessageCircle class="text-muted-foreground h-4 w-4" />
                     <span>
-                        {{ metrics.awaiting_feedback }} task{{ metrics.awaiting_feedback === 1 ? '' : 's' }} are awaiting feedback and may block completion.
+                        {{ metrics.awaiting_feedback }} task{{ metrics.awaiting_feedback === 1 ? '' : 's' }} are awaiting feedback and may block
+                        completion.
                     </span>
                 </CardContent>
             </Card>

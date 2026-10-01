@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
-import { useRouter, useRoute } from 'vue-router';
-import axios from '../axios-config';
 import ActionIconButton from '@shared/components/ActionIconButton.vue';
-import { getPriorityBadgeClass, getPriorityLabel, getStatusBadgeClass, getStatusLabel } from '@shared/tasks/presentation';
-import { ArrowLeft, Pencil } from 'lucide-vue-next';
-import { Badge } from '@shift/ui/badge';
+import TaskStateBadge from '@shared/components/tasks/TaskStateBadge.vue';
+import { getPriorityLabel, getStatusLabel } from '@shared/tasks/presentation';
 import { Button } from '@shift/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@shift/ui/card';
+import { ArrowLeft, Pencil } from 'lucide-vue-next';
+import { computed, onMounted, ref } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import axios from '../axios-config';
 
 type Task = {
     id: number;
@@ -103,22 +103,14 @@ onMounted(fetchTask);
                 </div>
 
                 <div class="flex flex-wrap items-center gap-2">
-                    <Badge :class="getStatusBadgeClass(task.status)" variant="outline">
-                        {{ getStatusLabel(task.status) }}
-                    </Badge>
-                    <Badge :class="getPriorityBadgeClass(task.priority)" variant="outline">
-                        {{ getPriorityLabel(task.priority) }}
-                    </Badge>
+                    <TaskStateBadge kind="status" :value="task.status" />
+                    <TaskStateBadge kind="priority" :value="task.priority" />
                 </div>
             </CardHeader>
 
             <CardContent class="grid gap-4 sm:grid-cols-3">
-                <div
-                    v-for="row in detailRows"
-                    :key="row.label"
-                    class="border-border/70 bg-muted/35 rounded-xl border px-4 py-3"
-                >
-                    <div class="text-muted-foreground text-xs font-medium uppercase tracking-[0.16em]">{{ row.label }}</div>
+                <div v-for="row in detailRows" :key="row.label" class="border-border/70 bg-muted/35 rounded-xl border px-4 py-3">
+                    <div class="text-muted-foreground text-xs font-medium tracking-[0.16em] uppercase">{{ row.label }}</div>
                     <div class="text-foreground mt-2 text-sm font-medium">{{ row.value }}</div>
                 </div>
             </CardContent>
