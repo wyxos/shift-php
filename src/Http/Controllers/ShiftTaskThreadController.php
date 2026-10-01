@@ -73,6 +73,7 @@ class ShiftTaskThreadController extends Controller
     {
         $request->validate([
             'is_draft' => ['prohibited'],
+            'client_request_id' => ['nullable', 'uuid'],
         ]);
 
         $apiToken = config('shift.token');
@@ -108,6 +109,10 @@ class ShiftTaskThreadController extends Controller
                     'environment' => config('app.env'),
                 ],
             ];
+
+            if ($request->filled('client_request_id')) {
+                $payload['client_request_id'] = $request->input('client_request_id');
+            }
 
             // Add temp_identifier if available
             if ($hasTempIdentifier) {
