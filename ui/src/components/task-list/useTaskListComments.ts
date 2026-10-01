@@ -32,6 +32,7 @@ export function useTaskListComments({ editOpen, editTask }: UseTaskListCommentsO
             const response = await axios.post(`/shift/api/tasks/${taskId}/threads`, {
                 content: payload.html,
                 temp_identifier: payload.tempIdentifier,
+                client_request_id: payload.clientRequestId,
             });
             const data = response.data?.data ?? response.data;
             return data?.thread ?? data;

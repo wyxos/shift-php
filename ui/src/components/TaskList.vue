@@ -146,6 +146,7 @@ const {
     fetchThreads,
     resetCommentsState,
     handleThreadSend,
+    retryThreadSend,
     startThreadEdit,
     startReplyToMessage,
     cancelThreadEdit,
@@ -466,6 +467,7 @@ onMounted(async () => {
         :delete-thread-message="deleteThreadMessage"
         :cancel-thread-edit="cancelThreadEdit"
         :handle-thread-send="handleThreadSend"
+        :retry-thread-send="retryThreadSend"
         :update-edit-collaborators="updateEditCollaborators"
         :remove-attachment-from-task="removeAttachmentFromTask"
     />

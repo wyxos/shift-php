@@ -3,7 +3,7 @@ import axios from '@/axios-config';
 import ShiftEditor from '@shared/components/ShiftEditor.vue';
 import { imageTiles } from '@shared/tasks/image-tile';
 import { renderRichContent } from '@shared/tasks/rich-content';
-import { Paperclip } from 'lucide-vue-next';
+import { LoaderCircle, Paperclip, RotateCcw } from 'lucide-vue-next';
 import { ContextMenuContent, ContextMenuItem, ContextMenuPortal, ContextMenuRoot, ContextMenuSeparator, ContextMenuTrigger } from 'reka-ui';
 import { computed, type ComponentPublicInstance } from 'vue';
 import { aiImproveUrl, getTaskListAiImproveEnabled, removeTempUrl, resolveTempUrl, taskListUploadEndpoints } from './editor-config';
@@ -37,6 +37,7 @@ interface Props {
     deleteThreadMessage: (message: ThreadMessage) => boolean | Promise<boolean>;
     cancelThreadEdit: () => void;
     handleThreadSend: (payload: { html: string; attachments?: any[] }) => void | Promise<void>;
+    retryThreadSend: (message: ThreadMessage) => void;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -75,8 +76,8 @@ function assignCommentsScrollRef(value: Element | ComponentPublicInstance | null
         </div>
 
         <div :ref="assignCommentsScrollRef" class="flex-1 space-y-3 overflow-auto px-4 py-4" @load.capture="onCommentsMediaLoadCapture">
-            <div v-if="threadLoading" class="text-muted-foreground py-6 text-center text-sm">Loading comments...</div>
-            <div v-else-if="threadError" class="text-destructive py-6 text-center text-sm">{{ threadError }}</div>
+            <div v-if="threadLoading && threadMessages.length === 0" class="text-muted-foreground py-6 text-center text-sm">Loading comments...</div>
+            <div v-else-if="threadError && threadMessages.length === 0" class="text-destructive py-6 text-center text-sm">{{ threadError }}</div>
             <div v-else-if="threadMessages.length === 0" class="text-muted-foreground py-6 text-center text-sm">No comments yet.</div>
 
             <div v-for="message in threadMessages" :key="message.clientId" :class="message.isYou ? 'justify-end' : 'justify-start'" class="flex">
@@ -105,10 +106,11 @@ function assignCommentsScrollRef(value: Element | ComponentPublicInstance | null
                                     v-html="renderRichContent(message.content)"
                                 ></div>
                                 <div v-if="message.attachments?.length" class="mt-3 flex flex-wrap gap-2">
-                                    <a
+                                    <component
+                                        :is="message.pending || message.failed ? 'span' : 'a'"
                                         v-for="attachment in message.attachments"
                                         :key="attachment.id"
-                                        :href="attachment.url"
+                                        :href="message.pending || message.failed ? undefined : attachment.url"
                                         :class="
                                             message.isYou
                                                 ? 'border-white/20 bg-white/10 text-white hover:bg-white/15'
@@ -120,7 +122,7 @@ function assignCommentsScrollRef(value: Element | ComponentPublicInstance | null
                                     >
                                         <Paperclip class="h-3 w-3 shrink-0 opacity-80" />
                                         <span class="min-w-0 truncate">{{ attachment.original_filename }}</span>
-                                    </a>
+                                    </component>
                                 </div>
                             </div>
                         </ContextMenuTrigger>
@@ -169,8 +171,18 @@ function assignCommentsScrollRef(value: Element | ComponentPublicInstance | null
                         </ContextMenuPortal>
                     </ContextMenuRoot>
 
-                    <div :class="message.isYou ? 'text-right' : 'text-left'" class="text-muted-foreground mt-1 text-[11px]">
+                    <div :class="message.isYou ? 'justify-end' : 'justify-start'" class="text-muted-foreground mt-1 flex items-center gap-1.5 text-[11px]" role="status">
+                        <LoaderCircle v-if="message.pending" class="size-3 animate-spin" aria-hidden="true" />
                         {{ message.time }}
+                        <button
+                            v-if="message.failed"
+                            type="button"
+                            class="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-foreground underline-offset-2 hover:bg-accent hover:underline"
+                            :data-testid="`retry-comment-${message.clientId}`"
+                            @click="retryThreadSend(message)"
+                        >
+                            <RotateCcw class="size-3" aria-hidden="true" /> Retry
+                        </button>
                     </div>
                 </div>
             </div>

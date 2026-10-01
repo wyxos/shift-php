@@ -72,6 +72,7 @@ interface Props {
     deleteThreadMessage: (message: ThreadMessage) => boolean | Promise<boolean>;
     cancelThreadEdit: () => void;
     handleThreadSend: (payload: { html: string; attachments?: any[] }) => void | Promise<void>;
+    retryThreadSend: (message: ThreadMessage) => void;
     updateEditCollaborators: (value: TaskCollaboratorSelection) => void;
     removeAttachmentFromTask: (attachmentId: number) => void;
 }
@@ -196,6 +197,7 @@ const titleModel = computed({
                             :delete-thread-message="deleteThreadMessage"
                             :cancel-thread-edit="cancelThreadEdit"
                             :handle-thread-send="handleThreadSend"
+                            :retry-thread-send="retryThreadSend"
                         />
                     </div>
                 </div>
