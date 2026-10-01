@@ -71,6 +71,10 @@ class ShiftTaskThreadController extends Controller
      */
     public function store(Request $request, $taskId)
     {
+        $request->validate([
+            'is_draft' => ['prohibited'],
+        ]);
+
         $apiToken = config('shift.token');
         $project = config('shift.project');
 
@@ -189,6 +193,7 @@ class ShiftTaskThreadController extends Controller
 
         $request->validate([
             'content' => 'required|string',
+            'is_draft' => ['prohibited'],
             'temp_identifier' => 'nullable|string',
         ]);
 
