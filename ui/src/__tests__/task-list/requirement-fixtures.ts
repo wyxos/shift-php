@@ -1,0 +1,51 @@
+export const requirementItems = [
+    {
+        id: 20,
+        title: 'Portal reporting',
+        status: 'pending',
+        requirement_status: 'submitted',
+        priority: 'medium',
+        phase: 'requirement',
+        finalized: false,
+        environment: 'staging',
+    },
+];
+export const mixedRequirementItems = [
+    {
+        id: 20,
+        title: 'Portal reporting',
+        status: 'pending',
+        requirement_status: 'parked',
+        priority: 'medium',
+        phase: 'requirement',
+        finalized: false,
+        environment: 'staging',
+        batch: {
+            id: 5,
+            title: 'June scope',
+            total_items: 2,
+            requirement_items: 1,
+            ready_items: 0,
+            finalized_items: 1,
+        },
+    },
+    {
+        id: 21,
+        title: 'CSV export',
+        status: 'pending',
+        requirement_status: 'ready-to-finalize',
+        priority: 'medium',
+        phase: 'task',
+        finalized: true,
+        finalized_at: '2026-06-05T10:30:00Z',
+        environment: 'staging',
+        batch: {
+            id: 5,
+            title: 'June scope',
+            total_items: 2,
+            requirement_items: 1,
+            ready_items: 0,
+            finalized_items: 1,
+        },
+    },
+];
