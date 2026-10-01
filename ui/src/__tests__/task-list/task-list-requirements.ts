@@ -416,7 +416,7 @@ describe('TaskList requirements flow', () => {
         expect(wrapper.get('[data-testid="task-edit-sheet-title"]').text()).toBe('Portal reporting');
         expect(wrapper.text()).toContain('Clarifications');
         expect(wrapper.text()).toContain('Requirement state');
-        expect(wrapper.get('[data-testid="requirement-status-submitted"]').classes()).toContain('bg-slate-100');
+        expect(wrapper.get('[data-testid="requirement-status-trigger"]').text()).toContain('Submitted');
         expect(wrapper.find('[aria-label="Task status"]').exists()).toBe(false);
 
         const commentsEditor = wrapper.find('[data-testid="comments-editor"]');
@@ -480,10 +480,13 @@ describe('TaskList requirements flow', () => {
         await flushPromises();
         await nextTick();
 
-        await wrapper.get('[data-testid="requirement-status-parked"]').trigger('click');
+        wrapper
+            .findAllComponents({ name: 'TaskChoiceMenu' })
+            .find((control) => control.props('testIdPrefix') === 'requirement-status')!
+            .vm.$emit('update:modelValue', 'parked');
         await flushPromises();
         await nextTick();
-        expect(wrapper.get('[data-testid="requirement-status-parked"]').classes()).toContain('bg-orange-100');
+        expect(wrapper.get('[data-testid="requirement-status-trigger"]').text()).toContain('Parked');
 
         vi.advanceTimersByTime(800);
         await flushPromises();

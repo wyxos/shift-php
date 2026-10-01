@@ -140,20 +140,19 @@ describe('TaskList edit sheet', () => {
         expect(sheetLayout.classes()).toContain('lg:grid-cols-2');
         expect(detailsPane.classes()).toContain('min-w-0');
         expect(commentsPane.classes()).toContain('min-w-0');
-        expect(editStatusGroup.classes()).toContain('flex');
-        expect(editStatusGroup.classes()).toContain('flex-wrap');
-        expect(editStatusGroup.classes()).toContain('xl:grid-cols-4');
+        expect(editStatusGroup.text()).toContain('Pending');
+        expect(wrapper.get('[data-testid="task-choice-fields"]').classes()).toContain('grid-cols-2');
         expect(mobilePaneGroup.classes()).toContain('flex');
         expect(mobilePaneGroup.classes()).toContain('flex-wrap');
         expect(wrapper.get('[data-testid="edit-mobile-pane-details"]').text()).toContain('Details');
         expect(wrapper.get('[data-testid="edit-mobile-pane-comments"]').text()).toContain('Comments');
-        expect(wrapper.get('[data-testid="task-status-pending"]').classes()).toContain('bg-amber-100');
+        expect(wrapper.get('[data-testid="task-status-trigger"]').text()).toContain('Pending');
 
         wrapper.unmount();
         vi.useRealTimers();
     });
 
-    it('renders the owner priority buttons in a 3-column group inside the edit sheet', async () => {
+    it('renders the owner priority in a compact menu inside the edit sheet', async () => {
         (window as any).shiftConfig = { email: 'someone@example.com' };
 
         getMock
@@ -194,7 +193,7 @@ describe('TaskList edit sheet', () => {
         ).not.toContain('Task');
         expect(editPriorityGroup.classes()).toContain('flex');
         expect(editPriorityGroup.classes()).toContain('flex-wrap');
-        expect(wrapper.get('[data-testid="task-priority-high"]').classes()).toContain('bg-rose-100');
+        expect(wrapper.get('[data-testid="task-priority-trigger"]').text()).toContain('High');
 
         wrapper.unmount();
     });
@@ -466,10 +465,13 @@ describe('TaskList edit sheet', () => {
         await flushPromises();
         await nextTick();
 
-        await wrapper.get('[data-testid="task-status-in-progress"]').trigger('click');
+        wrapper
+            .findAllComponents({ name: 'TaskChoiceMenu' })
+            .find((control) => control.props('testIdPrefix') === 'task-status')!
+            .vm.$emit('update:modelValue', 'in-progress');
         await flushPromises();
         await nextTick();
-        expect(wrapper.get('[data-testid="task-status-in-progress"]').classes()).toContain('bg-sky-100');
+        expect(wrapper.get('[data-testid="task-status-trigger"]').text()).toContain('In Progress');
 
         expect(patchMock).not.toHaveBeenCalled();
         vi.advanceTimersByTime(800);

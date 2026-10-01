@@ -2,13 +2,13 @@
 import axios from '@/axios-config';
 import ShiftEditor from '@shared/components/ShiftEditor.vue';
 import TaskCollaboratorField from '@shared/components/TaskCollaboratorField.vue';
+import TaskChoiceMenu from '@shared/components/tasks/TaskChoiceMenu.vue';
 import type { TaskCollaboratorSelection } from '@shared/tasks/collaborators';
 import { getTaskCreatorEmail, getTaskCreatorName, getTaskEnvironment } from '@shared/tasks/metadata';
 import { getPriorityLabel, getRequirementStatusOptions, type TaskFilterOption } from '@shared/tasks/presentation';
 import { renderRichContent } from '@shared/tasks/rich-content';
 import { formatThreadTime } from '@shared/tasks/thread';
 import { Button } from '@shift/ui/button';
-import { ButtonGroup } from '@shift/ui/button-group';
 import { Label } from '@shift/ui/label';
 import { computed } from 'vue';
 import { aiImproveUrl, getTaskListAiImproveEnabled, removeTempUrl, resolveTempUrl, taskListUploadEndpoints } from './editor-config';
@@ -106,50 +106,42 @@ const editTaskEnvironmentLabel = computed(() => getTaskEnvironment(props.editTas
             </div>
         </div>
 
-        <div v-if="!isRequirement" class="space-y-2">
-            <Label class="text-muted-foreground">Status</Label>
-            <ButtonGroup
-                v-model="statusModel"
-                aria-label="Task status"
-                test-id-prefix="task-status"
-                :disabled="editLoading || editUploading"
-                :options="visibleStatusOptions"
-                :columns="2"
-                class="xl:grid-cols-4"
-            />
-        </div>
-
-        <div v-else class="space-y-2">
-            <Label class="text-muted-foreground">Requirement state</Label>
-            <ButtonGroup
-                v-model="requirementStatusModel"
-                aria-label="Requirement state"
-                test-id-prefix="requirement-status"
-                :disabled="editLoading || editUploading"
-                :options="requirementStatusOptions"
-                :columns="2"
-                class="xl:grid-cols-3"
-            />
-        </div>
-
-        <div class="space-y-2">
-            <Label class="text-muted-foreground">Priority</Label>
-            <template v-if="isOwner">
-                <ButtonGroup
-                    v-model="priorityModel"
-                    aria-label="Task priority"
-                    test-id-prefix="task-priority"
-                    :options="priorityOptions"
-                    :columns="3"
+        <div class="grid grid-cols-2 gap-3" data-testid="task-choice-fields">
+            <div v-if="!isRequirement" class="space-y-2">
+                <Label class="text-muted-foreground">Status</Label>
+                <TaskChoiceMenu
+                    v-model="statusModel"
+                    label="Task status"
+                    test-id-prefix="task-status"
+                    :disabled="editLoading || editUploading"
+                    :options="visibleStatusOptions"
                 />
-            </template>
-            <template v-else>
-                <div
-                    class="border-muted-foreground/30 bg-muted/10 text-foreground inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm"
-                >
-                    {{ getPriorityLabel(editTask.priority) }}
-                </div>
-            </template>
+            </div>
+
+            <div v-else class="space-y-2">
+                <Label class="text-muted-foreground">Requirement state</Label>
+                <TaskChoiceMenu
+                    v-model="requirementStatusModel"
+                    label="Requirement state"
+                    test-id-prefix="requirement-status"
+                    :disabled="editLoading || editUploading"
+                    :options="requirementStatusOptions"
+                />
+            </div>
+
+            <div class="space-y-2">
+                <Label class="text-muted-foreground">Priority</Label>
+                <template v-if="isOwner">
+                    <TaskChoiceMenu v-model="priorityModel" label="Task priority" test-id-prefix="task-priority" :options="priorityOptions" />
+                </template>
+                <template v-else>
+                    <div
+                        class="border-muted-foreground/30 bg-muted/10 text-foreground inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm"
+                    >
+                        {{ getPriorityLabel(editTask.priority) }}
+                    </div>
+                </template>
+            </div>
         </div>
 
         <div class="space-y-2">
