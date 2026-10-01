@@ -2,7 +2,9 @@
 import type { TaskCollaboratorSelection } from '@shared/tasks/collaborators';
 import type { TaskFilterOption } from '@shared/tasks/presentation';
 import { ButtonGroup } from '@shift/ui/button-group';
+import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from '@shift/ui/input-group';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@shift/ui/sheet';
+import { ArrowLeft } from 'lucide-vue-next';
 import { computed } from 'vue';
 import TaskEditCommentsPane from './TaskEditCommentsPane.vue';
 import TaskEditDetailsPane from './TaskEditDetailsPane.vue';
@@ -94,6 +96,7 @@ const titleModel = computed({
 <template>
     <Sheet :open="open" @update:open="setOpen">
         <SheetContent
+            :show-close="false"
             class="flex h-full w-screen max-w-none min-w-0 flex-col p-0 min-[1921px]:w-[50vw] md:w-screen xl:w-[75vw]"
             data-testid="task-edit-sheet-content"
             side="right"
@@ -102,17 +105,29 @@ const titleModel = computed({
             <form class="flex h-full min-h-0 flex-col" data-testid="edit-form">
                 <SheetHeader class="shrink-0 border-b px-6 py-5">
                     <SheetTitle class="min-w-0" data-testid="task-edit-sheet-title">
-                        <input
-                            v-if="editTask && isOwner"
-                            v-model="titleModel"
-                            :aria-label="titleInputLabel"
-                            class="border-input bg-background text-foreground placeholder:text-muted-foreground focus:border-ring focus-visible:border-ring block h-9 w-full min-w-0 rounded-md border px-3 py-1 text-lg font-semibold shadow-none transition-colors outline-none disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-100"
-                            data-shift-field-control
-                            data-testid="task-edit-title"
-                            required
-                            type="text"
-                        />
-                        <span v-else class="block truncate">{{ sheetTitle }}</span>
+                        <InputGroup data-testid="task-title-group">
+                            <InputGroupAddon>
+                                <InputGroupButton
+                                    size="icon-sm"
+                                    aria-label="Back to tasks"
+                                    data-testid="task-edit-back"
+                                    type="button"
+                                    @click="setOpen(false)"
+                                >
+                                    <ArrowLeft />
+                                </InputGroupButton>
+                            </InputGroupAddon>
+                            <InputGroupInput
+                                v-if="editTask && isOwner"
+                                v-model="titleModel"
+                                :aria-label="titleInputLabel"
+                                data-shift-field-control
+                                data-testid="task-edit-title"
+                                required
+                                type="text"
+                            />
+                            <span v-else class="block truncate">{{ sheetTitle }}</span>
+                        </InputGroup>
                     </SheetTitle>
                 </SheetHeader>
 
