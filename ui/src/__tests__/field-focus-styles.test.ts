@@ -58,9 +58,12 @@ describe('field focus styles', () => {
         const titleInputSource = source.slice(Math.max(0, titleInputIndex - 600), titleInputIndex + 300);
 
         expect(titleInputIndex).toBeGreaterThan(-1);
-        expectBorderOnlyFocusSource(titleInputSource);
-        expect(titleInputSource).toContain('border-input');
-        expect(titleInputSource).not.toContain('border-transparent');
+        expect(titleInputSource).toContain('<InputGroupInput');
+        const groupSource = readFileSync(join(process.cwd(), '../../../../shift/resources/js/components/ui/input-group/InputGroup.vue'), 'utf8');
+        expect(groupSource).toContain('border-input');
+        expect(groupSource).toContain('has-[[data-slot=input-group-control]:focus-visible]:border-ring');
+        expect(groupSource).not.toMatch(/focus-visible\]:ring/);
+        expect(groupSource).not.toContain('ring-offset');
     });
 
     it('keeps widget text fields border-only on focus', () => {
