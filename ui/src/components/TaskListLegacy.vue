@@ -204,19 +204,20 @@ onMounted(() => {
             <div v-else-if="tasks.length === 0" class="py-8 text-center text-muted-foreground">No tasks found</div>
 
             <ul v-else class="divide-y divide-border">
-                <li v-for="task in tasks" :key="task.id" class="flex flex-col py-4 sm:flex-row sm:items-center sm:gap-4">
+                <li v-for="task in tasks" :key="task.id" data-list-row class="flex flex-col py-4 sm:flex-row sm:items-center sm:gap-4">
                     <span class="flex-1 text-lg font-medium text-card-foreground">{{ task.title }}</span>
                     <Badge :variant="getStatusVariant(task.status)">
                         {{ task.status }}
                     </Badge>
                     <span class="ml-2 text-xs text-muted-foreground uppercase">{{ task.priority }}</span>
                     <div class="mt-2 flex space-x-2 sm:mt-0">
-                        <ActionIconButton as-child label="Edit task" title="Edit">
+                        <ActionIconButton data-row-action as-child label="Edit task" title="Edit">
                             <router-link :to="{ name: 'edit-task', params: { id: task.id.toString() } }">
                                 <Pencil class="h-4 w-4" />
                             </router-link>
                         </ActionIconButton>
                         <ActionIconButton
+                            data-row-action
                             label="Delete task"
                             title="Delete"
                             variant="destructive"
