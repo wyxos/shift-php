@@ -71,13 +71,13 @@ describe('TaskList collaborators', () => {
 
         expect(putMock).not.toHaveBeenCalled();
         expect(patchMock).toHaveBeenCalledWith('/shift/api/tasks/1/collaborators', {
-            environment: 'staging',
             internal_collaborator_ids: [],
             external_collaborators: [
                 {
                     id: 'client-2',
                     name: 'Project User',
                     email: 'project@example.com',
+                    environment: 'local',
                 },
             ],
         });
@@ -182,7 +182,6 @@ describe('TaskList collaborators', () => {
         await nextTick();
 
         expect(patchMock).toHaveBeenCalledWith('/shift/api/tasks/1/collaborators', {
-            environment: 'staging',
             internal_collaborator_ids: [],
             external_collaborators: [],
         });

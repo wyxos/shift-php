@@ -10,7 +10,7 @@ import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetT
 import { Plus, Trash2, Users } from 'lucide-vue-next';
 import { computed, ref } from 'vue';
 import { defaultSubmitterCollaborators, includesCurrentSubmitter } from './current-submitter';
-import { aiImproveUrl, getTaskListAiImproveEnabled, removeTempUrl, resolveTempUrl, taskListUploadEndpoints } from './editor-config';
+import { aiImproveUrl, getCurrentAppEnvironment, getTaskListAiImproveEnabled, removeTempUrl, resolveTempUrl, taskListUploadEndpoints } from './editor-config';
 
 type RequirementDraft = {
     key: number;
@@ -32,6 +32,7 @@ type RequirementPackPayload = {
             id: string | number;
             name: string;
             email: string;
+            environment: string;
         }>;
     }>;
     internal_collaborator_ids?: number[];
@@ -40,6 +41,7 @@ type RequirementPackPayload = {
         id: string | number;
         name: string;
         email: string;
+        environment: string;
     }>;
 };
 
@@ -134,6 +136,7 @@ function collaboratorPayload(collaborators: TaskCollaboratorSelection) {
             id: collaborator.id,
             name: collaborator.name,
             email: collaborator.email ?? '',
+            environment: collaborator.environment ?? getCurrentAppEnvironment(),
         })),
         include_submitter_as_collaborator: includesCurrentSubmitter(collaborators),
     };

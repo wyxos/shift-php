@@ -190,7 +190,7 @@ export const stubs = {
       </button>
       <button
         data-testid="stub-add-external-collaborator"
-        @click="$emit('update:modelValue', { internal: (modelValue && modelValue.internal) || [], external: [{ id: 'client-2', name: 'Project User', email: 'project@example.com' }] })"
+        @click="$emit('update:modelValue', { internal: (modelValue && modelValue.internal) || [], external: [{ id: 'client-2', name: 'Project User', email: 'project@example.com', environment: 'local' }] })"
       >
         add external
       </button>

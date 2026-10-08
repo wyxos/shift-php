@@ -73,7 +73,7 @@ class ShiftCollaboratorController extends Controller
         try {
             $payload = $this->resolveLocalCollaboratorPayload($search, paginate: true, perPage: 10);
 
-            return [$payload['users'], true, null];
+            return [array_map(fn (array $user): array => [...$user, 'environment' => $payload['environment']], $payload['users']), true, null];
         } catch (RuntimeException $exception) {
             return [[], false, $exception->getMessage()];
         }

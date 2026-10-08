@@ -73,7 +73,7 @@ const descriptionModel = computed({
 const visibleStatusOptions = computed(() => props.statusOptions.filter((option) => option.value !== 'closed'));
 const requirementStatusOptions = computed(() => getRequirementStatusOptions());
 const editTaskCreatorLabel = computed(() => getTaskCreatorName(props.editTask) ?? getTaskCreatorEmail(props.editTask) ?? 'Unknown');
-const editTaskEnvironmentLabel = computed(() => getTaskEnvironment(props.editTask) ?? 'Unknown');
+const editTaskEnvironmentLabel = computed(() => getTaskEnvironment(props.editTask) ?? 'N/A');
 </script>
 
 <template>

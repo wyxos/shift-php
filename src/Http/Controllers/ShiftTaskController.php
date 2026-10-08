@@ -186,6 +186,7 @@ class ShiftTaskController extends Controller
             'external_collaborators.*.id' => 'required',
             'external_collaborators.*.name' => 'required|string|max:255',
             'external_collaborators.*.email' => 'required|email',
+            'external_collaborators.*.environment' => 'nullable|string|max:255',
         ]);
 
         try {

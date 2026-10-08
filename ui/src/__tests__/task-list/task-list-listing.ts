@@ -94,7 +94,7 @@ describe('TaskList listing and filters', () => {
         await nextTick();
 
         expect(wrapper.get('[data-testid="task-environment-badge-1"]').text()).toContain('Staging');
-        expect(wrapper.get('[data-testid="task-environment-badge-3"]').text()).toContain('Unknown');
+        expect(wrapper.get('[data-testid="task-environment-badge-3"]').text()).toContain('N/A');
 
         wrapper.unmount();
     });

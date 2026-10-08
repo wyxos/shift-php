@@ -373,12 +373,12 @@ export function useTaskListEdit({
         if (!needsCoreUpdate && !needsCollaboratorUpdate) return;
         const collaboratorPayload = needsCollaboratorUpdate
             ? {
-                  environment: editTask.value.environment ?? currentAppEnvironment,
                   internal_collaborator_ids: editForm.value.collaborators.internal.map((collaborator) => Number(collaborator.id)),
                   external_collaborators: editForm.value.collaborators.external.map((collaborator) => ({
                       id: collaborator.id,
                       name: collaborator.name,
                       email: collaborator.email,
+                      environment: collaborator.environment ?? currentAppEnvironment,
                   })),
               }
             : null;

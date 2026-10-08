@@ -190,7 +190,7 @@ export function useTaskListListing(options: UseTaskListListingOptions = {}) {
     }
 
     function getTaskEnvironmentLabel(task: Task): string {
-        return getTaskEnvironment(task) ?? 'Unknown';
+        return getTaskEnvironment(task) ?? 'N/A';
     }
 
     return {

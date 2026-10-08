@@ -265,6 +265,7 @@ describe('TaskList requirements flow', () => {
                         id: 'client-2',
                         name: 'Project User',
                         email: 'project@example.com',
+                        environment: 'local',
                     },
                 ],
                 items: [
@@ -305,6 +306,7 @@ describe('TaskList requirements flow', () => {
                             id: 'client-2',
                             name: 'Project User',
                             email: 'project@example.com',
+                            environment: 'local',
                         },
                     ],
                 }),

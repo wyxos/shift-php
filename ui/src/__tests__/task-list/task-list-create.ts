@@ -107,6 +107,7 @@ describe('TaskList create flow', () => {
                         id: 'client-2',
                         name: 'Project User',
                         email: 'project@example.com',
+                        environment: 'local',
                     },
                 ],
             }),
