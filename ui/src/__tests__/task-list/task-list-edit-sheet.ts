@@ -124,15 +124,20 @@ describe('TaskList edit sheet', () => {
         expect(metadataLabels.map((label) => label.text())).toEqual(['Created by', 'Created', 'Updated', 'Environment']);
         metadataLabels.forEach((label) => {
             expect(label.classes()).not.toContain('uppercase');
-            expect(label.classes()).toContain('text-[11px]');
+            expect(label.classes()).toContain('text-xs');
+            expect(label.classes()).toContain('leading-4');
         });
         expect(wrapper.find('[data-testid="edit-task-environment-select"]').exists()).toBe(false);
         expect(wrapper.get('[data-testid="edit-task-created-by"]').text()).toContain('Taylor Brown');
         expect(wrapper.get('[data-testid="edit-task-updated-at"]').text()).toContain('21:55');
         expect(wrapper.find('[data-testid="edit-task-updated-at"] [data-testid="task-list-timestamp"]').exists()).toBe(true);
         expect(wrapper.text()).not.toContain('No attachments available');
-        expect(metadataGrid.classes()).toContain('sm:grid-cols-2');
+        expect(metadataGrid.classes()).toContain('grid-cols-2');
+        expect(metadataGrid.classes()).toContain('gap-x-4');
+        expect(metadataGrid.classes()).toContain('gap-y-3');
         expect(metadataGrid.classes()).toContain('xl:grid-cols-4');
+        expect(metadataGrid.get('[data-testid="edit-task-created-by"]').classes()).toContain('break-words');
+        expect(metadataGrid.get('[data-testid="edit-task-environment"]').classes()).toContain('break-words');
         expect(metadataGrid.classes()).not.toContain('rounded-lg');
         expect(sheetContent.classes()).toContain('w-screen');
         expect(sheetContent.classes()).toContain('md:w-screen');
@@ -490,6 +495,4 @@ describe('TaskList edit sheet', () => {
         wrapper.unmount();
         vi.useRealTimers();
     });
-
-
 });

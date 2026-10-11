@@ -81,26 +81,26 @@ const editTaskEnvironmentLabel = computed(() => getTaskEnvironment(props.editTas
         :class="[editMobilePane === 'comments' ? 'hidden lg:block' : 'block', 'min-w-0 space-y-6 pr-1 lg:min-h-0 lg:overflow-y-auto']"
         data-testid="task-edit-details-pane"
     >
-        <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4" data-testid="edit-task-meta">
-            <div class="space-y-1">
-                <div class="text-muted-foreground text-[11px] leading-4" data-testid="edit-task-meta-label">Created by</div>
-                <div class="text-foreground text-sm font-medium" data-testid="edit-task-created-by">{{ editTaskCreatorLabel }}</div>
+        <div class="grid grid-cols-2 gap-x-4 gap-y-3 xl:grid-cols-4" data-testid="edit-task-meta">
+            <div class="min-w-0 space-y-1">
+                <div class="text-muted-foreground text-xs leading-4" data-testid="edit-task-meta-label">Created by</div>
+                <div class="text-foreground text-sm font-medium break-words" data-testid="edit-task-created-by">{{ editTaskCreatorLabel }}</div>
             </div>
-            <div class="space-y-1">
-                <div class="text-muted-foreground text-[11px] leading-4" data-testid="edit-task-meta-label">Created</div>
+            <div class="min-w-0 space-y-1">
+                <div class="text-muted-foreground text-xs leading-4" data-testid="edit-task-meta-label">Created</div>
                 <div class="text-foreground text-sm font-medium" data-testid="edit-task-created-at">
                     <TaskListTimestamp :value="editTask.created_at" />
                 </div>
             </div>
-            <div class="space-y-1">
-                <div class="text-muted-foreground text-[11px] leading-4" data-testid="edit-task-meta-label">Updated</div>
+            <div class="min-w-0 space-y-1">
+                <div class="text-muted-foreground text-xs leading-4" data-testid="edit-task-meta-label">Updated</div>
                 <div class="text-foreground text-sm font-medium" data-testid="edit-task-updated-at">
                     <TaskListTimestamp :value="editTask.updated_at" />
                 </div>
             </div>
-            <div class="space-y-1">
-                <div class="text-muted-foreground text-[11px] leading-4" data-testid="edit-task-meta-label">Environment</div>
-                <div class="text-foreground text-sm font-medium" data-testid="edit-task-environment">
+            <div class="min-w-0 space-y-1">
+                <div class="text-muted-foreground text-xs leading-4" data-testid="edit-task-meta-label">Environment</div>
+                <div class="text-foreground text-sm font-medium break-words" data-testid="edit-task-environment">
                     {{ editTaskEnvironmentLabel }}
                 </div>
             </div>

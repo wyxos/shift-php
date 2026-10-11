@@ -1,7 +1,7 @@
 <script lang="ts" setup>
+import TaskSaveStatus from '@shared/components/tasks/TaskSaveStatus.vue';
 import type { TaskCollaboratorSelection } from '@shared/tasks/collaborators';
 import type { TaskFilterOption } from '@shared/tasks/presentation';
-import TaskSaveStatus from '@shared/components/tasks/TaskSaveStatus.vue';
 import { ButtonGroup } from '@shift/ui/button-group';
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from '@shift/ui/input-group';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@shift/ui/sheet';
@@ -178,6 +178,8 @@ const titleModel = computed({
 
                         <TaskEditCommentsPane
                             :is-requirement="isRequirement"
+                            :description="editForm.description"
+                            :task-id="editTask.id"
                             :edit-mobile-pane="editMobilePane"
                             :thread-loading="threadLoading"
                             :thread-error="threadError"
