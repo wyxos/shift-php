@@ -41,6 +41,14 @@ function props(overrides: Record<string, unknown> = {}) {
 describe('TaskEditCommentsPane mobile report context', () => {
     it('keeps a live draft while expanding context and switching panes, then resets expansion for another task', async () => {
         const wrapper = mount(TaskEditCommentsPane, { props: props(), global: { stubs } });
+        const pane = wrapper.get('[data-testid="task-edit-comments-pane"]');
+        const history = wrapper.get('[aria-label="Comments history"]');
+        expect(pane.classes()).toContain('md:rounded-2xl');
+        expect(pane.classes()).not.toContain('rounded-2xl');
+        expect(history.classes()).toContain('shift-scrollbar');
+        expect(history.attributes('tabindex')).toBe('0');
+        expect(history.classes()).toContain('md:px-4');
+        expect(history.classes()).not.toContain('px-4');
         const report = wrapper.get<HTMLDetailsElement>('[data-testid="task-report-context"]');
         expect(report.classes()).toContain('lg:hidden');
         expect(report.element.open).toBe(false);

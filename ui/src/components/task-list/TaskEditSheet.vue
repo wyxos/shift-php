@@ -102,13 +102,13 @@ const titleModel = computed({
     <Sheet :open="open" @update:open="setOpen">
         <SheetContent
             :show-close="false"
-            class="flex h-full w-screen max-w-none min-w-0 flex-col p-0 min-[1921px]:w-[50vw] md:w-screen xl:w-[75vw]"
+            class="flex h-full min-w-0 flex-col p-0"
             data-testid="task-edit-sheet-content"
             side="right"
             width-preset="task"
         >
             <form class="flex h-full min-h-0 flex-col" data-testid="edit-form">
-                <SheetHeader class="shrink-0 border-b px-6 py-5">
+                <SheetHeader class="shrink-0 border-b px-4 py-5 md:px-6">
                     <SheetTitle class="min-w-0" data-testid="task-edit-sheet-title">
                         <InputGroup class="min-h-12" data-testid="task-title-group">
                             <InputGroupAddon>
@@ -138,7 +138,7 @@ const titleModel = computed({
                     <TaskSaveStatus v-if="editTask" :state="taskSaveState" :error="taskSaveError" @retry="retryTaskSave" />
                 </SheetHeader>
 
-                <div v-if="editTask && !editLoading && !editError" class="border-b px-6 py-4 lg:hidden">
+                <div v-if="editTask && !editLoading && !editError" class="border-b px-4 py-4 md:px-6 lg:hidden">
                     <ButtonGroup
                         v-model="mobilePaneModel"
                         :touch-friendly="true"
@@ -149,11 +149,22 @@ const titleModel = computed({
                     />
                 </div>
 
-                <div class="flex-1 overflow-y-auto px-6 pt-6 pb-10 lg:min-h-0 lg:overflow-hidden lg:py-10">
+                <div
+                    :class="editMobilePane === 'comments' ? 'overflow-hidden' : 'overflow-y-auto'"
+                    class="shift-scrollbar focus-visible:ring-ring min-h-0 flex-1 px-4 pt-4 pb-4 focus-visible:ring-2 focus-visible:outline-none focus-visible:ring-inset md:px-6 lg:overflow-hidden lg:py-6"
+                    role="region"
+                    aria-label="Task sheet content"
+                    :tabindex="editMobilePane === 'comments' ? -1 : 0"
+                >
                     <div v-if="editLoading" class="text-muted-foreground py-8 text-center">Loading task...</div>
                     <div v-else-if="editError" class="text-destructive py-8 text-center">{{ editError }}</div>
 
-                    <div v-else-if="editTask" class="grid min-h-0 gap-6 lg:h-full lg:grid-cols-2" data-testid="task-edit-sheet-layout">
+                    <div
+                        v-else-if="editTask"
+                        :class="editMobilePane === 'comments' ? 'h-full' : ''"
+                        class="grid min-h-0 gap-6 lg:h-full lg:grid-cols-2"
+                        data-testid="task-edit-sheet-layout"
+                    >
                         <TaskEditDetailsPane
                             :edit-task="editTask"
                             :edit-loading="editLoading"

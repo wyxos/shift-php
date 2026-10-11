@@ -78,7 +78,13 @@ const editTaskEnvironmentLabel = computed(() => getTaskEnvironment(props.editTas
 
 <template>
     <div
-        :class="[editMobilePane === 'comments' ? 'hidden lg:block' : 'block', 'min-w-0 space-y-6 pr-1 lg:min-h-0 lg:overflow-y-auto']"
+        :class="[
+            editMobilePane === 'comments' ? 'hidden lg:block' : 'block',
+            'shift-scrollbar focus-visible:ring-ring min-w-0 space-y-6 focus-visible:ring-2 focus-visible:outline-none focus-visible:ring-inset lg:min-h-0 lg:overflow-y-auto lg:pr-1',
+        ]"
+        aria-label="Task details"
+        role="region"
+        tabindex="0"
         data-testid="task-edit-details-pane"
     >
         <div class="grid grid-cols-2 gap-x-4 gap-y-3 xl:grid-cols-4" data-testid="edit-task-meta">

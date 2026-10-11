@@ -67,18 +67,25 @@ function assignCommentsScrollRef(value: Element | ComponentPublicInstance | null
     <div
         :class="[
             editMobilePane === 'details' ? 'hidden lg:flex' : 'flex',
-            'border-muted-foreground/10 via-background to-background max-h-[70vh] min-h-[28rem] min-w-0 flex-col overflow-hidden rounded-2xl border bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900/5 lg:h-full lg:max-h-none lg:min-h-0',
+            'task-comments-pane shift-scrollbar md:border-muted-foreground/10 md:via-background md:to-background h-full max-h-none min-h-0 min-w-0 flex-col overflow-hidden md:rounded-2xl md:border md:bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] md:from-slate-900/5',
         ]"
         data-testid="task-edit-comments-pane"
     >
-        <div class="border-muted-foreground/10 flex items-center justify-between border-b px-4 py-3">
+        <div class="border-muted-foreground/10 flex shrink-0 items-center justify-between py-3 md:border-b md:px-4">
             <div>
                 <h3 class="text-foreground text-sm font-semibold">{{ isRequirement ? 'Clarifications' : 'Comments' }}</h3>
             </div>
             <div class="text-muted-foreground text-xs">{{ threadMessages.length }} message{{ threadMessages.length === 1 ? '' : 's' }}</div>
         </div>
 
-        <div :ref="assignCommentsScrollRef" class="flex-1 space-y-3 overflow-auto px-4 py-4" @load.capture="onCommentsMediaLoadCapture">
+        <div
+            :ref="assignCommentsScrollRef"
+            class="task-comments-history shift-scrollbar focus-visible:ring-ring min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain py-4 focus-visible:ring-2 focus-visible:outline-none focus-visible:ring-inset md:px-4"
+            role="region"
+            aria-label="Comments history"
+            tabindex="0"
+            @load.capture="onCommentsMediaLoadCapture"
+        >
             <TaskReportContext :key="taskId ?? 'no-task'" :description="description" />
             <div v-if="threadLoading && threadMessages.length === 0" class="text-muted-foreground py-6 text-center text-sm">Loading comments...</div>
             <div v-else-if="threadError && threadMessages.length === 0" class="text-destructive py-6 text-center text-sm">{{ threadError }}</div>
@@ -196,7 +203,7 @@ function assignCommentsScrollRef(value: Element | ComponentPublicInstance | null
             </div>
         </div>
 
-        <div class="border-muted-foreground/10 bg-background/80 border-t px-4 py-3 backdrop-blur">
+        <div class="border-muted-foreground/10 bg-background/80 shrink-0 py-3 backdrop-blur md:border-t md:px-4">
             <div v-if="threadEditError" class="text-destructive mb-2 text-xs">{{ threadEditError }}</div>
             <p v-if="!threadEditingId" class="text-muted-foreground mb-2 text-xs" data-testid="comment-audience-hint">
                 Visible to task collaborators, including external collaborators. Other collaborators may be notified.
@@ -216,6 +223,7 @@ function assignCommentsScrollRef(value: Element | ComponentPublicInstance | null
                 :temp-identifier="threadTempIdentifier"
                 :upload-endpoints="taskListUploadEndpoints"
                 data-testid="comments-editor"
+                class="task-comment-composer"
                 :placeholder="threadEditingId ? 'Edit your comment...' : 'Write a comment...'"
                 @cancel="cancelThreadEdit"
                 @uploading="setThreadComposerUploading"
