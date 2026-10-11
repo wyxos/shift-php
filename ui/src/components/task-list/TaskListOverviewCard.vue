@@ -25,6 +25,7 @@ interface Props {
     draftStatuses: string[];
     draftPriorities: string[];
     draftSearchTerm: string;
+    searchTerm: string;
     draftEnvironmentTerm: string;
     environmentOptions?: Option[];
     draftSortBy: string;
@@ -43,6 +44,7 @@ interface Props {
     setDraftStatuses: (value: string[]) => void;
     setDraftPriorities: (value: string[]) => void;
     setDraftSearchTerm: (value: string) => void;
+    searchTasks: (term: string) => void;
     setDraftEnvironmentTerm: (value: string) => void;
     setDraftSortBy: (value: string) => void;
     resetFilters: () => void;
@@ -83,6 +85,8 @@ const props = withDefaults(defineProps<Props>(), {
         :draft-statuses="props.draftStatuses"
         :draft-priorities="props.draftPriorities"
         :draft-search-term="props.draftSearchTerm"
+        :search-term="props.searchTerm"
+        :search-tasks="props.searchTasks"
         :draft-environment-term="props.draftEnvironmentTerm"
         :environment-options="props.environmentOptions"
         :draft-sort-by="props.draftSortBy"

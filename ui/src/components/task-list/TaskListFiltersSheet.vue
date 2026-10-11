@@ -139,7 +139,7 @@ const sortByModel = computed({
 
                 <div class="space-y-2">
                     <Label class="text-muted-foreground">Sort By</Label>
-                    <ButtonGroup v-model="sortByModel" test-id-prefix="sort-by" aria-label="Sort tasks" :options="sortByOptions" :columns="3" />
+                    <ButtonGroup v-model="sortByModel" test-id-prefix="sort-by" aria-label="Sort tasks" :options="sortByOptions" :columns="3" :touch-friendly="true" />
                 </div>
             </div>
 

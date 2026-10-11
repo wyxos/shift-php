@@ -3,11 +3,11 @@ import axios from '@/axios-config';
 import ShiftEditor from '@shared/components/ShiftEditor.vue';
 import TaskCollaboratorField from '@shared/components/TaskCollaboratorField.vue';
 import TaskChoiceMenu from '@shared/components/tasks/TaskChoiceMenu.vue';
+import TaskListTimestamp from '@shared/components/tasks/TaskListTimestamp.vue';
 import type { TaskCollaboratorSelection } from '@shared/tasks/collaborators';
 import { getTaskCreatorEmail, getTaskCreatorName, getTaskEnvironment } from '@shared/tasks/metadata';
 import { getPriorityLabel, getRequirementStatusOptions, type TaskFilterOption } from '@shared/tasks/presentation';
 import { renderRichContent } from '@shared/tasks/rich-content';
-import { formatThreadTime } from '@shared/tasks/thread';
 import { Button } from '@shift/ui/button';
 import { Label } from '@shift/ui/label';
 import { computed } from 'vue';
@@ -89,13 +89,13 @@ const editTaskEnvironmentLabel = computed(() => getTaskEnvironment(props.editTas
             <div class="space-y-1">
                 <div class="text-muted-foreground text-[11px] leading-4" data-testid="edit-task-meta-label">Created</div>
                 <div class="text-foreground text-sm font-medium" data-testid="edit-task-created-at">
-                    {{ editTask.created_at ? formatThreadTime(editTask.created_at) : 'Unknown' }}
+                    <TaskListTimestamp :value="editTask.created_at" />
                 </div>
             </div>
             <div class="space-y-1">
                 <div class="text-muted-foreground text-[11px] leading-4" data-testid="edit-task-meta-label">Updated</div>
                 <div class="text-foreground text-sm font-medium" data-testid="edit-task-updated-at">
-                    {{ editTask.updated_at ? formatThreadTime(editTask.updated_at) : 'Unknown' }}
+                    <TaskListTimestamp :value="editTask.updated_at" />
                 </div>
             </div>
             <div class="space-y-1">
@@ -149,6 +149,7 @@ const editTaskEnvironmentLabel = computed(() => getTaskEnvironment(props.editTas
             <template v-if="isOwner">
                 <ShiftEditor
                     v-model="descriptionModel"
+                    :touch-friendly="true"
                     :axios-instance="axios"
                     :enable-ai-improve="aiImproveEnabled"
                     :ai-improve-url="aiImproveUrl"

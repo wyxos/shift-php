@@ -190,9 +190,13 @@ function assignCommentsScrollRef(value: Element | ComponentPublicInstance | null
 
         <div class="border-muted-foreground/10 bg-background/80 border-t px-4 py-3 backdrop-blur">
             <div v-if="threadEditError" class="text-destructive mb-2 text-xs">{{ threadEditError }}</div>
+            <p v-if="!threadEditingId" class="text-muted-foreground mb-2 text-xs" data-testid="comment-audience-hint">
+                Visible to task collaborators, including external collaborators. Other collaborators may be notified.
+            </p>
             <ShiftEditor
                 :ref="assignThreadComposerRef"
                 v-model="threadComposerModel"
+                :touch-friendly="true"
                 :axios-instance="axios"
                 :enable-ai-improve="aiImproveEnabled"
                 :ai-context="threadAiContext"

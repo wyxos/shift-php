@@ -8,3 +8,4 @@ import './task-list/task-list-listing';
 import './task-list/task-list-metadata';
 import './task-list/task-list-requirement-submitters';
 import './task-list/task-list-requirements';
+import './task-list/task-list-save-status';

@@ -70,6 +70,7 @@ describe('TaskList edit sheet', () => {
         expect(getMock).toHaveBeenCalledWith('/shift/api/tasks/1/threads');
         expect(wrapper.text()).toContain('Created');
         expect(wrapper.text()).toContain('Comments');
+        expect(wrapper.get('[data-testid="comment-audience-hint"]').text()).toContain('Other collaborators may be notified.');
         expect(wrapper.text()).toContain('First');
         expect(wrapper.text()).toContain('Second');
 
@@ -127,7 +128,8 @@ describe('TaskList edit sheet', () => {
         });
         expect(wrapper.find('[data-testid="edit-task-environment-select"]').exists()).toBe(false);
         expect(wrapper.get('[data-testid="edit-task-created-by"]').text()).toContain('Taylor Brown');
-        expect(wrapper.get('[data-testid="edit-task-updated-at"]').text()).toBe('21:55');
+        expect(wrapper.get('[data-testid="edit-task-updated-at"]').text()).toContain('21:55');
+        expect(wrapper.find('[data-testid="edit-task-updated-at"] [data-testid="task-list-timestamp"]').exists()).toBe(true);
         expect(wrapper.text()).not.toContain('No attachments available');
         expect(metadataGrid.classes()).toContain('sm:grid-cols-2');
         expect(metadataGrid.classes()).toContain('xl:grid-cols-4');
@@ -488,4 +490,6 @@ describe('TaskList edit sheet', () => {
         wrapper.unmount();
         vi.useRealTimers();
     });
+
+
 });

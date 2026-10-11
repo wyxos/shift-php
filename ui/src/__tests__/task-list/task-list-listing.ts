@@ -34,6 +34,33 @@ describe('TaskList listing and filters', () => {
         wrapper.unmount();
     });
 
+    it('searches from the list toolbar and clears an empty result', async () => {
+        getMock
+            .mockResolvedValueOnce(makeIndexResponse(defaultTasks))
+            .mockResolvedValueOnce(makeIndexResponse([]))
+            .mockResolvedValueOnce(makeIndexResponse(defaultTasks));
+
+        const wrapper = mount(TaskList, { global: { stubs } });
+        await flushPromises();
+
+        await wrapper.get('[data-testid="task-list-search"]').setValue('missing title');
+        await wrapper.get('form[role="search"]').trigger('submit');
+        await flushPromises();
+
+        expect(getMock).toHaveBeenLastCalledWith('/shift/api/tasks', {
+            params: expect.objectContaining({ search: 'missing title' }),
+        });
+        expect(wrapper.get('[data-testid="task-list-clear-search"]').text()).toContain('Clear search');
+
+        await wrapper.get('[data-testid="task-list-clear-search"]').trigger('click');
+        await flushPromises();
+        expect(getMock).toHaveBeenLastCalledWith('/shift/api/tasks', {
+            params: expect.not.objectContaining({ search: expect.anything() }),
+        });
+        expect(wrapper.findAll('[data-testid="task-row"]')).toHaveLength(defaultTasks.length);
+        wrapper.unmount();
+    });
+
     it('shows a useful setup message when the embedded task list cannot reach shift', async () => {
         const networkError = new Error('Network Error');
         (networkError as any).code = 'ERR_NETWORK';

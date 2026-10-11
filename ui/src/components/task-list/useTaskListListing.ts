@@ -36,6 +36,7 @@ export function useTaskListListing(options: UseTaskListListingOptions = {}) {
     const draftStatuses = computed(() => activeFilters.value.draftStatuses.value);
     const draftPriorities = computed(() => activeFilters.value.draftPriorities.value);
     const draftSearchTerm = computed(() => activeFilters.value.draftSearchTerm.value);
+    const appliedSearchTerm = computed(() => activeFilters.value.appliedSearchTerm.value);
     const draftEnvironmentTerm = computed(() => activeFilters.value.draftEnvironmentTerm.value);
     const draftSortBy = computed(() => activeFilters.value.draftSortBy.value);
     const statusOptions = computed(() => activeFilters.value.statusOptions);
@@ -166,6 +167,13 @@ export function useTaskListListing(options: UseTaskListListingOptions = {}) {
         activeFilters.value.filtersOpen.value = false;
     }
 
+    function searchTasks(term: string) {
+        activeFilters.value.draftSearchTerm.value = term;
+        activeFilters.value.appliedSearchTerm.value = term;
+        currentPage.value = 1;
+        void fetchTasks();
+    }
+
     function goToPage(page: number) {
         const next = Math.max(1, Math.min(lastPage.value, page));
         if (next === currentPage.value) return;
@@ -195,6 +203,7 @@ export function useTaskListListing(options: UseTaskListListingOptions = {}) {
 
     return {
         activeFilterCount,
+        appliedSearchTerm,
         applyFilters,
         currentPage,
         deleteLoading,
@@ -217,6 +226,7 @@ export function useTaskListListing(options: UseTaskListListingOptions = {}) {
         loading,
         priorityOptions,
         resetFilters,
+        searchTasks,
         selectAllPriorities: () => activeFilters.value.selectAllPriorities(),
         selectAllStatuses: () => activeFilters.value.selectAllStatuses(),
         setDraftEnvironmentTerm,

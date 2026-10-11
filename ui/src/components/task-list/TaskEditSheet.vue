@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import type { TaskCollaboratorSelection } from '@shared/tasks/collaborators';
 import type { TaskFilterOption } from '@shared/tasks/presentation';
+import TaskSaveStatus from '@shared/components/tasks/TaskSaveStatus.vue';
 import { ButtonGroup } from '@shift/ui/button-group';
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from '@shift/ui/input-group';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@shift/ui/sheet';
@@ -29,6 +30,8 @@ interface Props {
     editTask: TaskDetail | null;
     editLoading: boolean;
     editError: string | null;
+    taskSaveState: 'idle' | 'pending' | 'saving' | 'saved' | 'error';
+    taskSaveError: string | null;
     editUploading: boolean;
     editForm: EditFormModel;
     isOwner: boolean;
@@ -48,6 +51,7 @@ interface Props {
     threadEditingId: number | null;
     threadEditError: string | null;
     setOpen: (value: boolean) => void;
+    retryTaskSave: () => void;
     setEditUploading: (value: boolean) => void;
     setEditTitle: (value: string) => void;
     setEditPriority: (value: string) => void;
@@ -106,10 +110,11 @@ const titleModel = computed({
             <form class="flex h-full min-h-0 flex-col" data-testid="edit-form">
                 <SheetHeader class="shrink-0 border-b px-6 py-5">
                     <SheetTitle class="min-w-0" data-testid="task-edit-sheet-title">
-                        <InputGroup data-testid="task-title-group">
+                        <InputGroup class="min-h-12" data-testid="task-title-group">
                             <InputGroupAddon>
                                 <InputGroupButton
                                     size="icon-sm"
+                                    class="max-md:size-11 [@media(pointer:coarse)]:size-11"
                                     aria-label="Back to tasks"
                                     data-testid="task-edit-back"
                                     type="button"
@@ -130,11 +135,13 @@ const titleModel = computed({
                             <span v-else class="block truncate">{{ sheetTitle }}</span>
                         </InputGroup>
                     </SheetTitle>
+                    <TaskSaveStatus v-if="editTask" :state="taskSaveState" :error="taskSaveError" @retry="retryTaskSave" />
                 </SheetHeader>
 
                 <div v-if="editTask && !editLoading && !editError" class="border-b px-6 py-4 lg:hidden">
                     <ButtonGroup
                         v-model="mobilePaneModel"
+                        :touch-friendly="true"
                         aria-label="Edit task section"
                         test-id-prefix="edit-mobile-pane"
                         :options="mobilePaneOptions"

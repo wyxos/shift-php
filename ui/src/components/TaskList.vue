@@ -66,6 +66,7 @@ const {
     draftStatuses,
     draftPriorities,
     draftSearchTerm,
+    appliedSearchTerm,
     draftEnvironmentTerm,
     draftSortBy,
     activeFilterCount,
@@ -73,6 +74,7 @@ const {
     setDraftStatuses,
     setDraftPriorities,
     setDraftSearchTerm,
+    searchTasks,
     setDraftEnvironmentTerm,
     setDraftSortBy,
     highlightTask,
@@ -167,6 +169,9 @@ const {
     isOwner,
     canManageCollaborators,
     taskAttachments,
+    taskSaveState,
+    taskSaveError,
+    retryTaskSave,
     setEditUploading,
     setEditTitle,
     setEditPriority,
@@ -374,6 +379,8 @@ onMounted(async () => {
         :draft-statuses="draftStatuses"
         :draft-priorities="draftPriorities"
         :draft-search-term="draftSearchTerm"
+        :search-term="appliedSearchTerm"
+        :search-tasks="searchTasks"
         :draft-environment-term="draftEnvironmentTerm"
         :environment-options="environmentOptions"
         :draft-sort-by="draftSortBy"
@@ -425,6 +432,9 @@ onMounted(async () => {
         :edit-task="editTask"
         :edit-loading="editLoading"
         :edit-error="editError"
+        :task-save-state="taskSaveState"
+        :task-save-error="taskSaveError"
+        :retry-task-save="retryTaskSave"
         :edit-uploading="editUploading"
         :edit-form="editForm"
         :is-owner="isOwner"
