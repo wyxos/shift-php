@@ -65,7 +65,7 @@ class ShiftTestCommand extends Command
         }
 
         $this->warn('This command creates a real QA task in your configured SHIFT project.');
-        $this->line("Creating a QA task in SHIFT project {$project} from {$appUrl}.");
+        $this->line("Creating an API QA task from {$appUrl}.");
 
         $response = Http::withToken($token)
             ->acceptJson()
