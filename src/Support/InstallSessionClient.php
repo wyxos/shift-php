@@ -112,7 +112,7 @@ class InstallSessionClient
         return $this->normalizeProject($response);
     }
 
-    public function finalize(array $session, array $project): array
+    public function finalize(array $session, array $project, ?bool $feedbackEnabled = null): array
     {
         $sessionId = $this->requireSessionId($session);
         $payload = array_filter([
@@ -125,6 +125,10 @@ class InstallSessionClient
             'project_token' => $project['token'] ?? null,
             'selection' => $project['id'] ?? $project['token'] ?? null,
         ], static fn ($value) => $value !== null && $value !== '');
+
+        if ($feedbackEnabled !== null) {
+            $payload['feedback_enabled'] = $feedbackEnabled;
+        }
 
         $response = $this->requestJsonWithFallbacks(array_filter([
             $this->attemptIfUrls('POST', $this->sessionUrls($session, ['finalize_url']), $payload),

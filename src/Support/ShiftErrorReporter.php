@@ -17,8 +17,16 @@ class ShiftErrorReporter
 
     public function reportThrowable(Throwable $exception): bool
     {
+        return $this->reportThrowableWithResult($exception) !== null;
+    }
+
+    /**
+     * @return array{id: ?int}|null
+     */
+    public function reportThrowableWithResult(Throwable $exception): ?array
+    {
         if (! $this->configured()) {
-            return false;
+            return null;
         }
 
         return $this->send([
@@ -44,8 +52,9 @@ class ShiftErrorReporter
 
     /**
      * @param  array<string, mixed>  $payload
+     * @return array{id: ?int}|null
      */
-    private function send(array $payload): bool
+    private function send(array $payload): ?array
     {
         $payload = $this->scrubber->scrubArray([
             'project' => (string) config('shift.project'),
@@ -62,10 +71,16 @@ class ShiftErrorReporter
                 ->timeout((int) config('shift.errors.timeout', 3))
                 ->post($this->endpoint(), $payload);
         } catch (Throwable) {
-            return false;
+            return null;
         }
 
-        return $response->successful();
+        if (! $response->successful()) {
+            return null;
+        }
+
+        $taskId = $response->json('task.id');
+
+        return ['id' => is_int($taskId) && $taskId > 0 ? $taskId : null];
     }
 
     private function configured(): bool

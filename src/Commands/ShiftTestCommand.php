@@ -6,10 +6,12 @@ use Illuminate\Console\Command;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
+use RuntimeException;
+use Wyxos\Shift\Support\ShiftErrorReporter;
 
 class ShiftTestCommand extends Command
 {
-    protected $signature = 'shift:test';
+    protected $signature = 'shift:test {--error : Send a safe sample through automatic error reporting instead of creating an API QA task.}';
 
     protected $description = 'Create a QA task in SHIFT to verify SDK configuration.';
 
@@ -32,6 +34,35 @@ class ShiftTestCommand extends Command
         $project = trim((string) config('shift.project'));
         $appUrl = rtrim(trim((string) config('app.url')), '/');
         $environment = trim((string) config('app.env', ''));
+
+        if ((bool) $this->option('error')) {
+            if (! (bool) config('shift.errors.enabled', true)) {
+                $this->error('Automatic error reporting is disabled. Set SHIFT_ERROR_REPORTING_ENABLED=true and clear cached config before testing.');
+
+                return self::FAILURE;
+            }
+
+            $this->warn('This command sends a safe sample error to your configured SHIFT project.');
+
+            $result = app(ShiftErrorReporter::class)->reportThrowableWithResult(new RuntimeException('SHIFT automatic error reporting QA sample'));
+
+            if ($result === null) {
+                $this->error('SHIFT did not accept the sample error. Check the URL, credentials, project and environment settings.');
+
+                return self::FAILURE;
+            }
+
+            $this->info('SHIFT accepted the sample automatic error report.');
+
+            if ($result['id'] !== null) {
+                $this->line('Open the resulting task: '.$baseUrl.'/tasks?task='.$result['id']);
+            } else {
+                $this->warn('SHIFT did not return a task ID.');
+                $this->line('Open '.$baseUrl.'/connect, then select the configured project to find the latest automatic error report.');
+            }
+
+            return self::SUCCESS;
+        }
 
         $this->warn('This command creates a real QA task in your configured SHIFT project.');
         $this->line("Creating a QA task in SHIFT project {$project} from {$appUrl}.");
@@ -58,6 +89,12 @@ class ShiftTestCommand extends Command
             ])));
 
             $this->info('QA task created successfully'.($reference !== '' ? ": {$reference}" : '.'));
+
+            if ($id !== null) {
+                $this->line('Open this QA task: '.$baseUrl.'/tasks?task='.rawurlencode((string) $id));
+            }
+
+            $this->line('This API QA task does not verify the Feedback widget or automatic error reporting.');
 
             return self::SUCCESS;
         }

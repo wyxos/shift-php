@@ -22,6 +22,8 @@ class InstallShiftCommand extends Command
 
     private bool $usedBrowserVerification = false;
 
+    private ?string $selectedProjectId = null;
+
     private ?string $installSessionRealtimeWarning = null;
 
     protected $signature = 'install:shift
@@ -35,6 +37,7 @@ class InstallShiftCommand extends Command
         $this->info('Starting SHIFT installation.');
         $this->environmentRegisteredDuringCredentialResolution = false;
         $this->usedBrowserVerification = false;
+        $this->selectedProjectId = null;
 
         try {
             [$environment, $url] = $this->resolveApplicationContext();
@@ -79,6 +82,25 @@ class InstallShiftCommand extends Command
 
         $this->newLine();
         $this->info('SHIFT installation complete.');
+        $connectUrl = $this->shiftBaseUrl().'/connect';
+
+        if ($this->selectedProjectId !== null) {
+            $connectUrl .= '?project_id='.rawurlencode($this->selectedProjectId);
+        }
+
+        $this->line("Finish and verify this application connection: <info>{$connectUrl}</info>");
+        $this->line('Feedback: enable it for this environment in SHIFT, ensure SHIFT_WIDGET_ENABLED=true, then submit a report from the application widget.');
+        $this->line('Automatic errors: ensure SHIFT_ERROR_REPORTING_ENABLED=true, then run php artisan shift:test --error to send a safe sample error.');
+
+        if (! (bool) config('shift.widget.enabled', true)) {
+            $this->warn('Feedback is disabled in this application (SHIFT_WIDGET_ENABLED=false). Keep this setting if intentional, or set it to true and clear cached config.');
+        }
+
+        if (! (bool) config('shift.errors.enabled', true)) {
+            $this->warn('Automatic error reporting is disabled in this application (SHIFT_ERROR_REPORTING_ENABLED=false). Keep this setting if intentional, or set it to true and clear cached config.');
+        }
+
+        $this->line('php artisan shift:test creates an API QA task; it does not verify the Feedback widget or automatic error reporting.');
 
         if ($this->confirm('Create a QA task in the linked SHIFT project now?', false)) {
             $this->newLine();
@@ -232,7 +254,10 @@ class InstallShiftCommand extends Command
         $session = $this->waitForInstallSessionApproval($client, $session, $approvalListener);
         $projects = $client->projects($session);
         $selectedProject = $this->chooseOrCreateInstallableProject($client, $session, $projects);
-        $credentials = $client->finalize($session, $selectedProject);
+        $rawProjectId = $selectedProject['raw']['id'] ?? null;
+        $this->selectedProjectId = is_string($rawProjectId) || is_int($rawProjectId) ? (string) $rawProjectId : null;
+        $enableFeedback = $this->confirm('Enable Feedback for this application environment in SHIFT now?', false);
+        $credentials = $client->finalize($session, $selectedProject, $enableFeedback ? true : null);
 
         $this->environmentRegisteredDuringCredentialResolution = true;
         $this->usedBrowserVerification = true;
