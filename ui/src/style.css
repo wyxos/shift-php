@@ -1,6 +1,7 @@
 @import '../../../../resources/css/app.css';
 @import '@shared/styles/scrollbars.css';
 @import '@shared/styles/task-sheet.css';
+@import '@shared/styles/motion.css';
 
 /* Ensure Tailwind scans the same portal sources the SDK resolves via aliases.
    We include both the SDK harness copies and the sibling SHIFT portal repo for local path-repo work. */

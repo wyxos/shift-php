@@ -155,6 +155,7 @@ const editTaskEnvironmentLabel = computed(() => getTaskEnvironment(props.editTas
             <template v-if="isOwner">
                 <ShiftEditor
                     v-model="descriptionModel"
+                    accessible-label="Task description"
                     :touch-friendly="true"
                     :axios-instance="axios"
                     :enable-ai-improve="aiImproveEnabled"

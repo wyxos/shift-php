@@ -75,4 +75,31 @@ describe('TaskEditCommentsPane mobile report context', () => {
         expect(wrapper.find('[data-testid="task-report-context"]').exists()).toBe(false);
         wrapper.unmount();
     });
+
+    it('exposes comment actions and a labelled composer without changing bubble content', async () => {
+        const message = {
+            clientId: 'message-5',
+            id: 5,
+            author: 'Taylor',
+            time: '10:45',
+            content: '<p>Can you check the export?</p>',
+            audience: 'all' as const,
+            isYou: true,
+        };
+        const wrapper = mount(TaskEditCommentsPane, { props: props({ threadMessages: [message] }), global: { stubs } });
+
+        const bubble = wrapper.get('[data-testid="comment-bubble-5"]');
+        const trigger = wrapper.get('[data-testid="comment-actions-5"]');
+        expect(bubble.classes()).toContain('task-comment-own');
+        expect(bubble.classes()).not.toContain('bg-sky-600');
+        expect(bubble.text()).toContain('Can you check the export?');
+        expect(trigger.attributes('aria-label')).toBe('Actions for comment by Taylor');
+        expect(trigger.attributes('disabled')).toBeUndefined();
+        expect(wrapper.get('[data-testid="comments-editor"]').attributes('accessible-label')).toBe('Write a comment');
+
+        await wrapper.setProps({ threadEditingId: 5, threadMessages: [{ ...message, pending: true }] });
+        expect(wrapper.get('[data-testid="comments-editor"]').attributes('accessible-label')).toBe('Edit comment');
+        expect(wrapper.get('[data-testid="comment-actions-5"]').attributes('disabled')).toBeDefined();
+        wrapper.unmount();
+    });
 });
