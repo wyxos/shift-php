@@ -29,7 +29,9 @@ Applies inside `packages/shift-php/**` except where `ui/AGENTS.md` is more speci
 - After UI or public asset changes, publish with `php artisan shift:publish --group=public`.
 - After config or template changes, publish with `php artisan shift:publish --group=all`.
 - This directory has its own `.git`; package commits, tags, and releases happen here.
-- `npm run release` still runs `release.mjs`, but unattended releases should prefer `node ~/Developer/wyxos/scripts/release-shift.mjs shift-php ...` or `... both ...`.
+- `npm run release` runs `release.mjs` and uses Zephyr’s public release adviser to assess SDK commits and pending changes since the latest merged release tag. Do not supply an exact patch version by habit. Automatic releases skip unchanged package contents; an explicit version override can intentionally tag unchanged contents. An exact `--version` override intentionally bypasses assessment.
+- Use `npm run release -- --dry-run --non-interactive` to preview the recommendation without building, committing, tagging, or pushing. Missing adviser dependencies must fail; Zephyr may warn and use its heuristic fallback when Codex is unavailable.
+- Unattended releases should prefer `node ~/Developer/wyxos/scripts/release-shift.mjs shift-php ...` or `... both ...`.
 
 ## Local and Private Environment Rules
 - Do not break local or private `.test` and LAN flows when touching install, collaborator, or proxy code.

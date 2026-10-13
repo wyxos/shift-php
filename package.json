@@ -1,12 +1,16 @@
 {
-    "scripts": {
-        "release": "node release.mjs"
-    },
+  "scripts": {
+    "release": "node release.mjs",
+    "test:release": "node --test tests/release.test.mjs"
+  },
   "dependencies": {
     "execa": "^9.5.3",
     "fs-extra": "^11.3.0",
     "inquirer": "^12.6.2",
     "semver": "^7.7.2",
     "simple-git": "^3.27.0"
+  },
+  "devDependencies": {
+    "@wyxos/zephyr": "^0.10.0"
   }
 }
