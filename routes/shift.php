@@ -7,6 +7,7 @@ use Wyxos\Shift\Http\Controllers\ShiftCollaboratorController;
 use Wyxos\Shift\Http\Controllers\ShiftController;
 use Wyxos\Shift\Http\Controllers\ShiftDashboardController;
 use Wyxos\Shift\Http\Controllers\ShiftExternalRoleController;
+use Wyxos\Shift\Http\Controllers\ShiftInboxController;
 use Wyxos\Shift\Http\Controllers\ShiftNotificationController;
 use Wyxos\Shift\Http\Controllers\ShiftRequirementController;
 use Wyxos\Shift\Http\Controllers\ShiftTaskController;
@@ -36,6 +37,9 @@ Route::middleware([
         // Task routes
         Route::get('/shift/api/dashboard', [ShiftDashboardController::class, 'index'])->name('dashboard.index');
         Route::get('/shift/api/tasks', [ShiftTaskController::class, 'index'])->name('tasks.index');
+        Route::get('/shift/api/inbox', [ShiftInboxController::class, 'index'])->name('shift.inbox.index');
+        Route::patch('/shift/api/inbox/read-all', [ShiftInboxController::class, 'readAll'])->name('shift.inbox.read-all');
+        Route::patch('/shift/api/inbox/{notification}/read', [ShiftInboxController::class, 'read'])->name('shift.inbox.read');
         Route::get('/shift/api/requirements', [ShiftRequirementController::class, 'index'])->name('requirements.index');
         Route::post('/shift/api/requirements/batches', [ShiftRequirementController::class, 'store'])->name('requirements.batches.store');
         Route::get('/shift/api/external-roles/capabilities', [ShiftExternalRoleController::class, 'capabilities'])->name('external-roles.capabilities');
