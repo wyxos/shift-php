@@ -252,8 +252,8 @@ class InstallShiftCommand extends Command
         }
 
         $session = $this->waitForInstallSessionApproval($client, $session, $approvalListener);
-        $projects = $client->projects($session);
-        $selectedProject = $this->chooseOrCreateInstallableProject($client, $session, $projects);
+        $installable = $client->installableProjects($session);
+        $selectedProject = $this->chooseOrCreateInstallableProject($client, $session, $installable['projects'], $installable['organisations']);
         $rawProjectId = $selectedProject['raw']['id'] ?? null;
         $this->selectedProjectId = is_string($rawProjectId) || is_int($rawProjectId) ? (string) $rawProjectId : null;
         $enableFeedback = $this->confirm('Enable Feedback for this application environment in SHIFT now?', false);
@@ -350,12 +350,12 @@ class InstallShiftCommand extends Command
         }
     }
 
-    private function chooseOrCreateInstallableProject(InstallSessionClient $client, array $session, array $projects): array
+    private function chooseOrCreateInstallableProject(InstallSessionClient $client, array $session, array $projects, ?array $organisations): array
     {
         if ($projects === []) {
             $this->warn('No manageable SHIFT projects were found for your account.');
 
-            return $this->createInstallableProject($client, $session);
+            return $this->createInstallableProject($client, $session, $organisations);
         }
 
         $options = [];
@@ -373,15 +373,16 @@ class InstallShiftCommand extends Command
         $selection = $this->choice('Select which SHIFT project to link to this application', $options, 0);
 
         if ($selection === $createOption) {
-            return $this->createInstallableProject($client, $session);
+            return $this->createInstallableProject($client, $session, $organisations);
         }
 
         return $projectsByOption[$selection] ?? $projects[0];
     }
 
-    private function createInstallableProject(InstallSessionClient $client, array $session): array
+    private function createInstallableProject(InstallSessionClient $client, array $session, ?array $organisations): array
     {
         $defaultName = $this->defaultInstallProjectName();
+        $organisationId = $this->chooseInstallOrganisation($organisations);
 
         while (true) {
             $name = trim((string) $this->ask('Enter a name for the new SHIFT project', $defaultName));
@@ -392,11 +393,52 @@ class InstallShiftCommand extends Command
                 continue;
             }
 
-            $project = $client->createProject($session, $name);
+            $project = $client->createProject($session, $name, $organisationId);
+
+            if ($organisationId !== null && $project['organisation_id'] !== $organisationId) {
+                throw new RuntimeException('SHIFT did not confirm the new project belongs to the selected organisation. Installation stopped before credentials were saved.');
+            }
+
             $this->info("Created SHIFT project: {$project['name']}");
 
             return $project;
         }
+    }
+
+    private function chooseInstallOrganisation(?array $organisations): ?string
+    {
+        if ($organisations === null) {
+            $this->warn('SHIFT did not list manageable organisations. This portal may be older; verify the new project organisation in SHIFT after installation.');
+
+            return null;
+        }
+
+        if ($organisations === []) {
+            return null;
+        }
+
+        if (count($organisations) === 1) {
+            $organisation = $organisations[0];
+
+            if (! $this->confirm("Create this project under {$organisation['name']}?", true)) {
+                throw new RuntimeException('SHIFT project creation cancelled. Select an organisation to continue.');
+            }
+
+            return $organisation['id'];
+        }
+
+        $options = [];
+        $organisationsByOption = [];
+
+        foreach (array_values($organisations) as $index => $organisation) {
+            $label = sprintf('[%d] %s', $index + 1, $organisation['name']);
+            $options[] = $label;
+            $organisationsByOption[$label] = $organisation;
+        }
+
+        $selection = $this->choice('Select the organisation for the new SHIFT project', $options);
+
+        return $organisationsByOption[$selection]['id'];
     }
 
     private function defaultInstallProjectName(): string
