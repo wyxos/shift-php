@@ -53,13 +53,13 @@ describe('InboxNotifications', () => {
     it('loads only when opened, and reads the current page on explicit refresh', async () => {
         const wrapper = mountInbox();
         expect(get).not.toHaveBeenCalled();
-        expect(wrapper.get('[aria-label="Open notifications"]').exists()).toBe(true);
+        expect(wrapper.find('[aria-label="Open notifications"]').exists()).toBe(true);
 
         await wrapper.get('[aria-label="Open notifications"]').trigger('click');
         await flushPromises();
         expect(get).toHaveBeenCalledWith('/shift/api/inbox', expect.objectContaining({ params: { page: 1, per_page: 15 } }));
         expect(wrapper.text()).toContain('Reply on Fixture task');
-        expect(wrapper.get('[aria-label="Open notifications, 1 unread"]').exists()).toBe(true);
+        expect(wrapper.find('[aria-label="Open notifications, 1 unread"]').exists()).toBe(true);
 
         await wrapper.get('[aria-label="Refresh notifications"]').trigger('click');
         await flushPromises();
@@ -86,7 +86,7 @@ describe('InboxNotifications', () => {
         await flushPromises();
         expect(patch).toHaveBeenCalledWith('/shift/api/inbox/notification-1/read');
         expect(push).toHaveBeenCalledWith({ path: '/tasks', query: { task: '12' } });
-        expect(wrapper.get('[aria-label="Open notifications"]').exists()).toBe(true);
+        expect(wrapper.find('[aria-label="Open notifications"]').exists()).toBe(true);
     });
 
     it('keeps the notification available when marking it read fails', async () => {

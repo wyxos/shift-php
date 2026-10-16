@@ -1,27 +1,27 @@
 {
-  "_x-BmvzaSn4.js": {
-    "file": "assets/x-BmvzaSn4.js",
+  "_x-i_BRStXB.js": {
+    "file": "assets/x-i_BRStXB.js",
     "name": "x"
   },
   "index.html": {
-    "file": "assets/app-BVwQDAPO.js",
+    "file": "assets/app-Bm62ai0k.js",
     "name": "app",
     "src": "index.html",
     "isEntry": true,
     "imports": [
-      "_x-BmvzaSn4.js"
+      "_x-i_BRStXB.js"
     ],
     "css": [
-      "assets/app-o17RpiJP.css"
+      "assets/app-D9HVvRm8.css"
     ]
   },
   "src/widget.ts": {
-    "file": "assets/widget-CMTz98Xf.js",
+    "file": "assets/widget-DD8wwUWa.js",
     "name": "widget",
     "src": "src/widget.ts",
     "isEntry": true,
     "imports": [
-      "_x-BmvzaSn4.js"
+      "_x-i_BRStXB.js"
     ],
     "css": [
       "assets/widget-Cns6XTdO.css"

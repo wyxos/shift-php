@@ -38,4 +38,25 @@ describe('App.vue', () => {
             'data-position': 'bottom-center',
         });
     });
+
+    it('keeps a named return link to the consuming app in the header', () => {
+        window.shiftConfig.appName = 'Fixture Consumer';
+        window.shiftConfig.baseUrl = 'https://consumer.example.test/';
+        const wrapper = mount(App, {
+            global: {
+                stubs: {
+                    AppContent: { template: '<main><slot /></main>' },
+                    AppSidebarHeader: { template: '<header><slot name="navigation" /></header>' },
+                    AuthErrorModal: { template: '<div />' },
+                    RouterView: { template: '<section />' },
+                    ShiftShell: { template: '<div><slot /></div>' },
+                    ShiftSidebar: { template: '<aside />' },
+                },
+            },
+        });
+
+        expect(wrapper.get('header a').attributes('href')).toBe('https://consumer.example.test/');
+        expect(wrapper.get('header a').attributes('aria-label')).toBe('Back to Fixture Consumer');
+        expect(wrapper.get('header a').text()).toBe('Back to Fixture Consumer');
+    });
 });

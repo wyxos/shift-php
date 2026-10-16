@@ -15,10 +15,11 @@ import { useRoute } from 'vue-router';
 import { computed, onMounted, ref } from 'vue';
 import { Home, Inbox, Settings } from 'lucide-vue-next';
 import AppLogo from '@shift/components/AppLogo.vue';
+import ShiftAccountMenu from './ShiftAccountMenu.vue';
 
 const appUrl = window.shiftConfig.baseUrl;
 const username = window.shiftConfig.username;
-const userEmail = window.shiftConfig.email;
+const appName = window.shiftConfig.appName?.trim() || 'application';
 const route = useRoute();
 const canManageExternalRoles = ref(false);
 
@@ -89,17 +90,10 @@ onMounted(async () => {
         </SidebarContent>
 
         <SidebarFooter>
+            <p v-if="username" class="text-muted-foreground truncate px-2 text-xs group-data-[collapsible=icon]:hidden">Signed in through {{ appName }}</p>
             <SidebarMenu>
                 <SidebarMenuItem v-if="username">
-                    <SidebarMenuButton size="lg" class="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground">
-                        <div class="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-                            <span class="text-xs font-semibold">{{ username.charAt(0).toUpperCase() }}</span>
-                        </div>
-                        <div class="grid flex-1 text-left text-sm leading-tight">
-                            <span class="truncate font-medium">{{ username }}</span>
-                            <span v-if="userEmail" class="truncate text-xs text-muted-foreground">{{ userEmail }}</span>
-                        </div>
-                    </SidebarMenuButton>
+                    <ShiftAccountMenu />
                 </SidebarMenuItem>
             </SidebarMenu>
         </SidebarFooter>

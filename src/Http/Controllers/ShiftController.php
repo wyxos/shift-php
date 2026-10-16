@@ -3,6 +3,7 @@
 namespace Wyxos\Shift\Http\Controllers;
 
 use Illuminate\Routing\Controller;
+use Illuminate\Routing\Exceptions\UrlGenerationException;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Route;
@@ -89,7 +90,7 @@ class ShiftController extends Controller
     private function injectLoginRoute(string $html): string
     {
         $loginRoute = Route::has('login') ? route('login') : null;
-        $logoutRoute = Route::has('logout') ? route('logout') : null;
+        $logout = $this->logoutAction();
         $baseUrl = config('app.url');
         $appName = config('app.name');
         $shiftUrl = $this->resolveShiftUrl();
@@ -102,7 +103,9 @@ class ShiftController extends Controller
 
         $shiftConfig = json_encode([
             'loginRoute' => $loginRoute,
-            'logoutRoute' => $logoutRoute,
+            'logoutRoute' => $logout['url'],
+            'logoutMethod' => $logout['method'],
+            'csrfToken' => $logout['url'] !== null ? csrf_token() : null,
             'baseUrl' => $baseUrl,
             'appName' => $appName,
             'username' => $username,
@@ -111,7 +114,7 @@ class ShiftController extends Controller
             'aiEnabled' => $aiEnabled,
             'appEnvironment' => (string) config('app.env', 'production'),
             'shiftUrl' => $shiftUrl,
-        ], JSON_UNESCAPED_SLASHES);
+        ], JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_THROW_ON_ERROR);
 
         $script = <<<SCRIPT
 <script>
@@ -122,7 +125,7 @@ SCRIPT;
         $html = $this->injectShiftFavicon($html, $shiftUrl);
 
         // Inject just before the first <script type="module">
-        $injected = preg_replace('/(<script\s+type="module")/i', $script."\n$1", $html, 1);
+        $injected = preg_replace_callback('/(<script\s+type="module")/i', fn (array $match): string => $script."\n".$match[1], $html, 1);
 
         return is_string($injected) ? $injected : $html;
     }
@@ -132,6 +135,37 @@ SCRIPT;
         $url = rtrim((string) config('shift.url', 'https://shift.wyxos.com'), '/');
 
         return $url !== '' ? $url : 'https://shift.wyxos.com';
+    }
+
+    /** @return array{url: ?string, method: ?string} */
+    private function logoutAction(): array
+    {
+        $unavailable = ['url' => null, 'method' => null];
+        $route = Route::getRoutes()->getByName('logout');
+        if ($route === null) {
+            return $unavailable;
+        }
+
+        $method = collect(['POST', 'DELETE', 'PUT', 'PATCH'])->first(fn (string $method): bool => in_array($method, $route->methods(), true));
+        if ($method === null) {
+            return $unavailable;
+        }
+
+        try {
+            $url = route('logout');
+        } catch (UrlGenerationException) {
+            return $unavailable;
+        }
+
+        $parts = parse_url($url);
+        $port = $parts['port'] ?? (($parts['scheme'] ?? null) === 'https' ? 443 : 80);
+        if (($parts['scheme'] ?? null) !== request()->getScheme()
+            || strtolower($parts['host'] ?? '') !== strtolower(request()->getHost())
+            || $port !== request()->getPort()) {
+            return $unavailable;
+        }
+
+        return ['url' => route('logout', [], false), 'method' => $method];
     }
 
     private function injectShiftFavicon(string $html, string $shiftUrl): string

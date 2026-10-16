@@ -3,7 +3,9 @@
 interface Window {
     shiftConfig: {
         loginRoute: string;
-        logoutRoute: string;
+        logoutRoute: string | null;
+        logoutMethod?: 'POST' | 'DELETE' | 'PUT' | 'PATCH' | null;
+        csrfToken?: string | null;
         baseUrl: string;
         appName: string;
         username: string;
