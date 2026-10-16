@@ -185,7 +185,7 @@ export function useDashboardData() {
         },
     } satisfies ChartConfig;
 
-    const ownershipChartConfig = {
+    const ownershipChartConfig = computed<ChartConfig>(() => ({
         value: {
             label: 'Tasks',
             color: 'var(--chart-1)',
@@ -198,7 +198,7 @@ export function useDashboardData() {
             label: 'Shared With You',
             color: 'var(--chart-3)',
         },
-    } satisfies ChartConfig;
+    }));
 
     const priorityChartConfig = {
         value: {
@@ -342,7 +342,7 @@ export function useDashboardData() {
     }
 
     function ownershipDonutColor(item: DonutDatum): string | undefined {
-        return ownershipChartConfig[item.segment as keyof typeof ownershipChartConfig]?.color;
+        return ownershipChartConfig.value[item.segment]?.color;
     }
 
     function priorityBarColor(item: OrderedDatum): string | undefined {

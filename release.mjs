@@ -6,7 +6,7 @@ import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 import semver from 'semver';
 import inquirer from 'inquirer';
-import simpleGit from 'simple-git';
+import { simpleGit } from 'simple-git';
 import { execa } from 'execa';
 
 const PACKAGE_DIR = fileURLToPath(new URL('.', import.meta.url));
@@ -106,7 +106,7 @@ export async function main(options = parseOptions()) {
     const advisor = version ? null : await loadAdvisor();
     if (!options.dryRun) {
         console.log('📦 Installing and building frontend...');
-        await execa('npm', ['install'], { cwd: UI_PATH, stdio: 'inherit' });
+        await execa('npm', ['ci'], { cwd: UI_PATH, stdio: 'inherit' });
         await execa('npm', ['run', 'build'], { cwd: UI_PATH, stdio: 'inherit' });
         await git.add('.');
     }

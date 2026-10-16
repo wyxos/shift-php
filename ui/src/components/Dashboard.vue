@@ -261,7 +261,7 @@ const {
                                         <span
                                             class="h-2.5 w-2.5 rounded-sm"
                                             :style="{
-                                                backgroundColor: ownershipChartConfig[segment.segment as keyof typeof ownershipChartConfig]?.color,
+                                                backgroundColor: ownershipDonutColor(segment),
                                             }"
                                         />
                                         <span class="text-sm font-medium">{{ segment.label }}</span>
