@@ -80,6 +80,11 @@ class InstallSessionClient
 
     public function projects(array $session): array
     {
+        return $this->installableProjects($session)['projects'];
+    }
+
+    public function installableProjects(array $session): array
+    {
         $sessionId = $this->requireSessionId($session);
 
         $response = $this->requestJsonWithFallbacks(array_filter([
@@ -92,10 +97,15 @@ class InstallSessionClient
             $this->attempt('GET', $this->restfulSessionUrls($sessionId, ['/projects']), $this->sessionQuery($session)),
         ]), 'Unable to load installable SHIFT projects.');
 
-        return $this->normalizeProjects($response);
+        $payload = new InstallProjectPayload($response);
+
+        return [
+            'projects' => $payload->projects(),
+            'organisations' => $payload->organisations(),
+        ];
     }
 
-    public function createProject(array $session, string $name): array
+    public function createProject(array $session, string $name, ?string $organisationId = null): array
     {
         $sessionId = $this->requireSessionId($session);
         $payload = array_filter([
@@ -103,13 +113,14 @@ class InstallSessionClient
             'session' => $sessionId,
             'session_id' => $sessionId,
             'name' => trim($name),
+            'organisation_id' => $organisationId,
         ], static fn ($value) => $value !== null && $value !== '');
 
         $response = $this->requestJsonWithFallbacks([
             $this->attempt('POST', $this->candidateUrls(self::CREATE_PROJECT_PATHS), $payload),
         ], 'Unable to create a SHIFT project for this install session.');
 
-        return $this->normalizeProject($response);
+        return (new InstallProjectPayload($response))->project();
     }
 
     public function finalize(array $session, array $project, ?bool $feedbackEnabled = null): array
@@ -363,120 +374,6 @@ class InstallSessionClient
             'channel' => $channel,
             'event' => $event,
         ], static fn ($value) => $value !== null && $value !== '');
-    }
-
-    private function normalizeProjects(array $payload): array
-    {
-        $items = $this->listValue($payload, [
-            'data.projects',
-            'projects',
-            'data',
-        ]);
-
-        $projects = [];
-
-        foreach ($items as $item) {
-            if (! is_array($item)) {
-                continue;
-            }
-
-            $project = $this->normalizeProjectItem($item);
-
-            if ($project === null) {
-                continue;
-            }
-
-            $projects[] = $project;
-        }
-
-        return $projects;
-    }
-
-    private function normalizeProject(array $payload): array
-    {
-        $item = $this->pathValue($payload, 'data.project');
-
-        if (! is_array($item)) {
-            $item = $this->pathValue($payload, 'project');
-        }
-
-        if (is_array($item)) {
-            $project = $this->normalizeProjectItem($item);
-
-            if ($project !== null) {
-                return $project;
-            }
-        }
-
-        $projects = $this->normalizeProjects($payload);
-
-        if ($projects !== []) {
-            return $projects[0];
-        }
-
-        throw new RuntimeException('SHIFT did not return a usable project for this install session.');
-    }
-
-    private function normalizeProjectItem(array $item): ?array
-    {
-        $id = $this->stringValue($item, [
-            'id',
-            'uuid',
-            'project_id',
-            'token',
-            'project_token',
-        ]);
-
-        $token = $this->stringValue($item, [
-            'token',
-            'project_token',
-        ]);
-
-        $name = $this->stringValue($item, [
-            'name',
-            'title',
-        ]);
-
-        $client = $this->stringValue($item, [
-            'client_name',
-            'client.name',
-            'client',
-        ]);
-
-        $organisation = $this->stringValue($item, [
-            'organisation_name',
-            'organization_name',
-            'organisation.name',
-            'organization.name',
-            'organisation',
-            'organization',
-        ]);
-
-        $label = $this->stringValue($item, ['label']);
-
-        if ($label === null) {
-            $label = implode(' / ', array_values(array_filter([
-                $organisation,
-                $client,
-                $name,
-            ], static fn ($value) => $value !== null && $value !== '')));
-        }
-
-        if ($label === '') {
-            $label = $name ?? $token ?? $id ?? 'Unnamed project';
-        }
-
-        if ($label === '' && $id === null && $token === null) {
-            return null;
-        }
-
-        return [
-            'id' => $id ?? $token ?? $label,
-            'token' => $token,
-            'name' => $name ?? $label,
-            'label' => $label,
-            'raw' => $item,
-        ];
     }
 
     private function attempt(string $method, array $urls, array $payload): array
