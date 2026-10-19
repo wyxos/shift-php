@@ -59,7 +59,7 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {
     title: 'Tasks',
-    description: 'Default view hides completed and closed tasks.',
+    description: '',
     emptyLabel: 'No tasks found',
     itemLabel: 'tasks',
     actionLabel: 'Create',

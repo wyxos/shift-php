@@ -388,11 +388,7 @@ onMounted(async () => {
         :priority-options="priorityOptions"
         :sort-by-options="sortByOptions"
         :title="isRequirementsMode ? 'Requirements' : 'Tasks'"
-        :description="
-            isRequirementsMode
-                ? 'Submitted requirements stay separate until SHIFT confirms them as active tasks.'
-                : 'Default view hides completed and closed tasks.'
-        "
+        :description="isRequirementsMode ? 'Submitted requirements stay separate until SHIFT confirms them as active tasks.' : ''"
         :empty-label="isRequirementsMode ? 'No requirements found' : 'No tasks found'"
         :item-label="isRequirementsMode ? 'requirements' : 'tasks'"
         :status-label="isRequirementsMode ? 'State' : 'Status'"
