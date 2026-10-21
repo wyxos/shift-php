@@ -3,6 +3,8 @@
   "compilerOptions": {
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
     "baseUrl": ".",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "types": ["node"],
     "paths": {
       "@/*": ["./src/*"],
       "@/components/*": ["../../../../shift/resources/js/components/*", "../../../resources/js/components/*"],

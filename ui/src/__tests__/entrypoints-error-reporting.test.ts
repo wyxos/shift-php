@@ -31,7 +31,7 @@ describe('package UI entrypoints', () => {
 
         await import('../main');
 
-        expect(errorReportingListenerRegistrations(addEventListenerSpy)).toHaveLength(0);
+        expect(errorReportingListenerRegistrations(addEventListenerSpy.mock.calls)).toHaveLength(0);
     });
 
     it('does not install global browser error reporting from the widget entrypoint', async () => {
@@ -62,10 +62,10 @@ describe('package UI entrypoints', () => {
 
         await import('../widget');
 
-        expect(errorReportingListenerRegistrations(addEventListenerSpy)).toHaveLength(0);
+        expect(errorReportingListenerRegistrations(addEventListenerSpy.mock.calls)).toHaveLength(0);
     });
 });
 
-function errorReportingListenerRegistrations(spy: ReturnType<typeof vi.spyOn>): unknown[] {
-    return spy.mock.calls.filter(([event]) => event === 'error' || event === 'unhandledrejection');
+function errorReportingListenerRegistrations(calls: readonly (readonly unknown[])[]): unknown[] {
+    return calls.filter(([event]) => event === 'error' || event === 'unhandledrejection');
 }

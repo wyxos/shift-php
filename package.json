@@ -8,7 +8,7 @@
     "fs-extra": "^11.3.0",
     "inquirer": "^12.6.2",
     "semver": "^7.7.2",
-    "simple-git": "^3.27.0"
+    "simple-git": "^4.0.2"
   },
   "devDependencies": {
     "@wyxos/zephyr": "^0.10.0"
