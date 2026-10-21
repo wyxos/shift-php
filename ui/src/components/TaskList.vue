@@ -70,6 +70,7 @@ const {
     draftEnvironmentTerm,
     draftSortBy,
     activeFilterCount,
+    canResetFilters,
     setFiltersOpen,
     setDraftStatuses,
     setDraftPriorities,
@@ -376,6 +377,7 @@ onMounted(async () => {
         :highlighted-task-id="highlightedTaskId"
         :filters-open="filtersOpen"
         :active-filter-count="activeFilterCount"
+        :can-reset-filters="canResetFilters"
         :draft-statuses="draftStatuses"
         :draft-priorities="draftPriorities"
         :draft-search-term="draftSearchTerm"

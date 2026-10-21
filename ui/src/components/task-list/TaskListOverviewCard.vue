@@ -22,6 +22,7 @@ interface Props {
     highlightedTaskId: number | null;
     filtersOpen: boolean;
     activeFilterCount: number;
+    canResetFilters?: boolean;
     draftStatuses: string[];
     draftPriorities: string[];
     draftSearchTerm: string;
@@ -82,6 +83,7 @@ const props = withDefaults(defineProps<Props>(), {
         :highlighted-task-id="props.highlightedTaskId"
         :filters-open="props.filtersOpen"
         :active-filter-count="props.activeFilterCount"
+        :can-reset-filters="props.canResetFilters"
         :draft-statuses="props.draftStatuses"
         :draft-priorities="props.draftPriorities"
         :draft-search-term="props.draftSearchTerm"

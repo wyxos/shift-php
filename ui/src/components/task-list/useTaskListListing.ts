@@ -33,6 +33,7 @@ export function useTaskListListing(options: UseTaskListListingOptions = {}) {
     const isRequirementsEndpoint = computed(() => (unref(options.endpoint) ?? '/shift/api/tasks').includes('/requirements'));
     const activeFilters = computed(() => (isRequirementsEndpoint.value ? requirementFilters : taskFilters));
     const activeFilterCount = computed(() => activeFilters.value.activeFilterCount.value);
+    const canResetFilters = computed(() => activeFilters.value.canResetFilters.value);
     const draftStatuses = computed(() => activeFilters.value.draftStatuses.value);
     const draftPriorities = computed(() => activeFilters.value.draftPriorities.value);
     const draftSearchTerm = computed(() => activeFilters.value.draftSearchTerm.value);
@@ -203,6 +204,7 @@ export function useTaskListListing(options: UseTaskListListingOptions = {}) {
 
     return {
         activeFilterCount,
+        canResetFilters,
         appliedSearchTerm,
         applyFilters,
         currentPage,
