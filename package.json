@@ -1,7 +1,8 @@
 {
   "scripts": {
     "release": "node release.mjs",
-    "test:release": "node --test tests/release.test.mjs"
+    "test:release": "node --test tests/release.test.mjs",
+    "test:widget:browser": "node --test tests/widget-browser.test.mjs"
   },
   "dependencies": {
     "execa": "^9.5.3",
@@ -11,6 +12,7 @@
     "simple-git": "^4.0.2"
   },
   "devDependencies": {
-    "@wyxos/zephyr": "^0.10.0"
+    "@wyxos/zephyr": "^0.10.0",
+    "playwright": "1.63.0"
   }
 }

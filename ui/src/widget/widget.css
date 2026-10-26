@@ -18,6 +18,8 @@
         'Segoe UI',
         sans-serif;
     position: fixed;
+    /* Empty space around the launcher must not block the consuming app. */
+    pointer-events: none;
     right: 1rem;
     z-index: 2147483000;
 }
@@ -39,6 +41,7 @@
 }
 
 .shift-widget__launcher {
+    pointer-events: auto;
     background: var(--shift-widget-primary);
     border-radius: 0.375rem;
     box-shadow: 0 16px 30px rgba(24, 24, 27, 0.18);
@@ -83,6 +86,7 @@
 }
 
 .shift-widget__panel {
+    pointer-events: auto;
     background: var(--shift-widget-bg);
     border: 1px solid var(--shift-widget-border);
     border-radius: 0.5rem;
