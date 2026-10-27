@@ -4,7 +4,7 @@
     "name": "x"
   },
   "index.html": {
-    "file": "assets/app-B9IQYLq8.js",
+    "file": "assets/app-pNUpDM5G.js",
     "name": "app",
     "src": "index.html",
     "isEntry": true,
@@ -12,7 +12,7 @@
       "_x-B_y6MHKe.js"
     ],
     "css": [
-      "assets/app-BAaAKL1s.css"
+      "assets/app-DNbtbnKu.css"
     ]
   },
   "src/widget.ts": {
