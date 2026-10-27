@@ -3,6 +3,7 @@
 namespace Wyxos\Shift;
 
 use Illuminate\Contracts\Debug\ExceptionHandler;
+use Illuminate\Foundation\Events\VendorTagPublished;
 use Illuminate\Foundation\Http\Kernel as HttpKernel;
 use Illuminate\Support\ServiceProvider;
 use Throwable;
@@ -13,6 +14,7 @@ use Wyxos\Shift\Commands\ShiftLocalSmokeCommand;
 use Wyxos\Shift\Commands\ShiftTestCommand;
 use Wyxos\Shift\Commands\ToggleShiftCommand;
 use Wyxos\Shift\Http\Middleware\InjectShiftWidget;
+use Wyxos\Shift\Support\ShiftAssetPermissions;
 use Wyxos\Shift\Support\ShiftErrorReporter;
 
 class ShiftServiceProvider extends ServiceProvider
@@ -63,6 +65,14 @@ class ShiftServiceProvider extends ServiceProvider
         ], 'shift');
 
         if ($this->app->runningInConsole()) {
+            $this->app['events']->listen(VendorTagPublished::class, function (VendorTagPublished $event): void {
+                $destination = $event->paths[__DIR__.'/../public'] ?? null;
+
+                if ($destination !== null) {
+                    $this->app->make(ShiftAssetPermissions::class)->normalize($destination.'/shift-assets');
+                }
+            });
+
             $this->commands([
                 InstallShiftCommand::class,
                 ShiftExternalRoleCommand::class,
