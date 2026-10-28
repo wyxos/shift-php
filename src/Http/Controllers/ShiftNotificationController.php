@@ -24,6 +24,13 @@ class ShiftNotificationController extends Controller
 
     private const MAX_SIGNATURE_AGE_SECONDS = 300;
 
+    private const HANDLERS = [
+        'thread.update' => TaskThreadUpdated::class,
+        'task.created' => TaskCreated::class,
+        'task.collaborator_added' => TaskCollaboratorAdded::class,
+        'tasks.awaiting_feedback' => TasksAwaitingFeedback::class,
+    ];
+
     public function store(Request $request): JsonResponse
     {
         $projectToken = trim((string) config('shift.project', ''));
@@ -47,17 +54,16 @@ class ShiftNotificationController extends Controller
             'source' => ['required', 'array'],
         ]);
 
+        $response = $this->deliver($request, $attributes);
+        $this->logResult($attributes, $response);
+
+        return $response;
+    }
+
+    private function deliver(Request $request, array $attributes): JsonResponse
+    {
         $handler = $attributes['handler'];
         $payload = $attributes['payload'];
-        $source = $attributes['source'];
-
-        Log::info('Received notification from SHIFT', [
-            'delivery_id' => $attributes['delivery_id'] ?? null,
-            'handler' => $handler,
-            'payload' => $payload,
-            'source' => $source,
-        ]);
-
         $notification = $this->notificationFor($handler, $payload);
 
         if (! $notification) {
@@ -145,13 +151,44 @@ class ShiftNotificationController extends Controller
 
     private function notificationFor(string $handler, array $payload): ?NotificationMessage
     {
-        return match ($handler) {
-            'thread.update' => new TaskThreadUpdated($payload),
-            'task.created' => new TaskCreated($payload),
-            'task.collaborator_added' => new TaskCollaboratorAdded($payload),
-            'tasks.awaiting_feedback' => new TasksAwaitingFeedback($payload),
-            default => null,
+        $notificationClass = self::HANDLERS[$handler] ?? null;
+
+        return $notificationClass === null ? null : new $notificationClass($payload);
+    }
+
+    private function logResult(array $attributes, JsonResponse $response): void
+    {
+        $status = $response->getStatusCode();
+        $outcome = match ($status) {
+            200 => ($response->getData(true)['duplicate'] ?? false) ? 'duplicate' : 'delivered',
+            404 => 'recipient_missing',
+            409 => 'conflict',
+            422 => 'rejected',
+            503 => 'pending',
+            default => 'failed',
         };
+        $payload = $attributes['payload'];
+
+        Log::info('SHIFT notification processed', [
+            'delivery_id' => $attributes['delivery_id'] ?? null,
+            'handler' => isset(self::HANDLERS[$attributes['handler']]) ? $attributes['handler'] : null,
+            'user_id' => $this->numericId($payload['user_id'] ?? null),
+            'task_id' => $this->numericId($payload['task_id'] ?? null),
+            'thread_id' => $this->numericId($payload['thread_id'] ?? null),
+            'outcome' => $outcome,
+            'status' => $status,
+        ]);
+    }
+
+    private function numericId(mixed $value): ?int
+    {
+        if (! is_int($value) && (! is_string($value) || preg_match('/\A[1-9][0-9]{0,18}\z/D', $value) !== 1)) {
+            return null;
+        }
+
+        $id = filter_var($value, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+
+        return is_int($id) ? $id : null;
     }
 
     private function successResponse(?string $deliveryId = null, bool $duplicate = false): JsonResponse
