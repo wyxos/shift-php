@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import TaskCreateForm from '@shared/components/TaskCreateForm.vue';
+import { createUploadIdentifier } from '@shared/lib/uploadIdentifier';
 import { Button } from '@shift/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@shift/ui/card';
 import { Plus, X } from 'lucide-vue-next';
@@ -12,7 +13,7 @@ import { getRuntimeAppEnvironment } from '../lib/runtime-config';
 const router = useRouter();
 const createError = ref<string | null>(null);
 const loading = ref(false);
-const tempIdentifier = ref(Date.now().toString());
+const tempIdentifier = ref(createUploadIdentifier());
 const isEditorUploading = ref(false);
 
 const newTask = ref({

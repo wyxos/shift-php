@@ -2,6 +2,7 @@
 import axios from '@/axios-config';
 import ShiftEditor from '@shared/components/ShiftEditor.vue';
 import TaskCollaboratorField from '@shared/components/TaskCollaboratorField.vue';
+import { createUploadIdentifier } from '@shared/lib/uploadIdentifier';
 import { type TaskCollaboratorSelection } from '@shared/tasks/collaborators';
 import { Button } from '@shift/ui/button';
 import { Input } from '@shift/ui/input';
@@ -10,7 +11,14 @@ import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetT
 import { Plus, Trash2, Users } from 'lucide-vue-next';
 import { computed, ref } from 'vue';
 import { defaultSubmitterCollaborators, includesCurrentSubmitter } from './current-submitter';
-import { aiImproveUrl, getCurrentAppEnvironment, getTaskListAiImproveEnabled, removeTempUrl, resolveTempUrl, taskListUploadEndpoints } from './editor-config';
+import {
+    aiImproveUrl,
+    getCurrentAppEnvironment,
+    getTaskListAiImproveEnabled,
+    removeTempUrl,
+    resolveTempUrl,
+    taskListUploadEndpoints,
+} from './editor-config';
 
 type RequirementDraft = {
     key: number;
@@ -101,7 +109,7 @@ function newRequirementDraft(): RequirementDraft {
         key: nextKey.value,
         title: '',
         description: '',
-        tempIdentifier: `requirement-${Date.now()}-${nextKey.value}`,
+        tempIdentifier: `requirement-${createUploadIdentifier()}`,
         collaborators: defaultSubmitterCollaborators(),
     };
 }

@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import axios from '@/axios-config';
+import { createUploadIdentifier } from '@shared/lib/uploadIdentifier';
 import { normalizeTaskCollaborators, type TaskCollaboratorSelection } from '@shared/tasks/collaborators';
 import { getTaskIdFromQuery } from '@shared/tasks/history';
 import { ImageLightbox } from '@shift/ui/image-lightbox';
@@ -30,7 +31,7 @@ const createOpen = ref(false);
 const createLoading = ref(false);
 const createError = ref<string | null>(null);
 const createUploading = ref(false);
-const createTempIdentifier = ref(Date.now().toString());
+const createTempIdentifier = ref(createUploadIdentifier());
 const createForm = ref({
     title: '',
     priority: 'medium',
@@ -203,7 +204,7 @@ function resetCreateForm() {
         description: '',
         collaborators: defaultSubmitterCollaborators(),
     };
-    createTempIdentifier.value = Date.now().toString();
+    createTempIdentifier.value = createUploadIdentifier();
     createError.value = null;
     createUploading.value = false;
 }

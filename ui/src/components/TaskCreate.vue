@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import axios from '@/axios-config';
 import TaskCreateForm from '@shared/components/TaskCreateForm.vue';
+import { createUploadIdentifier } from '@shared/lib/uploadIdentifier';
 import { Button } from '@shift/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@shift/ui/card';
 import { Plus } from 'lucide-vue-next';
@@ -34,7 +35,7 @@ function resolveTempUrl(data: any): string {
 const router = useRouter();
 const createError = ref<string | null>(null);
 const loading = ref(false);
-const tempIdentifier = ref(Date.now().toString());
+const tempIdentifier = ref(createUploadIdentifier());
 const isEditorUploading = ref(false);
 
 const newTask = ref({

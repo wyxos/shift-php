@@ -306,20 +306,20 @@ class ShiftAttachmentController extends Controller
      */
     public function showTemp(Request $request, string $temp, string $filename)
     {
-        $context = $this->resolveContext($request, false);
+        $context = $this->resolveContext($request);
         if ($context instanceof JsonResponse) {
             return $context;
         }
 
         try {
             $response = $this->jsonClient($context)
-                ->get($context->url('/api/attachments/temp/'.$temp.'/'.$filename), $context->jsonPayload([], false, false));
+                ->get($context->url('/api/attachments/temp/'.$temp.'/'.$filename), $context->jsonPayload());
 
             if (! $response->successful()) {
                 return $this->jsonResponse($response, 'Failed to fetch attachment', $context, 'attachments.temp');
             }
 
-            return $this->binaryResponse($response, ['Content-Type', 'Cache-Control'], $response->status());
+            return $this->binaryResponse($response, ['Content-Type', 'Content-Disposition', 'Cache-Control', 'Content-Security-Policy', 'X-Content-Type-Options'], $response->status());
         } catch (\Throwable $e) {
             return $this->exceptionResponse('Failed to fetch attachment', $e);
         }
@@ -348,7 +348,7 @@ class ShiftAttachmentController extends Controller
             }
 
             if ($response->successful()) {
-                return $this->binaryResponse($response, ['Content-Type', 'Content-Disposition', 'Cache-Control']);
+                return $this->binaryResponse($response, ['Content-Type', 'Content-Disposition', 'Cache-Control', 'Content-Security-Policy', 'X-Content-Type-Options']);
             }
 
             return response()->json([
@@ -397,7 +397,21 @@ class ShiftAttachmentController extends Controller
 
     private function binaryResponse(ClientResponse $response, array $allowedHeaders, int $status = 200): HttpResponse
     {
-        return response($response->body(), $status, $this->forwardHeaders($response, $allowedHeaders));
+        $headers = $this->forwardHeaders($response, $allowedHeaders);
+        $headers['Cache-Control'] = 'no-store, private';
+        $headers['Content-Security-Policy'] = "default-src 'none'; sandbox";
+        $headers['X-Content-Type-Options'] = 'nosniff';
+        $mime = strtolower(explode(';', $headers['Content-Type'] ?? 'application/octet-stream')[0]);
+        if (! in_array($mime, ['image/jpeg', 'image/png', 'image/gif', 'image/bmp', 'image/webp'], true)) {
+            if (! str_starts_with(strtolower($headers['Content-Disposition'] ?? ''), 'attachment;')) {
+                $headers['Content-Disposition'] = 'attachment';
+            }
+            if (in_array($mime, ['image/svg+xml', 'text/html', 'application/xhtml+xml', 'text/xml', 'application/xml'], true)) {
+                $headers['Content-Type'] = 'application/octet-stream';
+            }
+        }
+
+        return response($response->body(), $status, $headers);
     }
 
     private function forwardHeaders(ClientResponse $response, array $allowedHeaders): array

@@ -1,9 +1,11 @@
 import axios from '@/axios-config';
-import { collaboratorsEqual, emptyTaskCollaborators, normalizeTaskCollaborators, type TaskCollaboratorSelection } from '@shared/tasks/collaborators';
+import { createUploadIdentifier } from '@shared/lib/uploadIdentifier';
+import { collaboratorsEqual, normalizeTaskCollaborators, type TaskCollaboratorSelection } from '@shared/tasks/collaborators';
 import { getTaskIdFromQuery, syncTaskQuery } from '@shared/tasks/history';
 import { getTaskCreatorEmail } from '@shared/tasks/metadata';
 import { computed, onBeforeUnmount, onMounted, ref, watch, type Ref } from 'vue';
 import { toast } from 'vue-sonner';
+import { createEmptyEditForm } from './editForm';
 import type { Task, TaskDetail } from './types';
 type UseTaskListEditOptions = {
     editOpen: Ref<boolean>;
@@ -32,16 +34,6 @@ function getShiftUserEmail(): string | null {
     if (typeof email === 'string' && email.trim()) return email.trim();
     return null;
 }
-function createEmptyEditForm() {
-    return {
-        title: '',
-        priority: 'medium',
-        status: 'pending',
-        requirement_status: 'submitted',
-        description: '',
-        collaborators: emptyTaskCollaborators(),
-    };
-}
 export function useTaskListEdit({
     editOpen,
     editTask,
@@ -56,7 +48,7 @@ export function useTaskListEdit({
     const editLoading = ref(false);
     const editError = ref<string | null>(null);
     const editUploading = ref(false);
-    const editTempIdentifier = ref(Date.now().toString());
+    const editTempIdentifier = ref(createUploadIdentifier());
     const deletedAttachmentIds = ref<number[]>([]);
     const editForm = ref(createEmptyEditForm());
     const confirmCloseOpen = ref(false);
@@ -232,7 +224,7 @@ export function useTaskListEdit({
                     external: data?.external_collaborators ?? [],
                 }),
             };
-            editTempIdentifier.value = Date.now().toString();
+            editTempIdentifier.value = createUploadIdentifier();
             initialEditSnapshot.value = currentTaskSnapshot();
             autosaveArmed.value = true;
             void fetchThreads(taskId);
@@ -311,7 +303,11 @@ export function useTaskListEdit({
         if (typeof task.requirement_status === 'string' && editForm.value.requirement_status === submittedSnapshot.requirement_status) {
             editForm.value.requirement_status = task.requirement_status;
         }
-        if (mergeCollaborators && (task.internal_collaborators || task.external_collaborators) && collaboratorsEqual(editForm.value.collaborators, submittedSnapshot.collaborators)) {
+        if (
+            mergeCollaborators &&
+            (task.internal_collaborators || task.external_collaborators) &&
+            collaboratorsEqual(editForm.value.collaborators, submittedSnapshot.collaborators)
+        ) {
             editForm.value.collaborators = normalizeTaskCollaborators({
                 internal: Array.isArray(task.internal_collaborators) ? task.internal_collaborators : editForm.value.collaborators.internal,
                 external: Array.isArray(task.external_collaborators) ? task.external_collaborators : editForm.value.collaborators.external,
