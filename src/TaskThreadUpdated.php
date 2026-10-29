@@ -44,7 +44,7 @@ class TaskThreadUpdated extends CoreTaskThreadUpdated
             ->subject("SHIFT: New reply on {$taskTitle}")
             ->line('A new message was posted.')
             ->line("Preview: \"{$snippet}\"")
-            ->markdown('shift::notifications.email');
+            ->view(['html' => 'shift::notifications.email', 'text' => 'shift::notifications.email-text']);
 
         if (! empty($url)) {
             $message->action('View Thread', $url);

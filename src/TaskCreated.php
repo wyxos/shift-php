@@ -42,7 +42,7 @@ class TaskCreated extends Notification
             ->line('View the task to see the details.')
             ->action('View Task', $url)
             ->line('Please do not reply to this email directly.')
-            ->markdown('shift::notifications.email');
+            ->view(['html' => 'shift::notifications.email', 'text' => 'shift::notifications.email-text']);
     }
 
     /**
