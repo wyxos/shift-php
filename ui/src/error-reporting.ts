@@ -1,5 +1,6 @@
 import type { App } from 'vue';
 import type { Router } from 'vue-router';
+import { frontendBuild } from './frontend-build';
 
 type ErrorContext = {
     operation: string;
@@ -83,6 +84,7 @@ export function reportWorkspaceError(error: unknown, context: ErrorContext): voi
             },
             body: JSON.stringify({
                 source: 'ui',
+                ...frontendBuild(),
                 error: { name: clean(name, 255), message },
                 stack,
                 context: {

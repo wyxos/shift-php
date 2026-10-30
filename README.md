@@ -199,13 +199,30 @@ When `SHIFT_ERROR_REPORTING_ENABLED=true`, the package reports Laravel exception
 
 The `/shift` workspace captures Vue errors, SDK JavaScript errors and unhandled promise rejections, navigation or asset-loading failures, and unexpected API action failures. SDK PHP exceptions are reported even when a controller catches them to return an error response. Expected validation, authentication and permission failures are excluded from SDK diagnostics.
 
-Browser reports go through the authenticated, CSRF-protected `POST /shift/api/errors` endpoint. The portal token stays on the server. SDK diagnostics include the installed package version, operation and a correlation ID when available. JavaScript stack frames retain line and column positions; no source maps are uploaded.
+Browser reports go through the authenticated, CSRF-protected `POST /shift/api/errors` endpoint. The portal token stays on the server. SDK diagnostics include the installed package version, operation and a correlation ID when available. JavaScript stack frames retain line and column positions. Reports also identify the UI build actually loaded, independently of the PHP package version.
 
 Reporting is best effort and uses the configured timeout (three seconds by default). Delivery failures preserve the original response and write a local diagnostic with the exception class, operation and correlation ID. Local diagnostics omit exception messages and request data. Failed reports are not queued for later delivery.
 
 The workspace suppresses duplicate exceptions and sends at most twenty distinct reports per page load. The browser endpoint accepts twenty requests per minute per user, and PHP SDK reports are limited to twenty attempts per signature per minute when the app's limiter cache is available. These limits use separate SDK counters. The widget does not install global browser error listeners on consuming-app pages.
 
 Capture starts when the workspace entry script runs. A blocked or missing entry script, browser termination, or an unavailable network can prevent delivery. Visual layout problems do not produce exception reports.
+
+### Original browser source
+
+Production UI builds keep source maps and exact generated JavaScript in the private `.build/shift-ui/<build-id>` directory. Published SDK assets contain no source maps or source-map URLs. Keep the private artifact for each distributed build, including older builds that consuming apps may still serve.
+
+For a self-hosted SHIFT portal, import the matching private artifact before deploying that SDK build:
+
+```sh
+php artisan shift:sdk-build:import /private/path/to/build-id
+```
+
+The portal verifies artifact checksums and stores an immutable copy outside its public directory. When it receives an SDK browser report, it resolves stack positions to the original Vue or TypeScript source and records a short, scrubbed source excerpt. Error Reports and the existing MCP event tool expose these diagnostics under the same task permissions.
+
+Missing, invalid or mismatched artifacts leave the compiled trace available and show an explicit resolution status. SHIFT does not fetch scripts or source maps from URLs in reports. Resolution happens when the event is received; importing a map later does not rewrite earlier events.
+
+The build identifier belongs to the JavaScript executing in the browser. It remains distinct from the installed PHP SDK version and the consuming application's release. Build artifacts also record source revisions and whether those checkouts contained changes; the captured source content identifies the code built from modified checkouts.
+
 
 The package detects the revision from deployment commit metadata or the app Git checkout. If the checkout has an exact tag for that revision, the tag is sent as the release.
 

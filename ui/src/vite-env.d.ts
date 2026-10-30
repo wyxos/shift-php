@@ -1,5 +1,8 @@
 /// <reference types="vite/client" />
 
+declare const __SHIFT_UI_BUILD_ID__: string | undefined;
+declare const __SHIFT_UI_SDK_REVISION__: string | null | undefined;
+
 interface Window {
     shiftConfig: {
         loginRoute: string;

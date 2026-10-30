@@ -33,6 +33,13 @@ describe('workspace error reporting', () => {
         return JSON.parse(fetchMock.mock.calls.at(-1)![1].body);
     }
 
+    it('attaches the loaded frontend identity independently of consumer runtime configuration', () => {
+        vi.stubGlobal('__SHIFT_UI_BUILD_ID__', 'a'.repeat(64));
+        vi.stubGlobal('__SHIFT_UI_SDK_REVISION__', 'b'.repeat(40));
+        reportWorkspaceError(new Error('Build identity fixture'), { operation: 'runtime' });
+        expect(lastPayload()).toMatchObject({ frontend_build_id: 'a'.repeat(64), frontend_sdk_revision: 'b'.repeat(40) });
+    });
+
     it('captures a real Vue render exception with component and operation context', () => {
         const error = new Error('Fixture render failed');
         const fail = (): never => { throw error; };

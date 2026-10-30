@@ -4,6 +4,7 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import { defineConfig } from 'vite';
+import { sdkArtifacts } from './build/sdk-artifacts';
 
 export default defineConfig(({ command }) => {
   const isServe = command === 'serve';
@@ -51,6 +52,7 @@ export default defineConfig(({ command }) => {
         },
       }),
       tailwindcss(),
+      ...sdkArtifacts({ uiRoot: __dirname, portalResources: portalResourcesPath, artifactDirectory: process.env.SHIFT_UI_ARTIFACT_DIR }),
     ],
     resolve: {
       alias: [
@@ -133,7 +135,7 @@ export default defineConfig(({ command }) => {
     },
     base: isServe ? '/' : '/shift-assets/',
     build: {
-      outDir: path.resolve(__dirname, '../public/shift-assets'),
+      outDir: process.env.SHIFT_UI_PUBLIC_DIR ?? path.resolve(__dirname, '../public/shift-assets'),
       assetsDir: 'assets',
       emptyOutDir: true,
       manifest: true,

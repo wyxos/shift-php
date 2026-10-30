@@ -22,6 +22,8 @@ class ShiftErrorController extends Controller
             'error.name' => ['required', 'string', 'max:512'],
             'error.message' => ['required', 'string', 'max:20000'],
             'stack' => ['nullable', 'string', 'max:20000'],
+            'frontend_build_id' => ['nullable', 'string', 'regex:/^[a-f0-9]{64}$/'],
+            'frontend_sdk_revision' => ['nullable', 'string', 'regex:/^[a-f0-9]{40}$/'],
             'context' => ['sometimes', 'array:operation,route,component,http_status,correlation_id'],
             'context.operation' => ['nullable', 'string', 'max:255'],
             'context.route' => ['nullable', 'string', 'max:2048', 'regex:~^/shift(?:/[^?#]*)?$~'],

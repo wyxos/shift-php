@@ -190,7 +190,12 @@ class ShiftErrorReporter
                     'path' => $attributes['context']['route'] ?? '/shift',
                 ],
             ],
-            'metadata' => [...$this->metadata(), ...$this->sdkMetadata('workspace_ui', $attributes['context']['operation'] ?? null)],
+            'metadata' => [
+                ...$this->metadata(),
+                ...$this->sdkMetadata('workspace_ui', $attributes['context']['operation'] ?? null),
+                'frontend_build_id' => $attributes['frontend_build_id'] ?? null,
+                'frontend_sdk_revision' => $attributes['frontend_sdk_revision'] ?? null,
+            ],
             'user' => $this->userPayload(),
             'occurred_at' => now()->toIso8601String(),
         ]) !== null;
