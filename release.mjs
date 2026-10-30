@@ -8,11 +8,11 @@ import semver from 'semver';
 import inquirer from 'inquirer';
 import { simpleGit } from 'simple-git';
 import { execa } from 'execa';
+import { loadTargets, registrationPlan, registerSourceMaps } from './scripts/source-map-release.mjs';
+import { releaseArtifact } from './scripts/source-map-release-artifact.mjs';
 
 const PACKAGE_DIR = fileURLToPath(new URL('.', import.meta.url));
 const COMPOSER_PATH = path.join(PACKAGE_DIR, 'composer.json');
-const UI_PATH = path.join(PACKAGE_DIR, 'ui');
-const git = simpleGit(PACKAGE_DIR);
 
 export function parseOptions(args = process.argv.slice(2), env = process.env) {
     const options = { version: null, nonInteractive: false, dryRun: false, help: false };
@@ -28,6 +28,14 @@ export function parseOptions(args = process.argv.slice(2), env = process.env) {
             options.nonInteractive = true;
         } else if (arg === '--dry-run') {
             options.dryRun = true;
+        } else if (arg === '--register-source-maps') {
+            options.registerSourceMaps = true;
+        } else if (arg === '--source-map-targets') {
+            options.sourceMapTargets = args[++index];
+            if (!options.sourceMapTargets || options.sourceMapTargets.startsWith('-')) throw new Error('--source-map-targets requires a configuration file.');
+        } else if (arg.startsWith('--source-map-targets=')) {
+            options.sourceMapTargets = arg.slice('--source-map-targets='.length);
+            if (!options.sourceMapTargets) throw new Error('--source-map-targets requires a configuration file.');
         } else if (arg === '--help' || arg === '-h') {
             options.help = true;
         } else {
@@ -35,11 +43,13 @@ export function parseOptions(args = process.argv.slice(2), env = process.env) {
         }
     }
     options.version ??= env.RELEASE_VERSION || null;
+    if (!options.sourceMapTargets && env.SHIFT_SDK_RELEASE_TARGETS_FILE) options.sourceMapTargets = env.SHIFT_SDK_RELEASE_TARGETS_FILE;
+    if (options.registerSourceMaps && options.version) throw new Error('--register-source-maps cannot be combined with a release version.');
     return options;
 }
 
-async function getCurrentVersion() {
-    const { stdout } = await execa('git', ['tag', '--list', '--merged', 'HEAD'], { cwd: PACKAGE_DIR });
+async function getCurrentVersion(run = execa, packageDirectory = PACKAGE_DIR) {
+    const { stdout } = await run('git', ['tag', '--list', '--merged', 'HEAD'], { cwd: packageDirectory });
     return stdout.split(/\r?\n/).map(tag => tag.replace(/^v/, ''))
         .filter(version => semver.valid(version)).sort(semver.rcompare)[0] || '0.0.0';
 }
@@ -85,50 +95,93 @@ export async function chooseVersion(currentVersion, options, { loadVersionAdviso
     return normalizedVersion;
 }
 
-export async function hasReleaseChanges(currentVersion, run = execa) {
-    const { stdout } = await run('git', ['status', '--porcelain'], { cwd: PACKAGE_DIR });
+export async function hasReleaseChanges(currentVersion, run = execa, packageDirectory = PACKAGE_DIR) {
+    const { stdout } = await run('git', ['status', '--porcelain'], { cwd: packageDirectory });
     if (stdout.trim() || currentVersion === '0.0.0') return true;
     const result = await run('git', ['diff', '--quiet', `v${currentVersion}`, 'HEAD', '--'], {
-        cwd: PACKAGE_DIR, reject: false,
+        cwd: packageDirectory, reject: false,
     });
     if (result.exitCode > 1) throw new Error('Unable to compare SDK contents with the latest release tag.');
     return result.exitCode === 1;
 }
 
-export async function main(options = parseOptions()) {
+export async function main(options = parseOptions(), dependencies = {}) {
+    const packageDirectory = dependencies.packageDirectory ?? PACKAGE_DIR;
+    const run = dependencies.run ?? execa;
+    const releaseGit = dependencies.git ?? simpleGit(packageDirectory);
+    const output = dependencies.log ?? console.log;
+    const targetsLoader = dependencies.loadTargets ?? loadTargets;
+    const artifactLoader = dependencies.releaseArtifact ?? releaseArtifact;
+    const register = dependencies.registerSourceMaps ?? registerSourceMaps;
     if (options.help) {
-        console.log('Usage: npm run release -- [--non-interactive] [--dry-run] [--version <exact-version>]');
-        console.log('Default: Zephyr asks Codex to assess changes since the latest SDK release tag. --version bypasses assessment.');
+        output('Usage: npm run release -- [--non-interactive] [--dry-run] [--version <exact-version>] [--source-map-targets <file>]');
+        output('Retry registration only: npm run release -- --register-source-maps [--dry-run]');
+        output('Every SDK release verifies its private source maps on all configured SHIFT targets before creating or pushing a release.');
+        output('Default: Zephyr asks Codex to assess changes since the latest SDK release tag. --version bypasses assessment.');
         return;
     }
-    const currentVersion = await getCurrentVersion();
-    let version = options.version ? await chooseVersion(currentVersion, options) : null;
-    const advisor = version ? null : await loadAdvisor();
-    if (!options.dryRun) {
-        console.log('📦 Installing and building frontend...');
-        await execa('npm', ['ci'], { cwd: UI_PATH, stdio: 'inherit' });
-        await execa('npm', ['run', 'build'], { cwd: UI_PATH, stdio: 'inherit' });
-        await git.add('.');
-    }
-    if (!options.version && !await hasReleaseChanges(currentVersion)) {
-        console.log(`No SDK changes since v${currentVersion}; skipping package release.`);
+    const targets = await targetsLoader(path.resolve(packageDirectory, options.sourceMapTargets ?? '.shift-sdk-release.json'));
+    const showPlan = artifact => {
+        for (const item of registrationPlan(targets, artifact)) output(`Source maps: ${item.name} (${item.transport}), build ${item.build_id}`);
+    };
+    if (options.registerSourceMaps) {
+        const artifact = await artifactLoader(packageDirectory);
+        showPlan(artifact);
+        if (options.dryRun) {
+            output('Dry run: no registration, connections, builds or Git changes performed.');
+            return;
+        }
+        await register(artifact, targets, { run, log: output });
+        output(`SDK source maps registered and verified for build ${artifact.buildId}. No package release performed.`);
         return;
     }
-    version ??= await chooseVersion(currentVersion, options, { loadVersionAdvisor: async () => advisor });
+    const currentVersion = await (dependencies.getCurrentVersion ?? getCurrentVersion)(run, packageDirectory);
+    if (!options.version && !await (dependencies.hasReleaseChanges ?? hasReleaseChanges)(currentVersion, run, packageDirectory)) {
+        output(`No SDK changes since v${currentVersion}; skipping package release.`);
+        return;
+    }
+    const versionChooser = dependencies.chooseVersion ?? chooseVersion;
+    const version = await versionChooser(currentVersion, options);
+    showPlan(null);
     if (options.dryRun) {
-        console.log(`Dry run: would release v${version}; no files, commits, tags, or pushes changed.`);
+        output(`Dry run: would build, verify source maps on every target, then release v${version}; no connections, files, commits, tags, or pushes changed.`);
         return;
     }
-    const composer = await fs.readJson(COMPOSER_PATH);
+    const uiPath = path.join(packageDirectory, 'ui');
+    const latestReceipt = path.join(packageDirectory, '.build/shift-ui/latest.json');
+    await fs.remove(latestReceipt);
+    output('📦 Installing and building frontend...');
+    const buildOptions = {
+        cwd: uiPath,
+        stdio: 'inherit',
+        env: {
+            SHIFT_UI_PUBLIC_DIR: path.join(packageDirectory, 'public/shift-assets'),
+            SHIFT_UI_ARTIFACT_DIR: path.join(packageDirectory, '.build/shift-ui'),
+        },
+    };
+    await run('npm', ['ci'], buildOptions);
+    await run('npm', ['run', 'build'], buildOptions);
+    const artifact = await artifactLoader(packageDirectory);
+    await register(artifact, targets, { run, log: output });
+    const composerPath = path.join(packageDirectory, 'composer.json');
+    const composer = await fs.readJson(composerPath);
     delete composer.version;
-    await fs.writeJson(COMPOSER_PATH, composer, { spaces: 2 });
-    await git.add('.');
-    if ((await git.status()).files.length > 0) await git.commit(`Release v${version}`);
+    await fs.writeJson(composerPath, composer, { spaces: 2 });
+    await releaseGit.add('.');
+    if ((await releaseGit.status()).files.length > 0) await releaseGit.commit(`Release v${version}`);
+    let publishedArtifact;
+    try { publishedArtifact = await artifactLoader(packageDirectory); } catch (cause) {
+        throw new Error('SDK published artifacts became invalid after registration; publication stopped before tag or push.', { cause });
+    }
+    if (publishedArtifact.buildId !== artifact.buildId || publishedArtifact.manifestDigest !== artifact.manifestDigest
+        || publishedArtifact.assetsCount !== artifact.assetsCount) {
+        throw new Error('SDK build changed after source-map registration; publication stopped before tag or push.');
+    }
     const tagName = `v${version}`;
-    await git.addTag(tagName);
-    await git.push('origin', 'HEAD');
-    await git.push('origin', `refs/tags/${tagName}`);
-    console.log(`🎉 Release ${tagName} complete!`);
+    await releaseGit.addTag(tagName);
+    await releaseGit.push('origin', 'HEAD');
+    await releaseGit.push('origin', `refs/tags/${tagName}`);
+    output(`🎉 Release ${tagName} complete; SDK source maps verified on every target.`);
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

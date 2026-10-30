@@ -42,6 +42,7 @@ describe('private SDK source-map artifacts', () => {
         expect(builds).toHaveLength(1);
         const manifest = manifests[0];
         expect(BUILD_PLACEHOLDER).toHaveLength(64);
+        expect(JSON.parse(await readFile(path.join(artifactDir, 'latest.json'), 'utf8'))).toEqual({ schema_version: 1, build_id: manifest.build_id });
         expect(manifest).toMatchObject({ schema_version: 1, build_id: builds[0], sdk_revision: null });
         const [filename, asset] = Object.entries(manifest.assets)[0];
         const code = await readFile(path.join(publicDir, filename), 'utf8');
@@ -131,6 +132,8 @@ describe('private SDK source-map artifacts', () => {
             assets: { 'assets/main.js': { sha256: sha256(code), map: 'assets/main.js.map', map_sha256: sha256(map) } } };
         storePrivateArtifacts(artifactDir, manifest, { 'assets/main.js': { code, map } });
         await writeFile(path.join(artifactDir, manifest.build_id, 'assets/main.js'), 'tampered');
+        const receiptBefore = await readFile(path.join(artifactDir, 'latest.json'), 'utf8');
         expect(() => storePrivateArtifacts(artifactDir, manifest, { 'assets/main.js': { code, map } })).toThrow('integrity');
+        expect(await readFile(path.join(artifactDir, 'latest.json'), 'utf8')).toBe(receiptBefore);
     });
 });

@@ -1,10 +1,10 @@
 {
-  "_x-BQU6L_D_.js": {
-    "file": "assets/x-BQU6L_D_.js",
+  "_x-Dgf7jlZx.js": {
+    "file": "assets/x-Dgf7jlZx.js",
     "name": "x"
   },
   "index.html": {
-    "file": "assets/app-SfI-hPT4.js",
+    "file": "assets/app-BvxMrPll.js",
     "name": "app",
     "src": "index.html",
     "isEntry": true,
@@ -13,28 +13,28 @@
     ]
   },
   "src/widget.ts": {
-    "file": "assets/widget-5a4ymNIz.js",
+    "file": "assets/widget-D3PV032Y.js",
     "name": "widget",
     "src": "src/widget.ts",
     "isEntry": true,
     "imports": [
-      "_x-BQU6L_D_.js"
+      "_x-Dgf7jlZx.js"
     ],
     "css": [
-      "assets/widget-Iaz1iv0J.css"
+      "assets/widget-TnK29pil.css"
     ]
   },
   "src/workspace.ts": {
-    "file": "assets/workspace-CX7_eXeq.js",
+    "file": "assets/workspace-DaQUsPpa.js",
     "name": "workspace",
     "src": "src/workspace.ts",
     "isDynamicEntry": true,
     "imports": [
-      "_x-BQU6L_D_.js",
+      "_x-Dgf7jlZx.js",
       "index.html"
     ],
     "css": [
-      "assets/workspace-DZbPOYzX.css"
+      "assets/workspace-CR9zGnE8.css"
     ]
   }
 }

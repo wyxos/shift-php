@@ -211,7 +211,36 @@ Capture starts when the workspace entry script runs. A blocked or missing entry 
 
 Production UI builds keep source maps and exact generated JavaScript in the private `.build/shift-ui/<build-id>` directory. Published SDK assets contain no source maps or source-map URLs. Keep the private artifact for each distributed build, including older builds that consuming apps may still serve.
 
-For a self-hosted SHIFT portal, import the matching private artifact before deploying that SDK build:
+SDK releases register and verify the exact build on every configured SHIFT instance before creating or pushing the release tag. Consuming apps keep using their existing SHIFT URL and credentials; they need no source-map configuration.
+
+Configure the release machine once with an ignored `.shift-sdk-release.json` in the package checkout:
+
+```json
+{
+  "schema_version": 1,
+  "targets": [
+    {
+      "name": "Production SHIFT",
+      "transport": "ssh",
+      "host": "shift-production",
+      "projectPath": "/srv/shift",
+      "php": "php"
+    }
+  ]
+}
+```
+
+Use an existing SSH alias that signs in as the portal's application user. Registration uses private temporary files and the portal's `shift:sdk-build:import` and `shift:sdk-build:verify` commands. Deploy these commands to each target before the first automated release. No new upload endpoint or publishing token is required.
+
+The release stops if any target fails registration, returns the wrong build receipt, or cannot verify its stored checksums. Maps already registered on other targets remain available. Fix the target and retry the same artifact without rebuilding, tagging or publishing:
+
+```sh
+npm run release -- --register-source-maps
+```
+
+Add `--dry-run` to inspect registration targets without connecting. `--source-map-targets /private/path/targets.json` or `SHIFT_SDK_RELEASE_TARGETS_FILE` selects another release-level configuration. Keep target files private and outside published package contents.
+
+For a separately managed SHIFT instance, add it as a release target once. Manual import remains available:
 
 ```sh
 php artisan shift:sdk-build:import /private/path/to/build-id

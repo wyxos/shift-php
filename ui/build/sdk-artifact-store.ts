@@ -1,4 +1,4 @@
-import { createHash } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 
@@ -47,6 +47,16 @@ export function assertPrivateDirectory(directory: string, publicDirectories: str
     }
 }
 
+function writeBuildReceipt(directory: string, buildId: string): void {
+    const temporary = path.join(directory, `.latest-${randomUUID()}.json`);
+    try {
+        writeFileSync(temporary, JSON.stringify({ schema_version: 1, build_id: buildId }) + '\n', { mode: 0o600, flag: 'wx' });
+        renameSync(temporary, path.join(directory, 'latest.json'));
+    } finally {
+        rmSync(temporary, { force: true });
+    }
+}
+
 export function storePrivateArtifacts(directory: string, manifest: PrivateManifest, assets: Record<string, PrivateAsset>): void {
     mkdirSync(directory, { recursive: true, mode: 0o700 });
     const destination = path.join(directory, manifest.build_id);
@@ -64,6 +74,7 @@ export function storePrivateArtifacts(directory: string, manifest: PrivateManife
     };
     if (existsSync(destination)) {
         verifyExisting();
+        writeBuildReceipt(directory, manifest.build_id);
         return;
     }
     const temporary = mkdtempSync(path.join(directory, '.pending-'));
@@ -83,4 +94,5 @@ export function storePrivateArtifacts(directory: string, manifest: PrivateManife
     } finally {
         rmSync(temporary, { recursive: true, force: true });
     }
+    writeBuildReceipt(directory, manifest.build_id);
 }
