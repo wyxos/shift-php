@@ -70,6 +70,20 @@ test('requires explicit non-empty target configuration without accepting shell h
     assert.equal((await loadTargets(file))[0].php, 'php');
 });
 
+test('rejects duplicate destinations under different names while allowing separate instances', async t => {
+    const f = await fixture(t);
+    const file = path.join(f.root, 'targets.json');
+    for (const transport of ['local', 'ssh']) {
+        const first = { name: 'One', transport, projectPath: '/srv/shift', ...(transport === 'ssh' ? { host: 'fixture-host' } : {}) };
+        const second = { ...first, name: 'Two', php: 'php8.4', projectPath: '/srv/other/../shift/' };
+        await writeFile(file, JSON.stringify({ schema_version: 1, targets: [first, second] }));
+        await assert.rejects(loadTargets(file), /destinations must be unique/);
+        second.projectPath = '/srv/another-instance';
+        await writeFile(file, JSON.stringify({ schema_version: 1, targets: [first, second] }));
+        assert.equal((await loadTargets(file)).length, 2);
+    }
+});
+
 test('local registration verifies every target and removes only its private staging copy', async t => {
     const f = await fixture(t);
     const artifact = await releaseArtifact(f.root);

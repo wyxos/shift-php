@@ -1,10 +1,10 @@
 {
-  "_x-Dgf7jlZx.js": {
-    "file": "assets/x-Dgf7jlZx.js",
+  "_x-CxPEqU-1.js": {
+    "file": "assets/x-CxPEqU-1.js",
     "name": "x"
   },
   "index.html": {
-    "file": "assets/app-BvxMrPll.js",
+    "file": "assets/app-B6mJcmwA.js",
     "name": "app",
     "src": "index.html",
     "isEntry": true,
@@ -13,28 +13,28 @@
     ]
   },
   "src/widget.ts": {
-    "file": "assets/widget-D3PV032Y.js",
+    "file": "assets/widget-Dy48Yvze.js",
     "name": "widget",
     "src": "src/widget.ts",
     "isEntry": true,
     "imports": [
-      "_x-Dgf7jlZx.js"
+      "_x-CxPEqU-1.js"
     ],
     "css": [
-      "assets/widget-TnK29pil.css"
+      "assets/widget-Iaz1iv0J.css"
     ]
   },
   "src/workspace.ts": {
-    "file": "assets/workspace-DaQUsPpa.js",
+    "file": "assets/workspace-hQwYaEU5.js",
     "name": "workspace",
     "src": "src/workspace.ts",
     "isDynamicEntry": true,
     "imports": [
-      "_x-Dgf7jlZx.js",
+      "_x-CxPEqU-1.js",
       "index.html"
     ],
     "css": [
-      "assets/workspace-CR9zGnE8.css"
+      "assets/workspace-DYsTaQhe.css"
     ]
   }
 }

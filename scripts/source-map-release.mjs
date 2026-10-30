@@ -38,6 +38,8 @@ export async function loadTargets(configPath) {
     }
     const targets = config.targets.map(target);
     if (new Set(targets.map(item => item.name)).size !== targets.length) throw new Error('SDK source-map target names must be unique.');
+    const destinations = targets.map(item => JSON.stringify([item.transport, item.host ?? null, path.posix.resolve(item.projectPath)]));
+    if (new Set(destinations).size !== targets.length) throw new Error('SDK source-map target destinations must be unique.');
     return targets;
 }
 
