@@ -297,3 +297,12 @@ The reporter is intentionally silent on network failures and failed portal respo
 ## License
 
 MIT [Wyxos](https://wyxos.com). See [LICENSE.md](LICENSE.md) for details.
+
+
+## Widget request limits
+
+The SDK limits its widget config, session-user, login and task-submission routes to a shared 30 requests per minute per authenticated user or guest IP by default. Its `shift-widget:` counter prefix keeps this budget separate from unrelated application throttles. Laravel still uses the consuming application's configured limiter cache store.
+
+Applications only need to supply their own authentication or authorization middleware in `shift.widget.routes.middleware`. The SDK applies its default even when an older published config lacks the new setting. Remove a redundant app-owned `throttle:30,1` entry to use the package default. Existing explicit Laravel throttle middleware (including its fully qualified class or subclasses) remains an application override and is not stacked with another package limiter.
+
+Set `SHIFT_WIDGET_THROTTLE="60,1,shift-widget:"` to customize the attempts, decay minutes and counter prefix. Published configuration can set `shift.widget.routes.throttle` directly; explicit `false` disables the package default. Existing config files are preserved during dependency updates, so add the environment-backed setting if needed. Rebuild the application's route and configuration caches after changes. Signed callbacks, collaborator lookup and workspace routes retain their separate authorization and are outside this widget budget.

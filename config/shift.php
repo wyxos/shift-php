@@ -42,6 +42,7 @@ return [
 
         'routes' => [
             'middleware' => ['web'],
+            'throttle' => env('SHIFT_WIDGET_THROTTLE', '30,1,shift-widget:'),
         ],
 
         'assets' => [

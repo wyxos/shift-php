@@ -19,7 +19,22 @@ use Wyxos\Shift\Http\Middleware\HandleShiftAuthentication;
 Route::post('/shift/api/notifications', [ShiftNotificationController::class, 'store']);
 Route::get('/shift/api/collaborators/external', [ShiftCollaboratorController::class, 'external']);
 
-Route::middleware(config('shift.widget.routes.middleware', ['web']))
+// Keep package defaults even when an older published app config replaces widget settings.
+$widgetMiddleware = (array) config('shift.widget.routes.middleware', ['web']);
+$widgetThrottle = config('shift.widget.routes.throttle', '30,1,shift-widget:');
+foreach ($widgetMiddleware as $middleware) {
+    $name = is_string($middleware) ? explode(':', $middleware, 2)[0] : '';
+    if ($name === 'throttle' || is_a($name, \Illuminate\Routing\Middleware\ThrottleRequests::class, true)) {
+        // Existing explicit app throttles take precedence without counting twice.
+        $widgetThrottle = false;
+        break;
+    }
+}
+if ($widgetThrottle !== false) {
+    $widgetMiddleware[] = 'throttle:'.$widgetThrottle;
+}
+
+Route::middleware($widgetMiddleware)
     ->prefix('/shift/api/widget')
     ->group(function () {
         Route::get('/config', [ShiftWidgetController::class, 'config'])->name('shift.widget.config');
