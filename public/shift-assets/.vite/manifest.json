@@ -1,10 +1,10 @@
 {
-  "_x-BV4PaJhp.js": {
-    "file": "assets/x-BV4PaJhp.js",
+  "_x-BSHk-qIK.js": {
+    "file": "assets/x-BSHk-qIK.js",
     "name": "x"
   },
   "index.html": {
-    "file": "assets/app-BaUZf8Ur.js",
+    "file": "assets/app-D_TparB-.js",
     "name": "app",
     "src": "index.html",
     "isEntry": true,
@@ -13,28 +13,28 @@
     ]
   },
   "src/widget.ts": {
-    "file": "assets/widget-BK-vDl9H.js",
+    "file": "assets/widget-KMidCsX2.js",
     "name": "widget",
     "src": "src/widget.ts",
     "isEntry": true,
     "imports": [
-      "_x-BV4PaJhp.js"
+      "_x-BSHk-qIK.js"
     ],
     "css": [
       "assets/widget-TnK29pil.css"
     ]
   },
   "src/workspace.ts": {
-    "file": "assets/workspace-Zq47-4sW.js",
+    "file": "assets/workspace-D26c13ah.js",
     "name": "workspace",
     "src": "src/workspace.ts",
     "isDynamicEntry": true,
     "imports": [
-      "_x-BV4PaJhp.js",
+      "_x-BSHk-qIK.js",
       "index.html"
     ],
     "css": [
-      "assets/workspace-CvvaxfF5.css"
+      "assets/workspace-BJIyTGL6.css"
     ]
   }
 }
