@@ -197,6 +197,8 @@ For the authenticated dashboard and task routes, the package passes these reques
 
 When `SHIFT_ERROR_REPORTING_ENABLED=true`, the package reports Laravel exceptions and failures inside the SHIFT SDK to the configured portal. SDK reports appear under the consuming app's existing project and environment. Select **SDK errors** in the portal's App errors page to see them across projects you can access.
 
+The portal controls alert frequency per project. New errors and completed errors that return alert immediately. For an open error, the next occurrence at or after the configured alert cooldown sends another alert, even if events continued throughout the cooldown. Repeated events do not restart it. The default is one hour; all events remain in the error history. This policy applies on the portal without a consumer SDK upgrade.
+
 The `/shift` workspace captures Vue errors, SDK JavaScript errors and unhandled promise rejections, navigation or asset-loading failures, and unexpected API action failures. SDK PHP exceptions are reported even when a controller catches them to return an error response. Expected validation, authentication and permission failures are excluded from SDK diagnostics.
 
 Browser reports go through the authenticated, CSRF-protected `POST /shift/api/errors` endpoint. The portal token stays on the server. SDK diagnostics include the installed package version, operation and a correlation ID when available. JavaScript stack frames retain line and column positions. Reports also identify the UI build actually loaded, independently of the PHP package version.
