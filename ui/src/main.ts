@@ -1,9 +1,7 @@
-import { initializeTheme } from '@shift/composables/useAppearance';
-import { createApp } from 'vue';
-import App from './App.vue';
-import router from './router';
-import './style.css';
+import { installWorkspaceErrorReporting, reportWorkspaceError } from './error-reporting';
 
-initializeTheme();
+installWorkspaceErrorReporting();
 
-createApp(App).use(router).mount('#app');
+void import('./workspace').catch((error: unknown) => {
+    reportWorkspaceError(error, { operation: 'startup' });
+});

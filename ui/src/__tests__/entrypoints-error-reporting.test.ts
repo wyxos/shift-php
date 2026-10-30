@@ -7,12 +7,13 @@ describe('package UI entrypoints', () => {
         vi.doUnmock('../router');
         vi.doUnmock('../widget/WidgetApp.vue');
         vi.doUnmock('@shift/composables/useAppearance');
+        vi.doUnmock('../workspace');
         vi.restoreAllMocks();
         vi.resetModules();
         vi.unstubAllGlobals();
     });
 
-    it('does not install global browser error reporting from the dashboard entrypoint', async () => {
+    it('installs scoped browser capture before the workspace starts', async () => {
         document.body.innerHTML = '<div id="app"></div>';
         vi.doMock('@shift/composables/useAppearance', () => ({
             initializeTheme: vi.fn(),
@@ -22,16 +23,17 @@ describe('package UI entrypoints', () => {
                 template: '<div />',
             },
         }));
-        vi.doMock('../router', () => ({
-            default: {
-                install: vi.fn(),
-            },
-        }));
+        vi.doMock('../workspace', () => ({}));
         const addEventListenerSpy = vi.spyOn(window, 'addEventListener');
 
         await import('../main');
+        await vi.dynamicImportSettled();
 
-        expect(errorReportingListenerRegistrations(addEventListenerSpy.mock.calls)).toHaveLength(0);
+        const listeners = errorReportingListenerRegistrations(addEventListenerSpy.mock.calls);
+        expect(listeners).toHaveLength(2);
+        for (const [event, listener, capture] of listeners as [string, EventListener, boolean][]) {
+            window.removeEventListener(event, listener, capture);
+        }
     });
 
     it('does not install global browser error reporting from the widget entrypoint', async () => {
@@ -63,6 +65,27 @@ describe('package UI entrypoints', () => {
         await import('../widget');
 
         expect(errorReportingListenerRegistrations(addEventListenerSpy.mock.calls)).toHaveLength(0);
+    });
+
+    it('reports startup import failures after installing capture', async () => {
+        const error = new Error('Fixture workspace import failed');
+        vi.doMock('../workspace', () => { throw error; });
+        const fetchMock = vi.fn().mockResolvedValue(new Response(null, { status: 201 }));
+        vi.stubGlobal('fetch', fetchMock);
+        window.shiftConfig = { errorReportingEnabled: true } as Window['shiftConfig'];
+        const addEventListenerSpy = vi.spyOn(window, 'addEventListener');
+
+        await import('../main');
+        await vi.dynamicImportSettled();
+
+        expect(fetchMock).toHaveBeenCalledTimes(1);
+        expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toMatchObject({
+            error: { name: 'Error', message: expect.stringContaining('error') }, context: { operation: 'startup' },
+        });
+        const listeners = errorReportingListenerRegistrations(addEventListenerSpy.mock.calls);
+        for (const [event, listener, capture] of listeners as [string, EventListener, boolean][]) {
+            window.removeEventListener(event, listener, capture);
+        }
     });
 });
 

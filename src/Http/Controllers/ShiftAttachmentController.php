@@ -43,6 +43,8 @@ class ShiftAttachmentController extends Controller
 
             return $this->jsonResponse($response, 'Failed to upload attachment', $context, 'attachments.upload');
         } catch (\Throwable $e) {
+            app(\Wyxos\Shift\Support\ShiftErrorReporter::class)->reportSdkThrowable($e, __METHOD__);
+
             return $this->exceptionResponse('Failed to upload attachment', $e);
         }
     }
@@ -75,6 +77,7 @@ class ShiftAttachmentController extends Controller
 
             return $this->jsonResponse($response, 'Failed to initialize upload', $context, 'attachments.upload-init');
         } catch (\Throwable $e) {
+            app(\Wyxos\Shift\Support\ShiftErrorReporter::class)->reportSdkThrowable($e, __METHOD__);
             $traceId = (string) Str::uuid();
             ShiftProxyLogger::exception('attachments.upload-init', $e, $traceId);
 
@@ -107,6 +110,8 @@ class ShiftAttachmentController extends Controller
 
             return $this->jsonResponse($response, 'Failed to fetch upload status', $context, 'attachments.upload-status');
         } catch (\Throwable $e) {
+            app(\Wyxos\Shift\Support\ShiftErrorReporter::class)->reportSdkThrowable($e, __METHOD__);
+
             return $this->exceptionResponse('Failed to fetch upload status', $e);
         }
     }
@@ -140,6 +145,8 @@ class ShiftAttachmentController extends Controller
 
             return $this->jsonResponse($response, 'Failed to upload chunk', $context, 'attachments.upload-chunk');
         } catch (\Throwable $e) {
+            app(\Wyxos\Shift\Support\ShiftErrorReporter::class)->reportSdkThrowable($e, __METHOD__);
+
             return $this->exceptionResponse('Failed to upload chunk', $e);
         }
     }
@@ -166,6 +173,8 @@ class ShiftAttachmentController extends Controller
 
             return $this->jsonResponse($response, 'Failed to complete upload', $context, 'attachments.upload-complete');
         } catch (\Throwable $e) {
+            app(\Wyxos\Shift\Support\ShiftErrorReporter::class)->reportSdkThrowable($e, __METHOD__);
+
             return $this->exceptionResponse('Failed to upload attachment', $e);
         }
     }
@@ -235,6 +244,8 @@ class ShiftAttachmentController extends Controller
 
             return $this->jsonResponse($response, 'Failed to upload attachments', $context, 'attachments.upload-multiple');
         } catch (\Throwable $e) {
+            app(\Wyxos\Shift\Support\ShiftErrorReporter::class)->reportSdkThrowable($e, __METHOD__);
+
             return $this->exceptionResponse('Failed to upload attachments', $e);
         }
     }
@@ -265,6 +276,8 @@ class ShiftAttachmentController extends Controller
 
             return $this->jsonResponse($response, 'Failed to remove attachment', $context, 'attachments.remove-temp');
         } catch (\Throwable $e) {
+            app(\Wyxos\Shift\Support\ShiftErrorReporter::class)->reportSdkThrowable($e, __METHOD__);
+
             return $this->exceptionResponse('Failed to remove attachment', $e);
         }
     }
@@ -291,6 +304,8 @@ class ShiftAttachmentController extends Controller
 
             return $this->jsonResponse($response, 'Failed to list attachments', $context, 'attachments.list-temp');
         } catch (\Throwable $e) {
+            app(\Wyxos\Shift\Support\ShiftErrorReporter::class)->reportSdkThrowable($e, __METHOD__);
+
             return $this->exceptionResponse('Failed to list attachments', $e);
         }
     }
@@ -315,6 +330,8 @@ class ShiftAttachmentController extends Controller
 
             return $this->binaryResponse($response, ['Content-Type', 'Content-Disposition', 'Cache-Control', 'Content-Security-Policy', 'X-Content-Type-Options'], $response->status());
         } catch (\Throwable $e) {
+            app(\Wyxos\Shift\Support\ShiftErrorReporter::class)->reportSdkThrowable($e, __METHOD__);
+
             return $this->exceptionResponse('Failed to fetch attachment', $e);
         }
     }
@@ -349,6 +366,8 @@ class ShiftAttachmentController extends Controller
                 'error' => $this->extractErrorMessage($response, 'Failed to download attachment'),
             ], $response->status() ?: 422);
         } catch (\Throwable $e) {
+            app(\Wyxos\Shift\Support\ShiftErrorReporter::class)->reportSdkThrowable($e, __METHOD__);
+
             return $this->exceptionResponse('Failed to download attachment', $e);
         }
     }

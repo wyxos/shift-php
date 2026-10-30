@@ -60,6 +60,8 @@ class ShiftTaskController extends Controller
 
             return ShiftProxyResponse::error($response, 'Failed to fetch tasks');
         } catch (\Throwable $e) {
+            app(\Wyxos\Shift\Support\ShiftErrorReporter::class)->reportSdkThrowable($e, __METHOD__);
+
             return response()->json(['error' => 'Failed to fetch tasks: '.$e->getMessage()], 500);
         }
     }
@@ -91,6 +93,8 @@ class ShiftTaskController extends Controller
 
             return ShiftProxyResponse::error($response, 'Failed to create task', 422);
         } catch (\Throwable $e) {
+            app(\Wyxos\Shift\Support\ShiftErrorReporter::class)->reportSdkThrowable($e, __METHOD__);
+
             return response()->json(['error' => 'Failed to create task: '.$e->getMessage()], 500);
         }
     }
@@ -132,6 +136,8 @@ class ShiftTaskController extends Controller
 
             return ShiftProxyResponse::error($response, 'Failed to import email', 422);
         } catch (\Throwable $e) {
+            app(\Wyxos\Shift\Support\ShiftErrorReporter::class)->reportSdkThrowable($e, __METHOD__);
+
             return response()->json(['error' => 'Failed to import email: '.$e->getMessage()], 500);
         }
     }
@@ -162,6 +168,8 @@ class ShiftTaskController extends Controller
 
             return ShiftProxyResponse::error($response, 'Failed to update task', 422);
         } catch (\Throwable $e) {
+            app(\Wyxos\Shift\Support\ShiftErrorReporter::class)->reportSdkThrowable($e, __METHOD__);
+
             return response()->json(['error' => 'Failed to update task: '.$e->getMessage()], 500);
         }
     }
@@ -203,6 +211,8 @@ class ShiftTaskController extends Controller
 
             return ShiftProxyResponse::error($response, 'Failed to update task collaborators', 422);
         } catch (\Throwable $e) {
+            app(\Wyxos\Shift\Support\ShiftErrorReporter::class)->reportSdkThrowable($e, __METHOD__);
+
             return response()->json(['error' => 'Failed to update task collaborators: '.$e->getMessage()], 500);
         }
     }
@@ -231,6 +241,8 @@ class ShiftTaskController extends Controller
 
             return ShiftProxyResponse::error($response, 'Failed to fetch task');
         } catch (\Throwable $e) {
+            app(\Wyxos\Shift\Support\ShiftErrorReporter::class)->reportSdkThrowable($e, __METHOD__);
+
             return response()->json(['error' => 'Failed to fetch task: '.$e->getMessage()], 500);
         }
     }
@@ -256,6 +268,8 @@ class ShiftTaskController extends Controller
 
             return ShiftProxyResponse::error($response, 'Failed to delete task', 422);
         } catch (\Throwable $e) {
+            app(\Wyxos\Shift\Support\ShiftErrorReporter::class)->reportSdkThrowable($e, __METHOD__);
+
             return response()->json(['error' => 'Failed to delete task: '.$e->getMessage()], 500);
         }
     }
@@ -290,6 +304,8 @@ class ShiftTaskController extends Controller
 
             return ShiftProxyResponse::error($response, 'Failed to update task status', 422);
         } catch (\Throwable $e) {
+            app(\Wyxos\Shift\Support\ShiftErrorReporter::class)->reportSdkThrowable($e, __METHOD__);
+
             return response()->json(['error' => 'Failed to update task status: '.$e->getMessage()], 500);
         }
     }

@@ -33,6 +33,8 @@ class ShiftExternalRoleController extends Controller
 
             return ShiftProxyResponse::error($response, 'Failed to fetch external role capabilities');
         } catch (\Throwable $e) {
+            app(\Wyxos\Shift\Support\ShiftErrorReporter::class)->reportSdkThrowable($e, __METHOD__);
+
             return response()->json(['error' => 'Failed to fetch external role capabilities: '.$e->getMessage()], 500);
         }
     }
@@ -69,6 +71,8 @@ class ShiftExternalRoleController extends Controller
 
             return ShiftProxyResponse::error($response, 'Failed to fetch external roles');
         } catch (\Throwable $e) {
+            app(\Wyxos\Shift\Support\ShiftErrorReporter::class)->reportSdkThrowable($e, __METHOD__);
+
             return response()->json(['error' => 'Failed to fetch external roles: '.$e->getMessage()], 500);
         }
     }
@@ -109,6 +113,8 @@ class ShiftExternalRoleController extends Controller
 
             return ShiftProxyResponse::error($response, 'Failed to update external role', 422);
         } catch (\Throwable $e) {
+            app(\Wyxos\Shift\Support\ShiftErrorReporter::class)->reportSdkThrowable($e, __METHOD__);
+
             return response()->json(['error' => 'Failed to update external role: '.$e->getMessage()], 500);
         }
     }

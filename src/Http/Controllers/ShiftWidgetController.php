@@ -27,6 +27,8 @@ class ShiftWidgetController extends Controller
         try {
             $portalConfig = $this->portalClient->widgetConfiguration();
         } catch (\Throwable $exception) {
+            app(\Wyxos\Shift\Support\ShiftErrorReporter::class)->reportSdkThrowable($exception, __METHOD__);
+
             return response()->json(['message' => $exception->getMessage()], $this->statusCode($exception, 500));
         }
 
@@ -86,6 +88,8 @@ class ShiftWidgetController extends Controller
         try {
             $portalConfig = $this->portalClient->widgetConfiguration();
         } catch (\Throwable $exception) {
+            app(\Wyxos\Shift\Support\ShiftErrorReporter::class)->reportSdkThrowable($exception, __METHOD__);
+
             return response()->json(['message' => $exception->getMessage()], $this->statusCode($exception, 500));
         }
 

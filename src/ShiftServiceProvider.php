@@ -21,6 +21,8 @@ class ShiftServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
+        $this->app->scoped(ShiftErrorReporter::class);
+
         $this->mergeConfigFrom(
             __DIR__.'/../config/shift.php', 'shift'
         );

@@ -32,6 +32,7 @@ class ShiftInboxController extends Controller
                 ? response()->json($response->json(), $response->status())
                 : ShiftProxyResponse::error($response, 'Failed to fetch notifications');
         } catch (\Throwable $exception) {
+            app(\Wyxos\Shift\Support\ShiftErrorReporter::class)->reportSdkThrowable($exception, __METHOD__);
             ShiftProxyLogger::exception('inbox.index', $exception);
 
             return response()->json(['error' => 'Failed to fetch notifications'], 500);
@@ -69,6 +70,7 @@ class ShiftInboxController extends Controller
                 ? response()->json($response->json(), $response->status())
                 : ShiftProxyResponse::error($response, 'Failed to mark notifications read');
         } catch (\Throwable $exception) {
+            app(\Wyxos\Shift\Support\ShiftErrorReporter::class)->reportSdkThrowable($exception, __METHOD__);
             ShiftProxyLogger::exception($operation, $exception);
 
             return response()->json(['error' => 'Failed to mark notifications read'], 500);

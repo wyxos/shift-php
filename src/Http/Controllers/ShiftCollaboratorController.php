@@ -37,6 +37,8 @@ class ShiftCollaboratorController extends Controller
         } catch (CollaboratorResolverNotConfigured $exception) {
             return response()->json(['message' => $exception->getMessage()], 503);
         } catch (RuntimeException $exception) {
+            app(\Wyxos\Shift\Support\ShiftErrorReporter::class)->reportSdkThrowable($exception, __METHOD__);
+
             return response()->json(['message' => $exception->getMessage()], 500);
         }
 
@@ -75,6 +77,8 @@ class ShiftCollaboratorController extends Controller
 
             return [array_map(fn (array $user): array => [...$user, 'environment' => $payload['environment']], $payload['users']), true, null];
         } catch (RuntimeException $exception) {
+            app(\Wyxos\Shift\Support\ShiftErrorReporter::class)->reportSdkThrowable($exception, __METHOD__);
+
             return [[], false, $exception->getMessage()];
         }
     }
@@ -179,7 +183,9 @@ class ShiftCollaboratorController extends Controller
                 'project' => $project,
                 ...(filled($search) ? ['search' => $search] : []),
             ]);
-        } catch (ConnectionException) {
+        } catch (ConnectionException $exception) {
+            app(\Wyxos\Shift\Support\ShiftErrorReporter::class)->reportSdkThrowable($exception, __METHOD__);
+
             return [[], false, 'Failed to reach SHIFT for collaborator lookup.', null];
         }
 

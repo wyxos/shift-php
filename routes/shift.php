@@ -6,6 +6,7 @@ use Wyxos\Shift\Http\Controllers\ShiftAttachmentController;
 use Wyxos\Shift\Http\Controllers\ShiftCollaboratorController;
 use Wyxos\Shift\Http\Controllers\ShiftController;
 use Wyxos\Shift\Http\Controllers\ShiftDashboardController;
+use Wyxos\Shift\Http\Controllers\ShiftErrorController;
 use Wyxos\Shift\Http\Controllers\ShiftExternalRoleController;
 use Wyxos\Shift\Http\Controllers\ShiftInboxController;
 use Wyxos\Shift\Http\Controllers\ShiftNotificationController;
@@ -15,6 +16,7 @@ use Wyxos\Shift\Http\Controllers\ShiftTaskThreadController;
 use Wyxos\Shift\Http\Controllers\ShiftWidgetController;
 use Wyxos\Shift\Http\Middleware\EnsureShiftWorkspaceEnabled;
 use Wyxos\Shift\Http\Middleware\HandleShiftAuthentication;
+use Wyxos\Shift\Http\Middleware\ReportShiftErrors;
 
 Route::post('/shift/api/notifications', [ShiftNotificationController::class, 'store']);
 Route::get('/shift/api/collaborators/external', [ShiftCollaboratorController::class, 'external']);
@@ -34,7 +36,7 @@ if ($widgetThrottle !== false) {
     array_unshift($widgetMiddleware, 'throttle:'.$widgetThrottle);
 }
 
-Route::middleware($widgetMiddleware)
+Route::middleware([...$widgetMiddleware, ReportShiftErrors::class])
     ->prefix('/shift/api/widget')
     ->group(function () {
         Route::get('/config', [ShiftWidgetController::class, 'config'])->name('shift.widget.config');
@@ -45,10 +47,13 @@ Route::middleware($widgetMiddleware)
 
 Route::middleware([
     EnsureShiftWorkspaceEnabled::class,
+    ReportShiftErrors::class,
     HandleShiftAuthentication::class,
     ...(array) config('shift.routes.middleware'),
 ])
     ->group(function () {
+        Route::post('/shift/api/errors', [ShiftErrorController::class, 'store'])->middleware('throttle:20,1,shift-errors:')->name('shift.errors.store');
+
         // Task routes
         Route::get('/shift/api/dashboard', [ShiftDashboardController::class, 'index'])->name('dashboard.index');
         Route::get('/shift/api/tasks', [ShiftTaskController::class, 'index'])->name('tasks.index');

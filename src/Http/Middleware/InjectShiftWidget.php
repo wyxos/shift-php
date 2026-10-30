@@ -30,7 +30,9 @@ class InjectShiftWidget
 
         try {
             $portalConfig = $this->portalClient->widgetConfiguration();
-        } catch (\Throwable) {
+        } catch (\Throwable $exception) {
+            app(\Wyxos\Shift\Support\ShiftErrorReporter::class)->reportSdkThrowable($exception, __METHOD__);
+
             return $response;
         }
 

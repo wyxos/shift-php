@@ -65,6 +65,8 @@ class ShiftAiController extends Controller
                 'error' => $response->json()['error'] ?? $response->json()['message'] ?? 'Failed to improve message',
             ], $status);
         } catch (Throwable $e) {
+            app(\Wyxos\Shift\Support\ShiftErrorReporter::class)->reportSdkThrowable($e, __METHOD__);
+
             return response()->json(['error' => 'Failed to improve message: '.$e->getMessage()], 500);
         }
     }

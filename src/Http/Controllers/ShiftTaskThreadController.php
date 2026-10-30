@@ -59,6 +59,8 @@ class ShiftTaskThreadController extends Controller
 
             return ShiftProxyResponse::error($response, 'Failed to fetch threads');
         } catch (\Throwable $e) {
+            app(\Wyxos\Shift\Support\ShiftErrorReporter::class)->reportSdkThrowable($e, __METHOD__);
+
             return response()->json(['error' => 'Failed to fetch threads: '.$e->getMessage()], 500);
         }
     }
@@ -129,6 +131,8 @@ class ShiftTaskThreadController extends Controller
 
             return ShiftProxyResponse::error($response, 'Failed to create thread', 422);
         } catch (\Throwable $e) {
+            app(\Wyxos\Shift\Support\ShiftErrorReporter::class)->reportSdkThrowable($e, __METHOD__);
+
             return response()->json(['error' => 'Failed to create thread: '.$e->getMessage()], 500);
         }
     }
@@ -176,6 +180,8 @@ class ShiftTaskThreadController extends Controller
 
             return ShiftProxyResponse::error($response, 'Failed to fetch thread');
         } catch (\Throwable $e) {
+            app(\Wyxos\Shift\Support\ShiftErrorReporter::class)->reportSdkThrowable($e, __METHOD__);
+
             return response()->json(['error' => 'Failed to fetch thread: '.$e->getMessage()], 500);
         }
     }
@@ -241,6 +247,8 @@ class ShiftTaskThreadController extends Controller
 
             return ShiftProxyResponse::error($response, 'Failed to update thread');
         } catch (\Throwable $e) {
+            app(\Wyxos\Shift\Support\ShiftErrorReporter::class)->reportSdkThrowable($e, __METHOD__);
+
             return response()->json(['error' => 'Failed to update thread: '.$e->getMessage()], 500);
         }
     }
@@ -293,6 +301,8 @@ class ShiftTaskThreadController extends Controller
 
             return ShiftProxyResponse::error($response, 'Failed to delete thread');
         } catch (\Throwable $e) {
+            app(\Wyxos\Shift\Support\ShiftErrorReporter::class)->reportSdkThrowable($e, __METHOD__);
+
             return response()->json(['error' => 'Failed to delete thread: '.$e->getMessage()], 500);
         }
     }

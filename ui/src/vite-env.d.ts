@@ -6,6 +6,9 @@ interface Window {
         logoutRoute: string | null;
         logoutMethod?: 'POST' | 'DELETE' | 'PUT' | 'PATCH' | null;
         csrfToken?: string | null;
+        errorReportingEnabled?: boolean;
+        errorReportingEndpoint?: string;
+        errorReportingCsrfToken?: string;
         baseUrl: string;
         appName: string;
         username: string;

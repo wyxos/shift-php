@@ -193,11 +193,19 @@ For the authenticated dashboard and task routes, the package passes these reques
 - `GET /shift/api/tasks/{taskId}/threads`
 - `POST /shift/api/tasks/{taskId}/threads`
 
-## Backend Error Reports
+## Error Reports
 
-When `SHIFT_ERROR_REPORTING_ENABLED=true`, the package registers a Laravel exception reporter. It sends cleaned backend exception details to the configured portal without blocking the app's normal exception handling.
+When `SHIFT_ERROR_REPORTING_ENABLED=true`, the package reports Laravel exceptions and failures inside the SHIFT SDK to the configured portal. SDK reports appear under the consuming app's existing project and environment. Select **SDK errors** in the portal's App errors page to see them across projects you can access.
 
-The reporter never blocks the app. Missing credentials, disabled reporting, connection failures, timeouts, or failed portal responses are ignored.
+The `/shift` workspace captures Vue errors, SDK JavaScript errors and unhandled promise rejections, navigation or asset-loading failures, and unexpected API action failures. SDK PHP exceptions are reported even when a controller catches them to return an error response. Expected validation, authentication and permission failures are excluded from SDK diagnostics.
+
+Browser reports go through the authenticated, CSRF-protected `POST /shift/api/errors` endpoint. The portal token stays on the server. SDK diagnostics include the installed package version, operation and a correlation ID when available. JavaScript stack frames retain line and column positions; no source maps are uploaded.
+
+Reporting is best effort and uses the configured timeout (three seconds by default). Delivery failures preserve the original response and write a local diagnostic with the exception class, operation and correlation ID. Local diagnostics omit exception messages and request data. Failed reports are not queued for later delivery.
+
+The workspace suppresses duplicate exceptions and sends at most twenty distinct reports per page load. The browser endpoint accepts twenty requests per minute per user, and PHP SDK reports are limited to twenty attempts per signature per minute when the app's limiter cache is available. These limits use separate SDK counters. The widget does not install global browser error listeners on consuming-app pages.
+
+Capture starts when the workspace entry script runs. A blocked or missing entry script, browser termination, or an unavailable network can prevent delivery. Visual layout problems do not produce exception reports.
 
 The package detects the revision from deployment commit metadata or the app Git checkout. If the checkout has an exact tag for that revision, the tag is sent as the release.
 
@@ -218,6 +226,8 @@ Widget submissions include:
 - Page details supplied by the widget, such as current page URL, page title, and referrer.
 - Authenticated app user details, or guest name/email when guest details are submitted and anonymous mode is not used.
 - Linked app name, environment, and URL.
+
+SDK diagnostics include cleaned error messages, stack frames, the workspace path, operation, SDK version, app release, environment, and authenticated user details when available. They omit form bodies, request queries, source-code excerpts, and browser DOM contents. Normal consuming-app Laravel reports retain the backend request context listed below.
 
 Backend error reports include:
 

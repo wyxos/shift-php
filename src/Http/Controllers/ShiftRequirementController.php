@@ -45,6 +45,8 @@ class ShiftRequirementController extends Controller
 
             return ShiftProxyResponse::error($response, 'Failed to fetch requirements');
         } catch (\Throwable $e) {
+            app(\Wyxos\Shift\Support\ShiftErrorReporter::class)->reportSdkThrowable($e, __METHOD__);
+
             return response()->json(['error' => 'Failed to fetch requirements: '.$e->getMessage()], 500);
         }
     }
@@ -96,6 +98,8 @@ class ShiftRequirementController extends Controller
 
             return ShiftProxyResponse::error($response, 'Failed to submit requirements', 422);
         } catch (\Throwable $e) {
+            app(\Wyxos\Shift\Support\ShiftErrorReporter::class)->reportSdkThrowable($e, __METHOD__);
+
             return response()->json(['error' => 'Failed to submit requirements: '.$e->getMessage()], 500);
         }
     }

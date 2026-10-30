@@ -51,6 +51,8 @@ class ShiftDashboardController extends Controller
                 'charts' => $this->buildCharts($tasks, $normalizedEmail),
             ]);
         } catch (Throwable $e) {
+            app(\Wyxos\Shift\Support\ShiftErrorReporter::class)->reportSdkThrowable($e, __METHOD__);
+
             return response()->json(['error' => 'Failed to load dashboard data: '.$e->getMessage()], 500);
         }
     }
