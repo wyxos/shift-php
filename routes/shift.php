@@ -31,7 +31,7 @@ foreach ($widgetMiddleware as $middleware) {
     }
 }
 if ($widgetThrottle !== false) {
-    $widgetMiddleware[] = 'throttle:'.$widgetThrottle;
+    array_unshift($widgetMiddleware, 'throttle:'.$widgetThrottle);
 }
 
 Route::middleware($widgetMiddleware)
