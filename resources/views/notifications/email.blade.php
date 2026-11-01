@@ -1,5 +1,10 @@
 @php
-    $portalUrl = rtrim((string) config('shift.url'), '/') ?: 'https://shift.wyxos.com';
+    $logo = 'data:image/png;base64,'.base64_encode(file_get_contents($shiftLogoPath));
+    if (isset($message) && $message instanceof \Illuminate\Mail\Message) {
+        $message->embed($shiftLogoPath);
+        // A named reference works with Symfony MIME and API transports that use the attachment filename as its content ID.
+        $logo = 'cid:shift-wordmark-email.png';
+    }
     $dashboardUrl = \Illuminate\Support\Facades\Route::has('shift.dashboard') ? route('shift.dashboard') : config('app.url');
     $heading = $greeting ?: ($subject ?: __('SHIFT notification'));
 @endphp
@@ -36,7 +41,7 @@
 <tr>
 <td>
 <a href="{{ $dashboardUrl }}" style="display: inline-block; color: #ffffff; text-decoration: none;">
-<img src="{{ $portalUrl }}/brand/shift-wordmark-email.png" width="124" height="31" alt="SHIFT" style="display: block; width: 124px; height: 31px; border: 0; color: #ffffff; font-size: 22px; font-weight: bold;">
+<img src="{{ $logo }}" width="124" height="31" alt="SHIFT" style="display: block; width: 124px; height: 31px; border: 0; color: #ffffff; font-size: 22px; font-weight: bold;">
 </a>
 </td>
 <td align="right" style="color: #c4d4f0; font-size: 13px; line-height: 20px;">Notification</td>

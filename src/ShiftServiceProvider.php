@@ -6,6 +6,7 @@ use Illuminate\Contracts\Debug\ExceptionHandler;
 use Illuminate\Foundation\Events\VendorTagPublished;
 use Illuminate\Foundation\Http\Kernel as HttpKernel;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\View\View;
 use Throwable;
 use Wyxos\Shift\Commands\InstallShiftCommand;
 use Wyxos\Shift\Commands\PublishShiftCommand;
@@ -45,6 +46,10 @@ class ShiftServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->loadViewsFrom(__DIR__.'/../resources/views', 'shift');
+
+        $this->app['view']->composer('shift::notifications.email', function (View $view): void {
+            $view->with('shiftLogoPath', __DIR__.'/../resources/images/shift-wordmark-email.png');
+        });
 
         $this->loadRoutesFrom(__DIR__.'/../routes/shift.php');
 
