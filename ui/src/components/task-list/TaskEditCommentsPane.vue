@@ -1,10 +1,10 @@
 <script lang="ts" setup>
 import axios from '@/axios-config';
 import ShiftEditor from '@shared/components/ShiftEditor.vue';
+import TaskCommentContent from '@shared/components/tasks/TaskCommentContent.vue';
 import TaskCommentMenu from '@shared/components/tasks/TaskCommentMenu.vue';
+import TaskCommentReactions from '@shared/components/tasks/TaskCommentReactions.vue';
 import TaskReportContext from '@shared/components/tasks/TaskReportContext.vue';
-import { imageTiles } from '@shared/tasks/image-tile';
-import { renderRichContent } from '@shared/tasks/rich-content';
 import { LoaderCircle, Paperclip, RotateCcw } from 'lucide-vue-next';
 import { ContextMenuItem, ContextMenuSeparator } from 'reka-ui';
 import { computed, type ComponentPublicInstance } from 'vue';
@@ -41,13 +41,13 @@ interface Props {
     deleteThreadMessage: (message: ThreadMessage) => boolean | Promise<boolean>;
     cancelThreadEdit: () => void;
     handleThreadSend: (payload: { html: string; attachments?: any[] }) => void | Promise<void>;
+    toggleThreadReaction?: (message: ThreadMessage, emoji: string) => void | Promise<void>;
     retryThreadSend: (message: ThreadMessage) => void;
 }
 
 const props = withDefaults(defineProps<Props>(), {
     isRequirement: false,
 });
-const vImageTiles = imageTiles;
 const aiImproveEnabled = getTaskListAiImproveEnabled();
 
 const threadComposerModel = computed({
@@ -116,12 +116,7 @@ function assignCommentsScrollRef(value: Element | ComponentPublicInstance | null
                             <div v-if="!message.isYou" class="text-foreground/80 mb-1 text-xs font-semibold">
                                 {{ message.author }}
                             </div>
-                            <div
-                                v-image-tiles
-                                class="shift-rich text-inherit [&_img]:my-2 [&_img]:max-w-full [&_img]:cursor-zoom-in [&_img]:rounded-lg [&_img]:shadow-sm [&_img.editor-tile]:aspect-square [&_img.editor-tile]:w-[200px] [&_img.editor-tile]:max-w-[200px] [&_img.editor-tile]:object-contain"
-                                @click="onRichContentClick"
-                                v-html="renderRichContent(message.content)"
-                            ></div>
+                            <TaskCommentContent :content="message.content" @click="onRichContentClick" />
                             <div v-if="message.attachments?.length" class="mt-3 flex flex-wrap gap-2">
                                 <component
                                     :is="message.pending || message.failed ? 'span' : 'a'"
@@ -142,6 +137,13 @@ function assignCommentsScrollRef(value: Element | ComponentPublicInstance | null
                                 </component>
                             </div>
                         </div>
+                        <template v-if="toggleThreadReaction && message.reactions && !message.pending && !message.failed" #quick-actions>
+                            <TaskCommentReactions
+                                :reactions="message.reactions"
+                                :reacting="message.reacting"
+                                @select="toggleThreadReaction(message, $event)"
+                            />
+                        </template>
                         <template #items>
                             <ContextMenuItem
                                 v-if="!message.isYou"
@@ -185,6 +187,13 @@ function assignCommentsScrollRef(value: Element | ComponentPublicInstance | null
                             </ContextMenuItem>
                         </template>
                     </TaskCommentMenu>
+                    <TaskCommentReactions
+                        v-if="toggleThreadReaction && message.reactions"
+                        summary
+                        :reactions="message.reactions"
+                        :reacting="message.reacting"
+                        @select="toggleThreadReaction(message, $event)"
+                    />
 
                     <div
                         :class="message.isYou ? 'justify-end' : 'justify-start'"

@@ -2,9 +2,12 @@
 
 namespace Wyxos\Shift\Http\Controllers;
 
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Http;
+use Wyxos\Shift\Support\ShiftActorContext;
+use Wyxos\Shift\Support\ShiftErrorReporter;
 use Wyxos\Shift\Support\ShiftProxyResponse;
 
 class ShiftTaskThreadController extends Controller
@@ -250,6 +253,38 @@ class ShiftTaskThreadController extends Controller
             app(\Wyxos\Shift\Support\ShiftErrorReporter::class)->reportSdkThrowable($e, __METHOD__);
 
             return response()->json(['error' => 'Failed to update thread: '.$e->getMessage()], 500);
+        }
+    }
+
+    public function updateReaction(Request $request, int $taskId, int $threadId, ShiftActorContext $context): JsonResponse
+    {
+        if ($error = $context->configurationErrorResponse()) {
+            return $error;
+        }
+
+        $user = $request->user();
+        if (! $user) {
+            return response()->json(['error' => 'Unauthenticated'], 401);
+        }
+
+        $reaction = $request->validate([
+            'emoji' => ['required', 'string', 'max:16'],
+            'reacted' => ['required', 'boolean'],
+        ]);
+
+        try {
+            $response = $context->client()->put(
+                $context->baseUrl().'/api/tasks/'.$taskId.'/threads/'.$threadId.'/reaction',
+                $context->basePayload($user) + $reaction,
+            );
+
+            return $response->successful()
+                ? response()->json($response->json())
+                : ShiftProxyResponse::error($response, 'Unable to update reaction');
+        } catch (\Throwable $exception) {
+            app(ShiftErrorReporter::class)->reportSdkThrowable($exception, __METHOD__);
+
+            return response()->json(['error' => 'Unable to update reaction'], 500);
         }
     }
 

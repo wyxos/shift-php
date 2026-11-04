@@ -153,6 +153,7 @@ const {
     retryThreadSend,
     startThreadEdit,
     startReplyToMessage,
+    toggleThreadReaction,
     cancelThreadEdit,
     onMessageDblClick,
     onMessageTouchEnd,
@@ -471,6 +472,7 @@ onMounted(async () => {
         :copy-entire-message="copyEntireMessage"
         :copy-selected-message="copySelectedMessage"
         :start-reply-to-message="startReplyToMessage"
+        :toggle-thread-reaction="toggleThreadReaction"
         :start-thread-edit="startThreadEdit"
         :on-message-dbl-click="onMessageDblClick"
         :on-message-touch-end="onMessageTouchEnd"

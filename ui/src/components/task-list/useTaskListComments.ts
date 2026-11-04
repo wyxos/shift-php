@@ -48,6 +48,11 @@ export function useTaskListComments({ editOpen, editTask }: UseTaskListCommentsO
         deleteThread: async (taskId, threadId) => {
             await axios.delete(`/shift/api/tasks/${taskId}/threads/${threadId}`);
         },
+        setThreadReaction: async (taskId, threadId, emoji, reacted) => {
+            const response = await axios.put(`/shift/api/tasks/${taskId}/threads/${threadId}/reaction`, { emoji, reacted });
+            return response.data.reactions;
+        },
+        onReactionError: (message) => toast.error('Unable to update reaction', { description: message }),
         optimisticAuthor: () => window.shiftConfig?.username || 'You',
         onCopyMessageSuccess: () => toast.success('Message copied'),
         onCopyMessageError: () => toast.error('Unable to copy message'),

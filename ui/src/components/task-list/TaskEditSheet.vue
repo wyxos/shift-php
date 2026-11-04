@@ -70,6 +70,7 @@ interface Props {
     copyEntireMessage: (message: ThreadMessage) => void | Promise<void>;
     copySelectedMessage: () => void | Promise<void>;
     startReplyToMessage: (message: ThreadMessage) => void;
+    toggleThreadReaction: (message: ThreadMessage, emoji: string) => void;
     startThreadEdit: (message: ThreadMessage) => void;
     onMessageDblClick: (message: ThreadMessage, event: MouseEvent) => void;
     onMessageTouchEnd: (message: ThreadMessage, event: TouchEvent) => void;
@@ -211,6 +212,7 @@ const titleModel = computed({
                             :copy-entire-message="copyEntireMessage"
                             :copy-selected-message="copySelectedMessage"
                             :start-reply-to-message="startReplyToMessage"
+                            :toggle-thread-reaction="toggleThreadReaction"
                             :start-thread-edit="startThreadEdit"
                             :on-message-dbl-click="onMessageDblClick"
                             :on-message-touch-end="onMessageTouchEnd"

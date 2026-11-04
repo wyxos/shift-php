@@ -77,6 +77,7 @@ Route::middleware([
         // Task thread routes
         Route::get('/shift/api/tasks/{taskId}/threads', [ShiftTaskThreadController::class, 'index'])->name('task-threads.index');
         Route::post('/shift/api/tasks/{taskId}/threads', [ShiftTaskThreadController::class, 'store'])->name('task-threads.store');
+        Route::put('/shift/api/tasks/{taskId}/threads/{threadId}/reaction', [ShiftTaskThreadController::class, 'updateReaction'])->whereNumber(['taskId', 'threadId'])->name('task-threads.reaction');
         Route::get('/shift/api/tasks/{taskId}/threads/{threadId}', [ShiftTaskThreadController::class, 'show'])->name('task-threads.show');
         Route::put('/shift/api/tasks/{taskId}/threads/{threadId}', [ShiftTaskThreadController::class, 'update'])->name('task-threads.update');
         Route::delete('/shift/api/tasks/{taskId}/threads/{threadId}', [ShiftTaskThreadController::class, 'destroy'])->name('task-threads.destroy');
