@@ -4,8 +4,9 @@ import ShiftEditor from '@shared/components/ShiftEditor.vue';
 import TaskCommentContent from '@shared/components/tasks/TaskCommentContent.vue';
 import TaskCommentMenu from '@shared/components/tasks/TaskCommentMenu.vue';
 import TaskCommentReactions from '@shared/components/tasks/TaskCommentReactions.vue';
+import TaskMessageAttachments from '@shared/components/tasks/TaskMessageAttachments.vue';
 import TaskReportContext from '@shared/components/tasks/TaskReportContext.vue';
-import { LoaderCircle, Paperclip, RotateCcw } from 'lucide-vue-next';
+import { LoaderCircle, RotateCcw } from 'lucide-vue-next';
 import { ContextMenuItem, ContextMenuSeparator } from 'reka-ui';
 import { computed, type ComponentPublicInstance } from 'vue';
 import { aiImproveUrl, getTaskListAiImproveEnabled, removeTempUrl, resolveTempUrl, taskListUploadEndpoints } from './editor-config';
@@ -117,25 +118,12 @@ function assignCommentsScrollRef(value: Element | ComponentPublicInstance | null
                                 {{ message.author }}
                             </div>
                             <TaskCommentContent :content="message.content" @click="onRichContentClick" />
-                            <div v-if="message.attachments?.length" class="mt-3 flex flex-wrap gap-2">
-                                <component
-                                    :is="message.pending || message.failed ? 'span' : 'a'"
-                                    v-for="attachment in message.attachments"
-                                    :key="attachment.id"
-                                    :href="message.pending || message.failed ? undefined : attachment.url"
-                                    :class="
-                                        message.isYou
-                                            ? 'border-white/20 bg-black/10 text-white hover:bg-black/20'
-                                            : 'border-muted-foreground/20 bg-muted/20 text-foreground hover:bg-muted/30'
-                                    "
-                                    class="inline-flex max-w-[260px] items-center gap-1.5 truncate rounded-md border px-2 py-1 text-xs transition"
-                                    rel="noreferrer"
-                                    target="_blank"
-                                >
-                                    <Paperclip class="h-3 w-3 shrink-0 opacity-80" />
-                                    <span class="min-w-0 truncate">{{ attachment.original_filename }}</span>
-                                </component>
-                            </div>
+                            <TaskMessageAttachments
+                                :attachments="message.attachments || []"
+                                :disabled="message.pending || message.failed"
+                                :own="message.isYou"
+                                @image-click="onRichContentClick"
+                            />
                         </div>
                         <template v-if="toggleThreadReaction && message.reactions && !message.pending && !message.failed" #quick-actions>
                             <TaskCommentReactions

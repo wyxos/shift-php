@@ -1,10 +1,10 @@
 {
-  "_x-BtyJS_rl.js": {
-    "file": "assets/x-BtyJS_rl.js",
+  "_x-yRHGsbS6.js": {
+    "file": "assets/x-yRHGsbS6.js",
     "name": "x"
   },
   "index.html": {
-    "file": "assets/app-CXcjJod6.js",
+    "file": "assets/app-BPdxkwmk.js",
     "name": "app",
     "src": "index.html",
     "isEntry": true,
@@ -13,28 +13,28 @@
     ]
   },
   "src/widget.ts": {
-    "file": "assets/widget-BJ4GQqru.js",
+    "file": "assets/widget-DNCE-sVl.js",
     "name": "widget",
     "src": "src/widget.ts",
     "isEntry": true,
     "imports": [
-      "_x-BtyJS_rl.js"
+      "_x-yRHGsbS6.js"
     ],
     "css": [
-      "assets/widget-TnK29pil.css"
+      "assets/widget-Iaz1iv0J.css"
     ]
   },
   "src/workspace.ts": {
-    "file": "assets/workspace-ORARv050.js",
+    "file": "assets/workspace-CAe57tfX.js",
     "name": "workspace",
     "src": "src/workspace.ts",
     "isDynamicEntry": true,
     "imports": [
-      "_x-BtyJS_rl.js",
+      "_x-yRHGsbS6.js",
       "index.html"
     ],
     "css": [
-      "assets/workspace-qoSJY51l.css"
+      "assets/workspace-22RV3WMJ.css"
     ]
   }
 }

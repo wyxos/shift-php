@@ -103,3 +103,49 @@ describe('TaskEditCommentsPane mobile report context', () => {
         wrapper.unmount();
     });
 });
+
+describe('TaskEditCommentsPane message images', () => {
+    const imageUrl = '/shift/api/attachments/12/download';
+    const fileUrl = '/shift/api/attachments/13/download';
+    const message = {
+        clientId: 'message-with-media',
+        id: 12,
+        author: 'Alex',
+        time: '11:00',
+        content: '<p>Image caption</p>',
+        audience: 'all' as const,
+        isYou: true,
+        attachments: [
+            { id: 12, original_filename: 'wide-image.png', url: imageUrl },
+            { id: 13, original_filename: 'export.pdf', url: fileUrl },
+        ],
+    };
+
+    it('renders uploaded images after captions and retains SDK proxy URLs for other files', async () => {
+        const values = props({ threadMessages: [message] });
+        const wrapper = mount(TaskEditCommentsPane, { props: values, global: { stubs } });
+        const bubble = wrapper.get('[data-testid="comment-bubble-12"]');
+        const image = bubble.get(`img[src="${imageUrl}"]`);
+
+        expect(bubble.text()).toContain('Image caption');
+        expect(bubble.html().indexOf('Image caption')).toBeLessThan(bubble.html().indexOf(imageUrl));
+        expect(bubble.get(`a[href="${fileUrl}"]`).text()).toContain('export.pdf');
+        await image.trigger('click');
+        expect(values.onRichContentClick).toHaveBeenCalledOnce();
+        expect(values.onRichContentClick.mock.calls[0][0].target).toBe(image.element);
+        wrapper.unmount();
+    });
+
+    it.each(['pending', 'failed'])('disables uploaded media while the message is %s', async (state) => {
+        const values = props({ threadMessages: [{ ...message, [state]: true }] });
+        const wrapper = mount(TaskEditCommentsPane, { props: values, global: { stubs } });
+        const bubble = wrapper.get('[data-testid="comment-bubble-12"]');
+
+        expect(bubble.find(`a[href="${fileUrl}"]`).exists()).toBe(false);
+        expect(bubble.find(`a[href="${imageUrl}"]`).exists()).toBe(false);
+        const image = bubble.find(`img[src="${imageUrl}"]`);
+        if (image.exists()) await image.trigger('click');
+        expect(values.onRichContentClick).not.toHaveBeenCalled();
+        wrapper.unmount();
+    });
+});
