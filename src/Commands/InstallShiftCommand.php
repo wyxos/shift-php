@@ -75,10 +75,16 @@ class InstallShiftCommand extends Command
         $this->info("Registered {$environment} => {$url} with SHIFT.");
 
         $this->newLine();
-        $this->call('vendor:publish', [
+        $publishResult = $this->call('vendor:publish', [
             '--tag' => 'shift',
             '--force' => true,
         ]);
+
+        if ($publishResult !== self::SUCCESS) {
+            return $publishResult;
+        }
+
+        $this->ignorePublishedAssets();
 
         $this->newLine();
         $this->info('SHIFT installation complete.');
@@ -108,6 +114,22 @@ class InstallShiftCommand extends Command
         }
 
         return self::SUCCESS;
+    }
+
+    private function ignorePublishedAssets(): void
+    {
+        $path = base_path('.gitignore');
+        $contents = File::exists($path) ? File::get($path) : '';
+        $rule = '/public/shift-assets/';
+
+        if (preg_match('~^/?public/shift-assets/? *\r?$~m', $contents) === 1) {
+            return;
+        }
+
+        $newline = str_contains($contents, "\r\n") ? "\r\n" : "\n";
+        $separator = $contents !== '' && ! str_ends_with($contents, "\n") ? $newline : '';
+
+        File::append($path, $separator.$rule.$newline);
     }
 
     protected function writeEnv(array $values, array $onlyMissingKeys = []): void
