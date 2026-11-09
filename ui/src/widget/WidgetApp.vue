@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ArrowLeft, CheckCircle2, Loader2, LogIn, MessageSquare, X } from 'lucide-vue-next';
 import { computed, onMounted, reactive, ref } from 'vue';
+import { useLauncherPosition } from './useLauncherPosition';
 
 type WidgetKind = 'feature' | 'issue';
 type IdentityMode = 'account' | 'anonymous' | 'details' | 'login';
@@ -44,6 +45,7 @@ const kindOptions: { value: WidgetKind; label: string }[] = [
 ];
 const ready = ref(false);
 const isOpen = ref(false);
+const { launcherStyle, dragging, startDrag, drag, endDrag, cancelDrag, allowOpen, moveWithKeyboard } = useLauncherPosition();
 const submitting = ref(false);
 const loggingIn = ref(false);
 const success = ref(false);
@@ -283,8 +285,31 @@ function toTitle(value: string): string {
 </script>
 
 <template>
-    <div v-if="shouldRender" class="shift-widget" :class="{ 'shift-widget--open': isOpen }">
-        <button v-if="!isOpen" class="shift-widget__launcher" type="button" aria-label="Feedback" @click="isOpen = true">
+    <div
+        v-if="shouldRender"
+        class="shift-widget"
+        :class="{
+            'shift-widget--open': isOpen,
+            'shift-widget--positioned': !isOpen && launcherStyle,
+            'shift-widget--dragging': dragging,
+        }"
+        :style="!isOpen ? launcherStyle : undefined"
+    >
+        <button
+            v-if="!isOpen"
+            class="shift-widget__launcher"
+            type="button"
+            aria-label="Feedback"
+            aria-description="Drag to move. On touch screens, hold before dragging. Use Shift and an arrow key to move, or Shift and Home to reset."
+            @pointerdown="startDrag"
+            @pointermove="drag"
+            @pointerup="endDrag"
+            @pointercancel="cancelDrag"
+            @lostpointercapture="cancelDrag"
+            @keydown="moveWithKeyboard"
+            @contextmenu.prevent
+            @click="allowOpen($event) && (isOpen = true)"
+        >
             <MessageSquare aria-hidden="true" />
             <span>Feedback</span>
         </button>

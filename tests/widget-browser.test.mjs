@@ -2,13 +2,13 @@ import assert from 'node:assert/strict';
 import { mkdir, readFile } from 'node:fs/promises';
 import { createServer } from 'node:http';
 import { tmpdir } from 'node:os';
-import { join, resolve } from 'node:path';
+import { join, resolve, sep } from 'node:path';
 import { after, before, test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
 
 const packageRoot = resolve(fileURLToPath(new URL('..', import.meta.url)));
-const assetsRoot = join(packageRoot, 'public/shift-assets');
+const assetsRoot = resolve(process.env.SHIFT_WIDGET_ASSETS_DIR ?? join(packageRoot, 'public/shift-assets'));
 const output = process.env.SHIFT_WIDGET_REVIEW_DIR ?? join(tmpdir(), 'shift-widget-browser');
 const submissions = [];
 let browser;
@@ -47,7 +47,7 @@ before(async () => {
             const url = new URL(request.url, 'http://127.0.0.1');
             if (url.pathname.startsWith('/shift-assets/')) {
                 const file = resolve(assetsRoot, url.pathname.slice('/shift-assets/'.length));
-                if (!file.startsWith(`${assetsRoot}/`)) throw new Error('Invalid asset path');
+                if (!file.startsWith(assetsRoot + sep)) throw new Error('Invalid asset path');
                 response.setHeader('Content-Type', file.endsWith('.css') ? 'text/css' : 'text/javascript');
                 response.end(await readFile(file));
                 return;
@@ -149,3 +149,83 @@ for (const width of [320, 393, 520, 521, 1280]) {
         });
     }
 }
+
+test('a held touch can move Feedback without opening it and the next tap opens it', async () => {
+    const context = await browser.newContext({ viewport: { width: 393, height: 736 }, hasTouch: true, isMobile: true });
+    try {
+        const page = await context.newPage();
+        const client = await context.newCDPSession(page);
+        await page.goto(base);
+        const launcher = page.getByRole('button', { name: 'Feedback', exact: true });
+        await launcher.waitFor({ state: 'visible' });
+        const initial = await launcher.boundingBox();
+        const touch = (type, x, y) => client.send('Input.dispatchTouchEvent', {
+            type,
+            touchPoints: type === 'touchEnd' || type === 'touchCancel' ? [] : [{ x, y }],
+        });
+        const x = initial.x + initial.width / 2;
+        const y = initial.y + initial.height / 2;
+        await touch('touchStart', x, y);
+        await touch('touchMove', x - 40, y - 40);
+        await touch('touchEnd');
+        assert.deepEqual(await launcher.boundingBox(), initial, 'Moving before holding does not drag');
+
+        await touch('touchStart', x, y);
+        // CDP sends real touch events. Hold the pointer down before moving it.
+        await new Promise((resolve) => setTimeout(resolve, 400));
+        await touch('touchMove', 80, 180);
+        await touch('touchEnd');
+        assert.equal(await page.getByRole('region', { name: 'Feedback', exact: true }).count(), 0);
+        const moved = await launcher.boundingBox();
+        assert.ok(moved.x < initial.x - 100 && moved.y < initial.y - 100);
+        await page.screenshot({ path: join(output, 'touch-launcher-repositioned.png') });
+
+        await page.reload();
+        await launcher.waitFor({ state: 'visible' });
+        assert.deepEqual(await launcher.boundingBox(), moved, 'Position survives reload');
+        await touch('touchStart', moved.x + moved.width / 2, moved.y + moved.height / 2);
+        await new Promise((resolve) => setTimeout(resolve, 400));
+        await touch('touchMove', 260, 360);
+        await touch('touchCancel');
+        assert.deepEqual(await launcher.boundingBox(), moved, 'Cancel restores the last chosen position');
+
+        await page.getByRole('button', { name: 'Continue', exact: true }).tap();
+        assert.equal(await page.locator('output').textContent(), 'Step 2');
+        await launcher.tap();
+        await page.getByRole('region', { name: 'Feedback', exact: true }).waitFor({ state: 'visible' });
+    } finally {
+        await context.close();
+    }
+});
+
+test('mouse and keyboard can place and reset Feedback while keeping it in bounds', async () => {
+    const context = await browser.newContext({ viewport: { width: 1024, height: 768 }, reducedMotion: 'reduce' });
+    try {
+        const page = await context.newPage();
+        await page.goto(base);
+        const launcher = page.getByRole('button', { name: 'Feedback', exact: true });
+        await launcher.waitFor({ state: 'visible' });
+        const initial = await launcher.boundingBox();
+        await page.mouse.move(initial.x + initial.width / 2, initial.y + initial.height / 2);
+        await page.mouse.down();
+        await page.mouse.move(0, 0, { steps: 6 });
+        await page.mouse.up();
+        assert.equal(await page.getByRole('region', { name: 'Feedback', exact: true }).count(), 0);
+        let moved = await launcher.boundingBox();
+        assert.ok(moved.x >= 11 && moved.x < 30 && moved.y >= 11 && moved.y < 30);
+
+        await page.setViewportSize({ width: 320, height: 500 });
+        await launcher.focus();
+        await page.keyboard.press('Shift+ArrowRight');
+        await page.keyboard.press('Shift+ArrowDown');
+        moved = await launcher.boundingBox();
+        assert.ok(moved.x >= 11 && moved.x + moved.width <= 309 && moved.y > 30 && moved.y + moved.height <= 489);
+        await page.keyboard.press('Shift+Home');
+        const reset = await launcher.boundingBox();
+        assert.ok(reset.x > 180 && reset.y > 400, 'Keyboard reset restores the default corner');
+        await page.keyboard.press('Enter');
+        await page.getByRole('region', { name: 'Feedback', exact: true }).waitFor({ state: 'visible' });
+    } finally {
+        await context.close();
+    }
+});

@@ -42,6 +42,8 @@
 
 .shift-widget__launcher {
     pointer-events: auto;
+    touch-action: none;
+    user-select: none;
     background: var(--shift-widget-primary);
     border-radius: 0.375rem;
     box-shadow: 0 16px 30px rgba(24, 24, 27, 0.18);
@@ -329,6 +331,34 @@
     .shift-widget__panel {
         width: 100%;
     }
+}
+
+.shift-widget--positioned {
+    --shift-launcher-right: calc(12px + max(0px, 100% - 72px) * var(--shift-launcher-right-fraction));
+    right: var(--shift-launcher-right);
+    bottom: calc(12px + max(0px, 100% - 72px) * var(--shift-launcher-bottom-fraction));
+    left: auto;
+    max-width: calc(100% - var(--shift-launcher-right) - 12px);
+}
+
+.shift-widget--positioned .shift-widget__launcher {
+    max-width: 100%;
+    overflow: hidden;
+}
+
+.shift-widget--positioned .shift-widget__launcher svg {
+    flex-shrink: 0;
+}
+
+.shift-widget--dragging .shift-widget__launcher {
+    cursor: grabbing;
+}
+
+.shift-widget--dragging .shift-widget__launcher span {
+    margin-left: 0;
+    max-width: 0;
+    opacity: 0;
+    transition: none;
 }
 
 .shift-widget__menu {
